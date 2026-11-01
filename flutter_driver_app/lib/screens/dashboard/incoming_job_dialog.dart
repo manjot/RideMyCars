@@ -740,7 +740,7 @@ class _IncomingJobDialogState extends State<IncomingJobDialog> with SingleTicker
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$currSym${fare.toStringAsFixed(2)}',
+                    '$currSym${fare.toStringAsFixed(0)}',
                     style: const TextStyle(
                       color: AppColors.success,
                       fontSize: 32,

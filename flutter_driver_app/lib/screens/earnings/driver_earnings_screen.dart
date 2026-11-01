@@ -129,7 +129,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
     if (_walletBalance < _minWithdrawal) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Minimum withdrawal amount is $_currency${_minWithdrawal.toStringAsFixed(2)}. Your balance is $_currency${_walletBalance.toStringAsFixed(2)}.'),
+          content: Text('Minimum withdrawal amount is $_currency${_minWithdrawal.toStringAsFixed(0)}. Your balance is $_currency${_walletBalance.toStringAsFixed(0)}.'),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -279,15 +279,15 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildPeriodTile('TODAY', '$_currency${today.toStringAsFixed(2)}', AppColors.success)),
+                  Expanded(child: _buildPeriodTile('TODAY', '$_currency${today.toStringAsFixed(0)}', AppColors.success)),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildPeriodTile('THIS WEEK', '$_currency${week.toStringAsFixed(2)}', AppColors.info)),
+                  Expanded(child: _buildPeriodTile('THIS WEEK', '$_currency${week.toStringAsFixed(0)}', AppColors.info)),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildPeriodTile('THIS MONTH', '$_currency${month.toStringAsFixed(2)}', AppColors.purple)),
+                  Expanded(child: _buildPeriodTile('THIS MONTH', '$_currency${month.toStringAsFixed(0)}', AppColors.purple)),
                   const SizedBox(width: 12),
                   Expanded(child: _buildPeriodTile('TOTAL TRIPS', '$totalTrips', AppColors.primary)),
                 ],
@@ -388,7 +388,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  _walletBalance.toStringAsFixed(2),
+                  _walletBalance.toStringAsFixed(0),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 38,
@@ -416,7 +416,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'Pending Review: $_currency${_pendingWithdrawals.toStringAsFixed(2)}',
+                  'Pending Review: $_currency${_pendingWithdrawals.toStringAsFixed(0)}',
                   style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -548,7 +548,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  _commissionWalletBalance.toStringAsFixed(2),
+                  _commissionWalletBalance.toStringAsFixed(0),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 34,
@@ -631,7 +631,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
                 ),
                 Text(
-                  'Total: $_currency${_commissionWalletBalance.toStringAsFixed(2)}',
+                  'Total: $_currency${_commissionWalletBalance.toStringAsFixed(0)}',
                   style: const TextStyle(color: Colors.indigoAccent, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
               ],
@@ -723,7 +723,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Cash Collected: $_currency${grossFare.toStringAsFixed(2)} • Rate: ${rate.toStringAsFixed(0)}%',
+                                  'Cash Collected: $_currency${grossFare.toStringAsFixed(0)} • Rate: ${rate.toStringAsFixed(0)}%',
                                   style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                                 ),
                               ],
@@ -733,7 +733,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '-$_currency${commAmt.toStringAsFixed(2)}',
+                                '-$_currency${commAmt.toStringAsFixed(0)}',
                                 style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 14),
                               ),
                               const SizedBox(height: 2),
@@ -875,7 +875,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('$_currency${amount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+              Text('$_currency${amount.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
               Text(method == 'momo' ? 'Mobile Money' : 'Bank Transfer', style: const TextStyle(color: AppColors.textLight, fontSize: 12, fontWeight: FontWeight.w600)),
             ],
           ),
@@ -1020,11 +1020,11 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
       return;
     }
     if (amt < widget.minWithdrawal) {
-      setState(() => _errorMessage = 'Amount must be at least ${widget.currency}${widget.minWithdrawal.toStringAsFixed(2)}.');
+      setState(() => _errorMessage = 'Amount must be at least ${widget.currency}${widget.minWithdrawal.toStringAsFixed(0)}.');
       return;
     }
     if (amt > widget.balance) {
-      setState(() => _errorMessage = 'Amount cannot exceed available balance (${widget.currency}${widget.balance.toStringAsFixed(2)}).');
+      setState(() => _errorMessage = 'Amount cannot exceed available balance (${widget.currency}${widget.balance.toStringAsFixed(0)}).');
       return;
     }
 
@@ -1083,7 +1083,7 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
             ],
           ),
           content: Text(
-            'Your withdrawal of ${widget.currency}${amt.toStringAsFixed(2)} has been processed instantly without admin approval.\n\nYour funds have been disbursed to your selected payout account.',
+            'Your withdrawal of ${widget.currency}${amt.toStringAsFixed(0)} has been processed instantly without admin approval.\n\nYour funds have been disbursed to your selected payout account.',
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
           ),
           actions: [
@@ -1147,7 +1147,7 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'Available: ${widget.currency}${widget.balance.toStringAsFixed(2)}',
+                    'Available: ${widget.currency}${widget.balance.toStringAsFixed(0)}',
                     style: const TextStyle(color: Color(0xFFF97316), fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -1564,7 +1564,7 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
             ],
           ),
           content: Text(
-            '${widget.currency}${amt.toStringAsFixed(2)} has been credited to your driver wallet.\n\nYou can now accept rides or cashouts immediately.',
+            '${widget.currency}${amt.toStringAsFixed(0)} has been credited to your driver wallet.\n\nYou can now accept rides or cashouts immediately.',
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
           ),
           actions: [
@@ -1929,7 +1929,7 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : Text(
-                        'Top-Up Now (${widget.currency}${_enteredAmount.toStringAsFixed(2)})',
+                        'Top-Up Now (${widget.currency}${_enteredAmount.toStringAsFixed(0)})',
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
                       ),
               ),

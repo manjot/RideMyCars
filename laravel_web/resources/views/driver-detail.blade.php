@@ -51,10 +51,10 @@
                         <div class="text-left md:text-right w-full md:w-auto bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-white/5">
                             <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">Service Rates</div>
                             <div class="text-2xl font-extrabold text-gray-900 dark:text-white">
-                                {{ $countryConfig['symbol'] }}{{ number_format($driverProfile->hourly_rate ?? 25.00, 2) }}<span class="text-xs text-gray-500 dark:text-gray-400 font-normal">/hr</span>
+                                {{ $countryConfig['symbol'] }}{{ number_format($driverProfile->hourly_rate ?? 25.00, 0) }}<span class="text-xs text-gray-500 dark:text-gray-400 font-normal">/hr</span>
                             </div>
                             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {{ $countryConfig['symbol'] }}{{ number_format($driverProfile->daily_rate ?? (($driverProfile->hourly_rate ?? 25) * 8 * 0.85), 2) }}/day
+                                {{ $countryConfig['symbol'] }}{{ number_format($driverProfile->daily_rate ?? (($driverProfile->hourly_rate ?? 25) * 8 * 0.85), 0) }}/day
                             </div>
                         </div>
                     </div>

@@ -790,7 +790,7 @@ class _IncentivesScreenState extends State<IncentivesScreen> with SingleTickerPr
                   const Text('PAYOUT BALANCE', style: TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 4),
                   Text(
-                    '$currency${balance.toStringAsFixed(2)}',
+                    '$currency${balance.toStringAsFixed(0)}',
                     style: const TextStyle(color: AppColors.textLight, fontWeight: FontWeight.w900, fontSize: 20),
                   ),
                 ],

@@ -211,7 +211,7 @@
                     </p>
                     <a href="/payment/verify-details/delivery/{{ $delivery->id }}" 
                        class="w-full py-3 px-4 bg-black dark:bg-white text-white dark:text-black font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 hover:opacity-90 transition">
-                        <span>💳 Authorize ${{ number_format($delivery->total_price, 2) }} {{ $delivery->currency }} →</span>
+                        <span>💳 Authorize ${{ number_format($delivery->total_price, 0) }} {{ $delivery->currency }} →</span>
                     </a>
                 </div>
 
@@ -315,22 +315,22 @@
                         <div class="pt-3 border-t border-gray-100 dark:border-white/10 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                             <div class="flex justify-between">
                                 <span>Delivery Fee:</span>
-                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->subtotal, 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->subtotal, 0) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span>Service Fee ({{ $serviceFeePercent }}%):</span>
-                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->service_fee, 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->service_fee, 0) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span>Taxes (5%):</span>
-                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->tax, 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->tax, 0) }}</span>
                             </div>
                         </div>
                     @endif
 
                     <div class="pt-3 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-sm font-extrabold">
                         <span class="text-gray-900 dark:text-white">Total Amount:</span>
-                        <span class="text-amber-500">{{ $delCurrencySymbol }}{{ number_format($delivery->total_price, 2) }} {{ $delivery->currency }}</span>
+                        <span class="text-amber-500">{{ $delCurrencySymbol }}{{ number_format($delivery->total_price, 0) }} {{ $delivery->currency }}</span>
                     </div>
                 </div>
 

@@ -68,7 +68,7 @@ class PaymentConfigService {
     }
 
     try {
-      final res = await ApiClient().dio.get('/api/payment/gateways');
+      final res = await ApiClient().dio.get('/payment/gateways');
       if (res.statusCode == 200 && res.data != null) {
         final data = res.data;
         final rawActive = data['active_gateways'];

@@ -59,32 +59,32 @@
                   }
               },
               get baseTotal() {
-                  return (this.daysCount * this.dailyRate).toFixed(2);
+                  return (this.daysCount * this.dailyRate).toFixed(0);
               },
               get protectionTotal() {
-                  return this.protectionOption === 'full_cover' ? (this.daysCount * this.protectionRateDaily).toFixed(2) : (0).toFixed(2);
+                  return this.protectionOption === 'full_cover' ? (this.daysCount * this.protectionRateDaily).toFixed(0) : (0).toFixed(0);
               },
               get extrasTotal() {
                   let fee = 0;
                   if (this.selectedExtras.includes('additional_driver')) fee += this.daysCount * this.extraDriverRateDaily;
                   if (this.selectedExtras.includes('child_seat')) fee += this.daysCount * this.childSeatRateDaily;
                   if (this.selectedExtras.includes('gps')) fee += this.daysCount * this.gpsRateDaily;
-                  return fee.toFixed(2);
+                  return fee.toFixed(0);
               },
               get totalAmount() {
-                  return (parseFloat(this.baseTotal) + parseFloat(this.protectionTotal) + parseFloat(this.extrasTotal)).toFixed(2);
+                  return (parseFloat(this.baseTotal) + parseFloat(this.protectionTotal) + parseFloat(this.extrasTotal)).toFixed(0);
               },
               get payNowDeposit() {
                   if (this.paymentOption === 'full') {
                       return this.totalAmount;
                   }
-                  return (this.totalAmount * 0.20).toFixed(2);
+                  return (this.totalAmount * 0.20).toFixed(0);
               },
               get balanceAtPickup() {
                   if (this.paymentOption === 'full') {
-                      return (0).toFixed(2);
+                      return (0).toFixed(0);
                   }
-                  return (this.totalAmount - this.payNowDeposit).toFixed(2);
+                  return (this.totalAmount - this.payNowDeposit).toFixed(0);
               },
               toggleExtra(item) {
                   if (this.selectedExtras.includes(item)) {
@@ -225,7 +225,7 @@
                                     <div>
                                         <span class="px-2 py-0.5 bg-amber-500 text-white font-extrabold text-[10px] uppercase rounded">Recommended</span>
                                         <h3 class="font-extrabold text-gray-900 dark:text-white text-base mt-1">Full Protection Cover</h3>
-                                        <span class="text-xs text-brand-600 dark:text-brand-400 font-bold" x-text="`+${currencySymbol}${protectionRateDaily.toFixed(2)} / day`"></span>
+                                        <span class="text-xs text-brand-600 dark:text-brand-400 font-bold" x-text="`+${currencySymbol}${protectionRateDaily.toFixed(0)} / day`"></span>
                                     </div>
                                     <input type="radio" name="protection_choice" value="full_cover" :checked="protectionOption === 'full_cover'" class="w-5 h-5 text-brand-500 mt-1">
                                 </div>
@@ -252,7 +252,7 @@
                                  class="p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between">
                                 <div>
                                     <span class="font-extrabold text-gray-900 dark:text-white block">👨‍✈️ Additional Driver</span>
-                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${extraDriverRateDaily.toFixed(2)} / day`"></span>
+                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${extraDriverRateDaily.toFixed(0)} / day`"></span>
                                 </div>
                                 <input type="checkbox" :checked="selectedExtras.includes('additional_driver')" class="w-4 h-4 text-brand-500 rounded">
                             </div>
@@ -263,7 +263,7 @@
                                  class="p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between">
                                 <div>
                                     <span class="font-extrabold text-gray-900 dark:text-white block">👶 Child Safety Seat</span>
-                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${childSeatRateDaily.toFixed(2)} / day`"></span>
+                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${childSeatRateDaily.toFixed(0)} / day`"></span>
                                 </div>
                                 <input type="checkbox" :checked="selectedExtras.includes('child_seat')" class="w-4 h-4 text-brand-500 rounded">
                             </div>
@@ -274,7 +274,7 @@
                                  class="p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between">
                                 <div>
                                     <span class="font-extrabold text-gray-900 dark:text-white block">🗺️ GPS Navigation</span>
-                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${gpsRateDaily.toFixed(2)} / day`"></span>
+                                    <span class="text-[11px] text-gray-500" x-text="`+${currencySymbol}${gpsRateDaily.toFixed(0)} / day`"></span>
                                 </div>
                                 <input type="checkbox" :checked="selectedExtras.includes('gps')" class="w-4 h-4 text-brand-500 rounded">
                             </div>
@@ -451,7 +451,7 @@
                                         <input type="radio" name="payment_option" value="part" x-model="paymentOption" class="text-brand-500">
                                         <span class="text-gray-900 dark:text-white">20% Deposit Online</span>
                                     </div>
-                                    <span class="text-emerald-600 dark:text-emerald-400 font-extrabold" x-text="`${currencySymbol}${(totalAmount * 0.20).toFixed(2)}`"></span>
+                                    <span class="text-emerald-600 dark:text-emerald-400 font-extrabold" x-text="`${currencySymbol}${(totalAmount * 0.20).toFixed(0)}`"></span>
                                 </label>
 
                                 <label class="flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all"

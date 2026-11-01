@@ -39,6 +39,7 @@ class ApiConstants {
   static const String driverVerifyIdCard = '/driver/verify-id-card';
   static const String driverSubmitGuarantor = '/driver/submit-guarantor';
   static const String driverToggleChauffeur = '/driver/toggle-chauffeur';
+  static const String driverChauffeurSwitch = '/driver/chauffeur-switch';
   static const String driverVerificationStatus = '/driver/verification-status';
   static const String driverIncentives = '/driver/incentives';
   static const String driverIncentivesHistory = '/driver/incentives/history';

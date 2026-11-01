@@ -175,8 +175,8 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     </div>
                 </div>
-                <div class="text-3xl font-black text-slate-900 dark:text-white tracking-tight truncate" title="{{ $pricing->currency_symbol }}{{ number_format($totalEarned, 2) }}">
-                    {{ $pricing->currency_symbol }}{{ number_format($totalEarned, 2) }}
+                <div class="text-3xl font-black text-slate-900 dark:text-white tracking-tight truncate" title="{{ $pricing->currency_symbol }}{{ number_format($totalEarned, 0) }}">
+                    {{ $pricing->currency_symbol }}{{ number_format($totalEarned, 0) }}
                 </div>
                 <div class="flex items-center gap-1.5 mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                     <span>Cumulative fleet volume</span>
@@ -317,11 +317,11 @@
                                         <div class="flex items-center justify-between pt-1">
                                             <div>
                                                 <span class="text-slate-500 dark:text-slate-400 font-medium">Total Rental Fare:</span>
-                                                <div class="text-lg font-black text-slate-900 dark:text-white">{{ $pricing->currency_symbol }}{{ number_format($ride->total_amount ?: $ride->fare, 2) }}</div>
+                                                <div class="text-lg font-black text-slate-900 dark:text-white">{{ $pricing->currency_symbol }}{{ number_format($ride->total_amount ?: $ride->fare, 0) }}</div>
                                             </div>
                                             <div class="text-right">
                                                 <span class="text-slate-500 dark:text-slate-400 font-medium">20% Deposit (Hold):</span>
-                                                <div class="text-sm font-black text-emerald-600 dark:text-emerald-400">{{ $pricing->currency_symbol }}{{ number_format($ride->paid_amount ?: ($ride->fare * 0.2), 2) }}</div>
+                                                <div class="text-sm font-black text-emerald-600 dark:text-emerald-400">{{ $pricing->currency_symbol }}{{ number_format($ride->paid_amount ?: ($ride->fare * 0.2), 0) }}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -387,7 +387,7 @@
                                 </div>
                                 <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                                     <span class="text-slate-500 dark:text-slate-400 font-medium">Rental Total:</span>
-                                    <span class="font-black text-slate-900 dark:text-white">{{ $pricing->currency_symbol }}{{ number_format($ride->fare, 2) }}</span>
+                                    <span class="font-black text-slate-900 dark:text-white">{{ $pricing->currency_symbol }}{{ number_format($ride->fare, 0) }}</span>
                                 </div>
                             </div>
                         @endforeach
@@ -450,7 +450,7 @@
                                     </div>
                                     <div class="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-slate-950/90 backdrop-blur-md border border-white/10 text-white text-right">
                                         <span class="text-[10px] text-slate-400 font-semibold uppercase">Daily: </span>
-                                        <strong class="text-sm font-black text-amber-400">{{ $pricing->currency_symbol }}{{ number_format($v->daily_rate, 2) }}</strong>
+                                        <strong class="text-sm font-black text-amber-400">{{ $pricing->currency_symbol }}{{ number_format($v->daily_rate, 0) }}</strong>
                                     </div>
                                 </div>
 
@@ -548,7 +548,7 @@
                                         <td class="p-4 font-extrabold text-slate-900 dark:text-white">{{ $ride->vehicle?->year }} {{ $ride->vehicle?->make }} {{ $ride->vehicle?->model }}</td>
                                         <td class="p-4 text-slate-600 dark:text-slate-400">{{ $ride->rider?->name ?? 'Customer' }}</td>
                                         <td class="p-4 text-slate-500">{{ $ride->pickup_date ? \Carbon\Carbon::parse($ride->pickup_date)->format('M d') : '-' }} → {{ $ride->return_date ? \Carbon\Carbon::parse($ride->return_date)->format('M d') : '-' }}</td>
-                                        <td class="p-4 font-black text-slate-900 dark:text-white">{{ $pricing->currency_symbol }}{{ number_format($ride->fare, 2) }}</td>
+                                        <td class="p-4 font-black text-slate-900 dark:text-white">{{ $pricing->currency_symbol }}{{ number_format($ride->fare, 0) }}</td>
                                         <td class="p-4">
                                             <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider {{ $ride->status === 'completed' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/20 text-rose-600 dark:text-rose-400' }}">
                                                 {{ ucfirst($ride->status) }}

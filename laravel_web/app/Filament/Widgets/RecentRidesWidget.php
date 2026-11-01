@@ -40,7 +40,14 @@ class RecentRidesWidget extends BaseWidget
                     ->label('Dropoff')
                     ->limit(25),
                 Tables\Columns\TextColumn::make('fare')
-                    ->money('USD')
+                    ->label('Fare (GHS & USD)')
+                    ->formatStateUsing(function ($state, $record) {
+                        $amt = (float) ($state ?? 0);
+                        $curr = strtoupper(trim($record->currency ?? 'GHS'));
+                        $ghs = $curr === 'GHS' ? round($amt) : round(\App\Services\CurrencyExchangeService::convert($amt, $curr, 'GHS'));
+                        $usd = $curr === 'USD' ? round($amt) : round(\App\Services\CurrencyExchangeService::convert($amt, $curr, 'USD'));
+                        return 'GH₵ ' . number_format($ghs, 0) . ' ($' . number_format($usd, 0) . ')';
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()

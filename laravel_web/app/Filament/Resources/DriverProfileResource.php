@@ -140,7 +140,7 @@ class DriverProfileResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Driver License & Background Check')
+                Forms\Components\Section::make('Driver License, National ID & Background Check')
                     ->schema([
                         Forms\Components\Select::make('verification_status')
                             ->label('Driver License Verification')
@@ -153,6 +153,17 @@ class DriverProfileResource extends Resource
                                 'failed' => 'Failed',
                             ])
                             ->required(),
+                        Forms\Components\Select::make('id_card_status')
+                            ->label('National ID / Ghana Card Verification')
+                            ->options([
+                                'pending' => 'Pending',
+                                'submitted' => 'Submitted',
+                                'under_review' => 'Under Review',
+                                'verified' => 'Verified',
+                                'approved' => 'Approved',
+                                'rejected' => 'Rejected',
+                            ])
+                            ->default('pending'),
                         Forms\Components\Select::make('photo_formality_status')
                             ->label('Formal Dress Verification')
                             ->options([
@@ -172,6 +183,10 @@ class DriverProfileResource extends Resource
                                 'requires_review' => 'Requires Review',
                             ])
                             ->default('pending'),
+                        Forms\Components\Toggle::make('is_chauffeur')
+                            ->label('Qualified Chauffeur'),
+                        Forms\Components\Toggle::make('active_chauffeur_online')
+                            ->label('Chauffeur Active Status (Online)'),
                         Forms\Components\Textarea::make('verification_notes')
                             ->columnSpanFull(),
                         Forms\Components\Textarea::make('bio')

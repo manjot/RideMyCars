@@ -720,11 +720,11 @@
                             </div>
                             <div class="flex justify-between text-gray-500 dark:text-gray-400">
                                 <span>Base & Distance Fare</span>
-                                <span class="font-bold text-gray-900 dark:text-white" x-text="currencySymbol + (fareBreakdown.base_fare + fareBreakdown.distance_fare).toFixed(2)"></span>
+                                <span class="font-bold text-gray-900 dark:text-white" x-text="currencySymbol + Math.round(fareBreakdown.base_fare + fareBreakdown.distance_fare)"></span>
                             </div>
                             <div class="flex justify-between font-extrabold text-sm text-gray-900 dark:text-white pt-1 border-t border-gray-200 dark:border-white/10">
                                 <span>Total Estimated Fare</span>
-                                <span x-text="currencySymbol + fareBreakdown.grand_total.toFixed(2)"></span>
+                                <span x-text="currencySymbol + Math.round(fareBreakdown.grand_total)"></span>
                             </div>
                         </div>
 
@@ -1128,8 +1128,13 @@
                             </div>
                         </template>
 
-                        <!-- Action Buttons: Direct Call, WhatsApp & Email (Unlocked upon driver acceptance) -->
-                        <div class="grid grid-cols-3 gap-2">
+                        <!-- Action Buttons: In-App Chat, Direct Call, WhatsApp & Email (Unlocked upon driver acceptance) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <button type="button"
+                                    @click="window.openTripChat('ride', currentRideId, driverName || 'Assigned Driver', 'rider')"
+                                    class="py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1 cursor-pointer">
+                                <span>💬 In-App Chat</span>
+                            </button>
                             <a :href="'tel:' + (driverPhone || '+233598547966')" 
                                @click="callDriverDirect($event)"
                                class="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-1 cursor-pointer">
@@ -1700,7 +1705,7 @@
                         $min = (float) $tier['minimum_fare'];
                         $mult = (float) ($tier['multiplier'] ?? 1.0);
                         $subtotal = ($base + (10 * $perKm) + (15 * $perMin)) * $mult;
-                        $totalEst = max($min, round($subtotal * ($isGhana ? $ghanaSurge : 1.0), 2));
+                        $totalEst = round(max($min, $subtotal * ($isGhana ? $ghanaSurge : 1.0)), 0);
                         return [
                             'id' => $tier['slug'] ?? $tier['category_key'] ?? ('tier_' . $idx),
                             'name' => $tier['name'],
@@ -1708,30 +1713,30 @@
                             'capacity' => $tier['capacity'] ?? '1–4 seats',
                             'eta_minutes' => 3 + ($idx * 2),
                             'multiplier' => $mult,
-                            'base_fare' => $base,
-                            'per_km_rate' => $perKm,
-                            'minimum_fare' => $min,
-                            'per_minute_rate' => $perMin,
+                            'base_fare' => round($base, 0),
+                            'per_km_rate' => round($perKm, 0),
+                            'minimum_fare' => round($min, 0),
+                            'per_minute_rate' => round($perMin, 0),
                             'fare' => $totalEst,
-                            'fare_formatted' => $sym . number_format($totalEst, 2),
+                            'fare_formatted' => $sym . number_format($totalEst, 0),
                             'description' => $tier['description'] ?? '',
                             'target' => $tier['target'] ?? '',
                         ];
                     })->toArray();
 
                     $firstCat = !empty($formattedCats) ? $formattedCats[0] : null;
-                    $initialBase = (float) ($firstCat['base_fare'] ?? ($currentPricing?->ride_base_fare ?? 5.00));
-                    $initialPerKm = (float) ($firstCat['per_km_rate'] ?? ($currentPricing?->ride_per_km_rate ?? 1.50));
-                    $initialPerMin = (float) ($firstCat['per_minute_rate'] ?? ($currentPricing?->ride_per_minute_rate ?? 0.25));
-                    $initialMinFare = (float) ($firstCat['minimum_fare'] ?? ($currentPricing?->ride_minimum_fare ?? 10.00));
-                    $initialDistFare = round(10.0 * $initialPerKm, 2);
-                    $initialDurFare = round(15.0 * $initialPerMin, 2);
+                    $initialBase = round((float) ($firstCat['base_fare'] ?? ($currentPricing?->ride_base_fare ?? 5.00)), 0);
+                    $initialPerKm = round((float) ($firstCat['per_km_rate'] ?? ($currentPricing?->ride_per_km_rate ?? 1.50)), 0);
+                    $initialPerMin = round((float) ($firstCat['per_minute_rate'] ?? ($currentPricing?->ride_per_minute_rate ?? 0.25)), 0);
+                    $initialMinFare = round((float) ($firstCat['minimum_fare'] ?? ($currentPricing?->ride_minimum_fare ?? 10.00)), 0);
+                    $initialDistFare = round(10.0 * $initialPerKm, 0);
+                    $initialDurFare = round(15.0 * $initialPerMin, 0);
                     $initialSub = $initialBase + $initialDistFare + $initialDurFare;
-                    $initialSurged = max($initialMinFare, round($initialSub * ($isGhana ? ($ghanaSurge ?? 1.0) : 1.0), 2));
-                    $initialTax = round($initialSurged * 0.05, 2);
-                    $initialGrand = round($initialSurged + $initialTax, 2);
+                    $initialSurged = round(max($initialMinFare, $initialSub * ($isGhana ? ($ghanaSurge ?? 1.0) : 1.0)), 0);
+                    $initialTax = round($initialSurged * 0.05, 0);
+                    $initialGrand = round($initialSurged + $initialTax, 0);
                     $initialVehicleName = $firstCat['name'] ?? 'Economy';
-                    $initialFareFormatted = $firstCat['fare_formatted'] ?? ($sym . number_format($initialGrand, 2));
+                    $initialFareFormatted = $firstCat['fare_formatted'] ?? ($sym . number_format($initialGrand, 0));
                 @endphp
                 surgeMultiplier: {{ (float) ($isGhana ? (\App\Services\PricingService::getGhanaSurgeInfo()['multiplier'] ?? 1.0) : 1.0) }},
                 countryPricing: {
@@ -2656,27 +2661,27 @@
                             const stopsFee = this.stops.length * (baseFare * 0.5);
                             const standardSub = (baseFare + distFare + durFare + stopsFee) * mult;
                             const surgedSub = standardSub * surgeMult;
-                            const finalFare = Math.max(minFare, surgedSub);
+                            const finalFare = Math.round(Math.max(minFare, surgedSub));
 
-                            cat.fare_formatted = this.currencySymbol + finalFare.toFixed(2);
+                            cat.fare_formatted = this.currencySymbol + finalFare.toFixed(0);
                             cat.fare = finalFare;
                         });
 
                         const selectedCat = this.categories.find(c => c.name === this.vehicle_type) || this.categories[0];
-                        const defaultBase = selectedCat ? (parseFloat(selectedCat.base_fare) || 5.0) : (this.countryPricing.base_fare || 5.0);
-                        const defaultDistFare = totalDist * (selectedCat ? (parseFloat(selectedCat.per_km_rate) || 1.5) : (this.countryPricing.per_km || 1.5));
-                        const defaultStopsFee = this.stops.length * (defaultBase * 0.5);
-                        const currentFinalFare = selectedCat ? (selectedCat.fare || parseFloat(selectedCat.fare_formatted.replace(/[^0-9.]/g, ''))) : 20.0;
+                        const defaultBase = Math.round(selectedCat ? (parseFloat(selectedCat.base_fare) || 5.0) : (this.countryPricing.base_fare || 5.0));
+                        const defaultDistFare = Math.round(totalDist * (selectedCat ? (parseFloat(selectedCat.per_km_rate) || 1.5) : (this.countryPricing.per_km || 1.5)));
+                        const defaultStopsFee = Math.round(this.stops.length * (defaultBase * 0.5));
+                        const currentFinalFare = Math.round(selectedCat ? (selectedCat.fare || parseFloat(selectedCat.fare_formatted.replace(/[^0-9.]/g, ''))) : 20.0);
 
                         this.fareBreakdown = {
                             base_fare: defaultBase,
                             distance_fare: defaultDistFare,
                             stops_fee: defaultStopsFee,
-                            tax: currentFinalFare * 0.05,
+                            tax: Math.round(currentFinalFare * 0.05),
                             grand_total: currentFinalFare
                         };
 
-                        this.selectedFare = selectedCat ? selectedCat.fare_formatted : (this.currencySymbol + currentFinalFare.toFixed(2));
+                        this.selectedFare = selectedCat ? selectedCat.fare_formatted : (this.currencySymbol + currentFinalFare.toFixed(0));
                     }
                 },
 
@@ -3028,9 +3033,9 @@
                 getFormattedFare() {
                     if (this.selectedFare && this.selectedFare !== '') return this.selectedFare;
                     if (this.fareBreakdown && this.fareBreakdown.grand_total) {
-                        return this.currencySymbol + parseFloat(this.fareBreakdown.grand_total).toFixed(2);
+                        return this.currencySymbol + Math.round(parseFloat(this.fareBreakdown.grand_total));
                     }
-                    return this.currencySymbol + '28.50';
+                    return this.currencySymbol + '29';
                 },
 
                 goToChooseRide() {

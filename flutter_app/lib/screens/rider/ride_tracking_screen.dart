@@ -9,6 +9,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
 import '../../providers/ride_provider.dart';
+import '../../widgets/trip_chat_sheet.dart';
 import '../safety/widgets/sos_floating_button.dart';
 
 class RideTrackingScreen extends StatefulWidget {
@@ -935,7 +936,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                   ),
                                   const SizedBox(width: 10),
                                   Text(
-                                    '$currSym${fare.toStringAsFixed(2)}',
+                                    '$currSym${fare.toStringAsFixed(0)}',
                                     style: const TextStyle(
                                       color: AppColors.success,
                                       fontWeight: FontWeight.w900,
@@ -1006,6 +1007,32 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                         children: [
                                           Expanded(
                                             child: ElevatedButton.icon(
+                                              onPressed: () {
+                                                final rId = currentRide['id'] ?? widget.ride['id'] ?? 0;
+                                                final dName = (driver['name'] ?? 'Driver').toString();
+                                                TripChatSheet.show(
+                                                  context,
+                                                  tripType: 'ride',
+                                                  tripId: rId,
+                                                  peerName: dName,
+                                                  senderRole: 'rider',
+                                                );
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppColors.primary,
+                                                foregroundColor: Colors.black,
+                                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                elevation: 2,
+                                                minimumSize: Size.zero,
+                                              ),
+                                              icon: const Icon(Icons.forum_rounded, size: 14),
+                                              label: const Text('Chat', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: ElevatedButton.icon(
                                               onPressed: () => _callDriver(phone),
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: AppColors.success,
@@ -1019,7 +1046,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                               label: const Text('Call', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 6),
                                           Expanded(
                                             child: ElevatedButton.icon(
                                               onPressed: () => _whatsappDriver(phone),
@@ -1032,10 +1059,10 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                                                 minimumSize: Size.zero,
                                               ),
                                               icon: const Icon(Icons.chat_rounded, size: 14),
-                                              label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                              label: const Text('WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 6),
                                           Expanded(
                                             child: ElevatedButton.icon(
                                               onPressed: () => _emailDriver(email),

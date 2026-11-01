@@ -163,6 +163,7 @@ class ManageAppSettings extends Page implements HasForms
         return $form
             ->schema([
                 Forms\Components\Tabs::make('Settings Tabs')
+                    ->persistTabInQueryString('tab')
                     ->tabs([
                         // TAB 1: Payment Gateways
                         Forms\Components\Tabs\Tab::make('Payment Gateways')

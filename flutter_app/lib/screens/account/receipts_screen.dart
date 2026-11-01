@@ -310,7 +310,7 @@ class _ReceiptsScreenState extends State<ReceiptsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '$currencySymbol${amount.toStringAsFixed(2)}',
+                          '$currencySymbol${amount.toStringAsFixed(0)}',
                           style: const TextStyle(
                             color: AppColors.textLight,
                             fontSize: 24,
@@ -732,17 +732,17 @@ class _ReceiptsScreenState extends State<ReceiptsScreen> {
                     const SizedBox(height: 12),
 
                     // Fare Breakdown
-                    _buildBillRow('Base Fare', '$currencySymbol${subtotal.toStringAsFixed(2)}'),
+                    _buildBillRow('Base Fare', '$currencySymbol${subtotal.toStringAsFixed(0)}'),
                     if (discount > 0)
-                      _buildBillRow('Special Discount', '-$currencySymbol${discount.toStringAsFixed(2)}', isDiscount: true),
+                      _buildBillRow('Special Discount', '-$currencySymbol${discount.toStringAsFixed(0)}', isDiscount: true),
                     if (tax > 0)
-                      _buildBillRow('Taxes & GST', '$currencySymbol${tax.toStringAsFixed(2)}'),
+                      _buildBillRow('Taxes & GST', '$currencySymbol${tax.toStringAsFixed(0)}'),
                     const SizedBox(height: 6),
                     const Divider(color: Colors.black12, height: 1),
                     const SizedBox(height: 8),
                     _buildBillRow(
                       'Total Bill (rounded)',
-                      '$currencySymbol${amount.toStringAsFixed(2)}',
+                      '$currencySymbol${amount.toStringAsFixed(0)}',
                       isTotal: true,
                     ),
 
@@ -772,7 +772,7 @@ class _ReceiptsScreenState extends State<ReceiptsScreen> {
                             ],
                           ),
                           Text(
-                            '$currencySymbol${amount.toStringAsFixed(2)}',
+                            '$currencySymbol${amount.toStringAsFixed(0)}',
                             style: const TextStyle(
                               color: Color(0xFF0F172A),
                               fontWeight: FontWeight.w900,

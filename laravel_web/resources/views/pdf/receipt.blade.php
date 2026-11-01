@@ -220,7 +220,7 @@
 
     <!-- Hero / Big Price Banner -->
     <div class="hero-box">
-        <div class="hero-total">{{ $receipt->currency }} {{ number_format($receipt->total_amount, 2) }}</div>
+        <div class="hero-total">{{ $receipt->currency }} {{ number_format($receipt->total_amount, 0) }}</div>
         <div class="hero-crn">CRN / Receipt No: {{ $receipt->receipt_number }}</div>
         <div class="hero-greeting">
             Thanks for choosing RideMyCars, <strong>{{ $snapshot['customer_name'] ?? ($receipt->user->name ?? 'Valued Customer') }}</strong>!
@@ -306,47 +306,47 @@
                 <table class="bill-table">
                     <tr>
                         <td class="b-label">Base / Service Fare</td>
-                        <td class="b-val">{{ $receipt->currency }} {{ number_format($receipt->subtotal, 2) }}</td>
+                        <td class="b-val">{{ $receipt->currency }} {{ number_format($receipt->subtotal, 0) }}</td>
                     </tr>
 
                     @if($receipt->discount_amount > 0)
                         <tr>
                             <td class="b-label">Special Discount</td>
-                            <td class="b-val bill-discount">-{{ $receipt->currency }} {{ number_format($receipt->discount_amount, 2) }}</td>
+                            <td class="b-val bill-discount">-{{ $receipt->currency }} {{ number_format($receipt->discount_amount, 0) }}</td>
                         </tr>
                     @endif
 
                     @if(!empty($snapshot['extras_fee']) && floatval($snapshot['extras_fee']) > 0)
                         <tr>
                             <td class="b-label">Selected Extras</td>
-                            <td class="b-val">{{ $receipt->currency }} {{ number_format(floatval($snapshot['extras_fee']), 2) }}</td>
+                            <td class="b-val">{{ $receipt->currency }} {{ number_format(floatval($snapshot['extras_fee']), 0) }}</td>
                         </tr>
                     @endif
 
                     @if(!empty($snapshot['protection_fee']) && floatval($snapshot['protection_fee']) > 0)
                         <tr>
                             <td class="b-label">Protection Coverage</td>
-                            <td class="b-val">{{ $receipt->currency }} {{ number_format(floatval($snapshot['protection_fee']), 2) }}</td>
+                            <td class="b-val">{{ $receipt->currency }} {{ number_format(floatval($snapshot['protection_fee']), 0) }}</td>
                         </tr>
                     @endif
 
                     @if($receipt->fee_amount > 0)
                         <tr>
                             <td class="b-label">Platform / Convenience Fee</td>
-                            <td class="b-val">{{ $receipt->currency }} {{ number_format($receipt->fee_amount, 2) }}</td>
+                            <td class="b-val">{{ $receipt->currency }} {{ number_format($receipt->fee_amount, 0) }}</td>
                         </tr>
                     @endif
 
                     @if($receipt->tax_amount > 0)
                         <tr>
                             <td class="b-label">Taxes & Levies (GST / VAT)</td>
-                            <td class="b-val">{{ $receipt->currency }} {{ number_format($receipt->tax_amount, 2) }}</td>
+                            <td class="b-val">{{ $receipt->currency }} {{ number_format($receipt->tax_amount, 0) }}</td>
                         </tr>
                     @endif
 
                     <tr class="bill-total-row">
                         <td class="b-label" style="font-weight: 900; color: #111827;">Total Amount Paid</td>
-                        <td class="b-val" style="font-weight: 900; color: #111827;">{{ $receipt->currency }} {{ number_format($receipt->total_amount, 2) }}</td>
+                        <td class="b-val" style="font-weight: 900; color: #111827;">{{ $receipt->currency }} {{ number_format($receipt->total_amount, 0) }}</td>
                     </tr>
                 </table>
 
@@ -362,7 +362,7 @@
                                 Paid by: {{ ucfirst($receipt->payment_method) }}
                             </td>
                             <td style="text-align: right; font-weight: 900; font-size: 12px; color: #10b981;">
-                                {{ $receipt->currency }} {{ number_format($receipt->total_amount, 2) }}
+                                {{ $receipt->currency }} {{ number_format($receipt->total_amount, 0) }}
                             </td>
                         </tr>
                     </table>

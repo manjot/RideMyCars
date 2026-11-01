@@ -174,15 +174,15 @@
 
                                     <!-- Pricing & Payment Status -->
                                     <div class="sm:text-right sm:pl-4 sm:border-l sm:border-gray-100 sm:dark:border-white/10 flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1 shrink-0">
-                                        <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">{{ $rideCurrencySymbol }}{{ number_format($ride->total_amount ?? $displayFare, 2) }}</p>
+                                        <p class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">{{ $rideCurrencySymbol }}{{ number_format($ride->total_amount ?? $displayFare, 0) }}</p>
                                         
                                         @if($ride->total_amount > 0 && $ride->paid_amount !== null)
                                             <div class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                                                Paid: {{ $rideCurrencySymbol }}{{ number_format($ride->paid_amount, 2) }}
+                                                Paid: {{ $rideCurrencySymbol }}{{ number_format($ride->paid_amount, 0) }}
                                             </div>
                                             @if($ride->remaining_balance > 0)
                                                 <div class="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                                                    Due: {{ $rideCurrencySymbol }}{{ number_format($ride->remaining_balance, 2) }}
+                                                    Due: {{ $rideCurrencySymbol }}{{ number_format($ride->remaining_balance, 0) }}
                                                 </div>
                                             @endif
                                         @endif
@@ -565,18 +565,18 @@
                                     <div>
                                         <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Rental Fare</p>
                                         <p class="text-3xl font-black text-gray-900 dark:text-white mt-0.5">
-                                            {{ $rentalCurrency }}{{ number_format($rental->total_amount, 2) }}
+                                            {{ $rentalCurrency }}{{ number_format($rental->total_amount, 0) }}
                                         </p>
                                         
                                         <div class="mt-3 space-y-1.5 text-xs">
                                             <div class="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
                                                 <span>Paid (Deposit):</span>
-                                                <span>{{ $rentalCurrency }}{{ number_format($rental->paid_amount ?? ($rental->total_amount * 0.2), 2) }}</span>
+                                                <span>{{ $rentalCurrency }}{{ number_format($rental->paid_amount ?? ($rental->total_amount * 0.2), 0) }}</span>
                                             </div>
                                             @if(($rental->remaining_balance ?? 0) > 0)
                                                 <div class="flex justify-between text-amber-600 dark:text-amber-400 font-bold">
                                                     <span>Due at Pickup:</span>
-                                                    <span>{{ $rentalCurrency }}{{ number_format($rental->remaining_balance, 2) }}</span>
+                                                    <span>{{ $rentalCurrency }}{{ number_format($rental->remaining_balance, 0) }}</span>
                                                 </div>
                                             @endif
                                         </div>
@@ -670,7 +670,7 @@
                                     @endif
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $chfCurrencySymbol }}{{ number_format($booking->total_price ?? 0, 2) }}</p>
+                                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $chfCurrencySymbol }}{{ number_format($booking->total_price ?? 0, 0) }}</p>
                                     <span class="text-xs font-bold uppercase px-2 py-0.5 rounded-full
                                         @if($isBookingPaid) bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300
                                         @else bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300
@@ -720,7 +720,7 @@
                                             </div>
                                         </div>
                                         <a href="/payment/verify-details/driver_booking/{{ $booking->id }}" class="w-full sm:w-auto text-center px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all whitespace-nowrap">
-                                            Authorize Payment ({{ $chfCurrencySymbol }}{{ number_format($booking->total_price ?? 0, 2) }}) →
+                                            Authorize Payment ({{ $chfCurrencySymbol }}{{ number_format($booking->total_price ?? 0, 0) }}) →
                                         </a>
                                     </div>
 
@@ -858,7 +858,7 @@
                                     @endif
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->total_price ?? 0, 2) }}</p>
+                                    <p class="text-2xl font-black text-gray-900 dark:text-white">{{ $delCurrencySymbol }}{{ number_format($delivery->total_price ?? 0, 0) }}</p>
                                     <span class="text-xs font-bold uppercase px-2 py-0.5 rounded-full
                                         @if($isDeliveryPaid) bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300
                                         @else bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300
@@ -899,7 +899,7 @@
                                             </div>
                                         </div>
                                         <a href="/payment/verify-details/package_delivery/{{ $delivery->id }}" class="w-full sm:w-auto text-center px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all whitespace-nowrap">
-                                            Pay & Dispatch Courier ({{ $delCurrencySymbol }}{{ number_format($delivery->total_price ?? 0, 2) }}) →
+                                            Pay & Dispatch Courier ({{ $delCurrencySymbol }}{{ number_format($delivery->total_price ?? 0, 0) }}) →
                                         </a>
                                     </div>
 

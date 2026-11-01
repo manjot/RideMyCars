@@ -31,7 +31,7 @@
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-gray-500 dark:text-gray-400 font-medium">Amount Paid</span>
                     <span class="font-extrabold text-green-600 dark:text-green-400 text-base">
-                        {{ $sym }}{{ number_format($amt, 2) }}
+                        {{ $sym }}{{ number_format($amt, 0) }}
                     </span>
                 </div>
                 <div class="flex justify-between items-center text-sm">

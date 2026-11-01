@@ -114,7 +114,7 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
     if (_balance < _minWithdrawal) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Minimum withdrawal amount is $_currency${_minWithdrawal.toStringAsFixed(2)}. Your balance is $_currency${_balance.toStringAsFixed(2)}.'),
+          content: Text('Minimum withdrawal amount is $_currency${_minWithdrawal.toStringAsFixed(0)}. Your balance is $_currency${_balance.toStringAsFixed(0)}.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -263,7 +263,7 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  _balance.toStringAsFixed(2),
+                  _balance.toStringAsFixed(0),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 38,
@@ -291,7 +291,7 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'Pending Review: $_currency${_pendingWithdrawals.toStringAsFixed(2)}',
+                  'Pending Review: $_currency${_pendingWithdrawals.toStringAsFixed(0)}',
                   style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -741,7 +741,7 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$_currency${amount.toStringAsFixed(2)}',
+                '$_currency${amount.toStringAsFixed(0)}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 22,
@@ -934,15 +934,15 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
       return;
     }
     if (amt < widget.minWithdrawal) {
-      setState(() => _errorMessage = 'Amount must be at least ${widget.currency}${widget.minWithdrawal.toStringAsFixed(2)}.');
+      setState(() => _errorMessage = 'Amount must be at least ${widget.currency}${widget.minWithdrawal.toStringAsFixed(0)}.');
       return;
     }
     if (amt > widget.balance) {
-      setState(() => _errorMessage = 'Withdrawal amount cannot exceed available balance (${widget.currency}${widget.balance.toStringAsFixed(2)}).');
+      setState(() => _errorMessage = 'Withdrawal amount cannot exceed available balance (${widget.currency}${widget.balance.toStringAsFixed(0)}).');
       return;
     }
     if (amt > widget.maxWithdrawal) {
-      setState(() => _errorMessage = 'Amount exceeds maximum withdrawal limit of ${widget.currency}${widget.maxWithdrawal.toStringAsFixed(2)}.');
+      setState(() => _errorMessage = 'Amount exceeds maximum withdrawal limit of ${widget.currency}${widget.maxWithdrawal.toStringAsFixed(0)}.');
       return;
     }
 
@@ -998,7 +998,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
             ],
           ),
           content: Text(
-            'Your withdrawal request of ${widget.currency}${amt.toStringAsFixed(2)} has been submitted for pending approval.\n\nNote: Your wallet balance remains intact and will only be deducted once approved by admin.',
+            'Your withdrawal request of ${widget.currency}${amt.toStringAsFixed(0)} has been submitted for pending approval.\n\nNote: Your wallet balance remains intact and will only be deducted once approved by admin.',
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
           ),
           actions: [
@@ -1067,7 +1067,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'Available: ${widget.currency}${widget.balance.toStringAsFixed(2)}',
+                    'Available: ${widget.currency}${widget.balance.toStringAsFixed(0)}',
                     style: const TextStyle(color: Color(0xFFF97316), fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -1220,11 +1220,11 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Fee: ${widget.currency}${_calculatedFee.toStringAsFixed(2)}',
+                      'Fee: ${widget.currency}${_calculatedFee.toStringAsFixed(0)}',
                       style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
                     ),
                     Text(
-                      'Net Payout: ${widget.currency}${_netPayout.toStringAsFixed(2)}',
+                      'Net Payout: ${widget.currency}${_netPayout.toStringAsFixed(0)}',
                       style: const TextStyle(color: AppColors.success, fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                   ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/notification_provider.dart';
+import '../../providers/country_provider.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -167,7 +168,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   final isRead = n['is_read'] == true;
                   final type = n['type'] ?? 'general';
                   final title = n['title'] ?? 'Notification';
-                  final message = n['message'] ?? '';
+                  final rawMessage = (n['message'] ?? '').toString();
+                  final currencyCode = Provider.of<CountryProvider>(context, listen: false).currencyCode.isNotEmpty
+                      ? Provider.of<CountryProvider>(context, listen: false).currencyCode
+                      : 'GHS';
+                  final message = rawMessage
+                      .replaceAllMapped(RegExp(r'\$([0-9]+(?:\.[0-9]+)?)'), (m) {
+                        final val = double.tryParse(m.group(1) ?? '0') ?? 0;
+                        return '$currencyCode ${val.round()}';
+                      })
+                      .replaceAllMapped(RegExp(r'\b(GHS|NGN|KES|ZAR|USD|EUR|GBP|CAD)\s*([0-9]+\.[0-9]+)'), (m) {
+                        final code = m.group(1) ?? currencyCode;
+                        final val = double.tryParse(m.group(2) ?? '0') ?? 0;
+                        return '$code ${val.round()}';
+                      });
                   final timeAgo = n['time_ago'] ?? '';
                   final notifId = n['id'] is num ? (n['id'] as num).toInt() : int.tryParse(n['id']?.toString() ?? '0') ?? 0;
 

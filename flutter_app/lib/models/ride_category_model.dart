@@ -40,15 +40,14 @@ class RideCategoryModel {
   });
 
   factory RideCategoryModel.fromJson(Map<String, dynamic> json, {String defaultSymbol = '\$'}) {
-    final fareVal = (json['fare'] as num?)?.toDouble() ??
+    final rawFareVal = (json['fare'] as num?)?.toDouble() ??
         (json['default_fare'] as num?)?.toDouble() ??
         (json['minimum_fare'] as num?)?.toDouble() ??
         10.0;
+    final fareVal = rawFareVal.roundToDouble();
 
     final symbol = json['currency_symbol']?.toString() ?? defaultSymbol;
-    final formatted = json['fare_formatted']?.toString() ??
-        json['default_fare_formatted']?.toString() ??
-        '$symbol${fareVal.toStringAsFixed(2)}';
+    final formatted = '$symbol${fareVal.toStringAsFixed(0)}';
 
     return RideCategoryModel(
       id: json['id']?.toString() ?? json['slug']?.toString() ?? 'economy',

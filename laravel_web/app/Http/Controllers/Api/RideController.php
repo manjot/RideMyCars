@@ -130,9 +130,9 @@ class RideController extends Controller
                 'digital_receipt_code' => $r->digital_receipt_code ?: ($isRental ? ('RNT-' . $r->id) : ('REC-' . $r->id)),
                 'receipt_url' => $r->receipt ? $r->receipt->view_url : url('/receipts/' . ($r->digital_receipt_code ?: ($isRental ? ('RNT-' . $r->id) : ('REC-' . $r->id)))),
                 'receipt_download_url' => $r->receipt ? $r->receipt->download_url : url('/receipts/' . ($r->digital_receipt_code ?: ($isRental ? ('RNT-' . $r->id) : ('REC-' . $r->id))) . '/download'),
-                'fare' => (float)($r->total_amount ?? $r->fare ?? 0),
-                'paid_amount' => (float)($r->paid_amount ?? 0),
-                'remaining_balance' => (float)($r->remaining_balance ?? 0),
+                'fare' => round((float)($r->total_amount ?? $r->fare ?? 0), 0),
+                'paid_amount' => round((float)($r->paid_amount ?? 0), 0),
+                'remaining_balance' => round((float)($r->remaining_balance ?? 0), 0),
                 'currency_symbol' => $rPricing->currency_symbol,
                 'currency_code' => $rPricing->currency_code,
                 'country' => $rPricing->country_code,
@@ -198,7 +198,7 @@ class RideController extends Controller
                 'digital_receipt_code' => $db->booking_code ?? ('BK-' . $db->id),
                 'receipt_url' => $db->receipt ? $db->receipt->view_url : url('/receipts/' . ($db->booking_code ?? ('BK-' . $db->id))),
                 'receipt_download_url' => $db->receipt ? $db->receipt->download_url : url('/receipts/' . ($db->booking_code ?? ('BK-' . $db->id)) . '/download'),
-                'fare' => (float)($db->total_price ?? 0),
+                'fare' => round((float)($db->total_price ?? 0), 0),
                 'currency_symbol' => $dbPricing->currency_symbol,
                 'currency_code' => $dbPricing->currency_code,
                 'country' => $dbPricing->country_code,
@@ -242,7 +242,7 @@ class RideController extends Controller
                 'digital_receipt_code' => $del->delivery_code ?: ('DEL-' . $del->id),
                 'receipt_url' => $del->receipt ? $del->receipt->view_url : url('/receipts/' . ($del->delivery_code ?: ('DEL-' . $del->id))),
                 'receipt_download_url' => $del->receipt ? $del->receipt->download_url : url('/receipts/' . ($del->delivery_code ?: ('DEL-' . $del->id)) . '/download'),
-                'fare' => (float)($del->total_price ?? 0),
+                'fare' => round((float)($del->total_price ?? 0), 0),
                 'currency_symbol' => $delPricing->currency_symbol,
                 'currency_code' => $delPricing->currency_code,
                 'country' => $delPricing->country_code,
@@ -328,7 +328,7 @@ class RideController extends Controller
 
             // Default estimate for 10 km, 15 min
             $sub = ($base + (10.0 * $perKm) + (15.0 * $perMin)) * $mult;
-            $estFare = max($minFare, round($sub * $surgeMultiplier, 2));
+            $estFare = round(max($minFare, $sub * $surgeMultiplier), 0);
 
             $categories[] = [
                 'id' => $tier['slug'] ?? $tier['category_key'] ?? $key,
@@ -339,13 +339,13 @@ class RideController extends Controller
                 'capacity' => $tier['capacity'] ?? $tier['seats'] ?? '1–4 seats',
                 'luggage' => $tier['luggage'] ?? '2 Bags',
                 'eta_minutes' => 3 + ($idx * 2),
-                'base_fare' => $base,
-                'per_km_rate' => $perKm,
-                'per_minute_rate' => $perMin,
-                'minimum_fare' => $minFare,
+                'base_fare' => round($base, 0),
+                'per_km_rate' => round($perKm, 0),
+                'per_minute_rate' => round($perMin, 0),
+                'minimum_fare' => round($minFare, 0),
                 'multiplier' => $mult,
                 'default_fare' => $estFare,
-                'default_fare_formatted' => $pricing->currency_symbol . number_format($estFare, 2),
+                'default_fare_formatted' => $pricing->currency_symbol . number_format($estFare, 0),
                 'description' => $tier['description'] ?? $tier['desc'] ?? '',
                 'target' => $tier['target'] ?? ($tier['name'] ?? ''),
             ];
@@ -430,15 +430,15 @@ class RideController extends Controller
             $minFare = (float)($tier['minimum_fare'] ?? $tier['min'] ?? $pricing->ride_minimum_fare ?: 10.00);
             $mult = (float)($tier['multiplier'] ?? 1.0);
 
-            $distFare = round($distanceKm * $perKm, 2);
-            $durFare = round($durationMin * $perMin, 2);
-            $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
+            $distFare = round($distanceKm * $perKm, 0);
+            $durFare = round($durationMin * $perMin, 0);
+            $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 0);
 
-            $standardSubtotal = round(($base + $distFare + $durFare + $stopsFee) * $mult, 2);
-            $surgedSubtotal = round($standardSubtotal * $surgeMultiplier, 2);
-            $finalFare = round(max($minFare, $surgedSubtotal), 2);
-            $serviceTax = round($finalFare * 0.05, 2);
-            $grandTotal = round($finalFare + $serviceTax, 2);
+            $standardSubtotal = round(($base + $distFare + $durFare + $stopsFee) * $mult, 0);
+            $surgedSubtotal = round($standardSubtotal * $surgeMultiplier, 0);
+            $finalFare = round(max($minFare, $surgedSubtotal), 0);
+            $serviceTax = round($finalFare * 0.05, 0);
+            $grandTotal = round($finalFare + $serviceTax, 0);
 
             $results[] = [
                 'id' => $tier['slug'] ?? $tier['category_key'] ?? $key,
@@ -449,10 +449,10 @@ class RideController extends Controller
                 'capacity' => $tier['capacity'] ?? $tier['seats'] ?? '1–4 seats',
                 'luggage' => $tier['luggage'] ?? '2 Bags',
                 'eta_minutes' => 3 + ($idx * 2),
-                'base_fare' => $base,
-                'per_km_rate' => $perKm,
-                'per_minute_rate' => $perMin,
-                'minimum_fare' => $minFare,
+                'base_fare' => round($base, 0),
+                'per_km_rate' => round($perKm, 0),
+                'per_minute_rate' => round($perMin, 0),
+                'minimum_fare' => round($minFare, 0),
                 'multiplier' => $mult,
                 'distance_km' => $distanceKm,
                 'distance_fare' => $distFare,
@@ -461,10 +461,10 @@ class RideController extends Controller
                 'stops_fee' => $stopsFee,
                 'subtotal' => $standardSubtotal,
                 'fare' => $finalFare,
-                'fare_formatted' => $pricing->currency_symbol . number_format($finalFare, 2),
+                'fare_formatted' => $pricing->currency_symbol . number_format($finalFare, 0),
                 'tax' => $serviceTax,
                 'grand_total' => $grandTotal,
-                'grand_total_formatted' => $pricing->currency_symbol . number_format($grandTotal, 2),
+                'grand_total_formatted' => $pricing->currency_symbol . number_format($grandTotal, 0),
                 'description' => $tier['description'] ?? $tier['desc'] ?? '',
                 'target' => $tier['target'] ?? ($tier['name'] ?? ''),
             ];

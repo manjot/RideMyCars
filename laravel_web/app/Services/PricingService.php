@@ -26,7 +26,7 @@ class PricingService
 
         // Priority 1: Admin-configured specific price exists
         if ($adminConfiguredPrice !== null && $adminConfiguredPrice > 0) {
-            $finalPrice = round((float) $adminConfiguredPrice, 2);
+            $finalPrice = round((float) $adminConfiguredPrice, 0);
             return [
                 'original_price' => $finalPrice,
                 'original_currency' => $pricing->currency_code,
@@ -44,9 +44,9 @@ class PricingService
 
         // Priority 2: Location exists, convert default USD price using exchange rate
         if ($source === 'automatically_converted' || (strtoupper($pricing->currency_code) !== 'USD' && $rate > 0)) {
-            $converted = round($basePriceUsd * $rate, 2);
+            $converted = round($basePriceUsd * $rate, 0);
             return [
-                'original_price' => round($basePriceUsd, 2),
+                'original_price' => round($basePriceUsd, 0),
                 'original_currency' => 'USD',
                 'final_price' => $converted,
                 'display_price' => $converted,
@@ -61,7 +61,7 @@ class PricingService
         }
 
         // Priority 3: Fallback USD
-        $usdFinal = round($basePriceUsd, 2);
+        $usdFinal = round($basePriceUsd, 0);
         return [
             'original_price' => $usdFinal,
             'original_currency' => 'USD',
@@ -73,7 +73,7 @@ class PricingService
             'country_name' => $pricing->country_name ?: 'United States',
             'pricing_source' => 'default_usd',
             'exchange_rate' => 1.0,
-            'formatted_price' => '$' . number_format($usdFinal, 2),
+            'formatted_price' => '$' . number_format($usdFinal, 0),
         ];
     }
 
@@ -96,47 +96,47 @@ class PricingService
         // Base rates from country pricing or driver profile
         // If driver has custom rates in their profile matching the driver's country, respect them;
         // otherwise default directly to the country pricing standard driver rates without exchange rate loops.
-        $hourlyRate = (float) ($driver && $driver->hourly_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
+        $hourlyRate = round((float) ($driver && $driver->hourly_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
             ? $driver->hourly_rate 
-            : ($pricing->driver_hourly_rate ?: 25.00));
+            : ($pricing->driver_hourly_rate ?: 25.00)), 0);
 
-        $dailyRate = (float) ($driver && $driver->daily_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
+        $dailyRate = round((float) ($driver && $driver->daily_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
             ? $driver->daily_rate 
-            : ($pricing->driver_daily_rate ?: ($hourlyRate * 8 * 0.85)));
+            : ($pricing->driver_daily_rate ?: ($hourlyRate * 8 * 0.85))), 0);
 
-        $weeklyRate = (float) ($driver && $driver->weekly_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
+        $weeklyRate = round((float) ($driver && $driver->weekly_rate > 0 && strtoupper($driver->country ?? '') === strtoupper($countryCode)
             ? $driver->weekly_rate 
-            : ($pricing->driver_weekly_rate ?: ($dailyRate * 7 * 0.85)));
+            : ($pricing->driver_weekly_rate ?: ($dailyRate * 7 * 0.85))), 0);
 
         $subtotal = 0.0;
         $appliedRateText = '';
 
         if ($durationType === 'weekly') {
-            $subtotal = $weeklyRate * max(1, $durationCount);
-            $appliedRateText = "{$durationCount} Week(s) @ {$symbol}" . number_format($weeklyRate, 2) . "/week";
+            $subtotal = round($weeklyRate * max(1, $durationCount), 0);
+            $appliedRateText = "{$durationCount} Week(s) @ {$symbol}" . number_format($weeklyRate, 0) . "/week";
         } elseif ($durationType === 'daily') {
-            $subtotal = $dailyRate * max(1, $durationCount);
-            $appliedRateText = "{$durationCount} Day(s) @ {$symbol}" . number_format($dailyRate, 2) . "/day";
+            $subtotal = round($dailyRate * max(1, $durationCount), 0);
+            $appliedRateText = "{$durationCount} Day(s) @ {$symbol}" . number_format($dailyRate, 0) . "/day";
         } else {
             $hours = max(1, $durationCount);
 
             if ($hours >= 8) {
                 $days = ceil($hours / 8);
-                $subtotal = $dailyRate * $days;
-                $appliedRateText = "Full Day Rate (Minimum charge for 8+ hrs) @ {$symbol}" . number_format($dailyRate, 2);
+                $subtotal = round($dailyRate * $days, 0);
+                $appliedRateText = "Full Day Rate (Minimum charge for 8+ hrs) @ {$symbol}" . number_format($dailyRate, 0);
             } elseif ($hours > 4) {
-                $effectiveHourlyRate = $hourlyRate * 0.95;
-                $subtotal = $effectiveHourlyRate * $hours;
-                $appliedRateText = "{$hours} Hours (Tiered 4-8 hr rate) @ {$symbol}" . number_format($effectiveHourlyRate, 2) . "/hr";
+                $effectiveHourlyRate = round($hourlyRate * 0.95, 0);
+                $subtotal = round($effectiveHourlyRate * $hours, 0);
+                $appliedRateText = "{$hours} Hours (Tiered 4-8 hr rate) @ {$symbol}" . number_format($effectiveHourlyRate, 0) . "/hr";
             } else {
-                $subtotal = $hourlyRate * $hours;
-                $appliedRateText = "{$hours} Hours @ {$symbol}" . number_format($hourlyRate, 2) . "/hr";
+                $subtotal = round($hourlyRate * $hours, 0);
+                $appliedRateText = "{$hours} Hours @ {$symbol}" . number_format($hourlyRate, 0) . "/hr";
             }
         }
 
-        $serviceFee = round($subtotal * 0.05, 2); // 5% service fee
-        $tax = round($subtotal * 0.05, 2);        // 5% tax
-        $totalPrice = round($subtotal + $serviceFee + $tax, 2);
+        $serviceFee = round($subtotal * 0.05, 0); // 5% service fee
+        $tax = round($subtotal * 0.05, 0);        // 5% tax
+        $totalPrice = round($subtotal + $serviceFee + $tax, 0);
 
         return [
             'hourly_rate' => $hourlyRate,
@@ -155,7 +155,7 @@ class PricingService
             'country_name' => $pricing->country_name,
             'pricing_source' => $source,
             'exchange_rate' => $exchangeRate,
-            'formatted_price' => $symbol . number_format($totalPrice, 2),
+            'formatted_price' => $symbol . number_format($totalPrice, 0),
         ];
     }
 
@@ -314,26 +314,26 @@ class PricingService
             'ghana_surge' => $ghanaSurge,
         ]);
 
-        $distanceFare = round($distanceKm * $perKmRate, 2);
-        $durationFare = round($durationMinutes * $perMinuteRate, 2);
-        $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 2);
+        $distanceFare = round($distanceKm * $perKmRate, 0);
+        $durationFare = round($durationMinutes * $perMinuteRate, 0);
+        $stopsFee = round(max(0, $stopsCount) * $additionalStopFee, 0);
 
-        $standardSubtotal = round(($baseFare + $distanceFare + $durationFare + $stopsFee) * $tierMultiplier, 2);
-        $surgedSubtotal = round($standardSubtotal * $surgeMultiplier, 2);
-        $finalFare = round(max($minFare, $surgedSubtotal), 2);
-        $serviceTax = round($finalFare * 0.05, 2);
-        $grandTotal = round($finalFare + $serviceTax, 2);
+        $standardSubtotal = round(($baseFare + $distanceFare + $durationFare + $stopsFee) * $tierMultiplier, 0);
+        $surgedSubtotal = round($standardSubtotal * $surgeMultiplier, 0);
+        $finalFare = round(max($minFare, $surgedSubtotal), 0);
+        $serviceTax = round($finalFare * 0.05, 0);
+        $grandTotal = round($finalFare + $serviceTax, 0);
 
         return [
             'tier_key' => $tier['category_key'] ?? $tier['slug'] ?? 'economy',
             'tier_name' => $tier['name'] ?? 'Economy',
-            'base_fare' => $baseFare,
+            'base_fare' => round($baseFare, 0),
             'distance_km' => round($distanceKm, 2),
             'distance_fare' => $distanceFare,
             'duration_minutes' => $durationMinutes,
             'duration_fare' => $durationFare,
             'stops_count' => max(0, $stopsCount),
-            'stop_fee_per_item' => $additionalStopFee,
+            'stop_fee_per_item' => round($additionalStopFee, 0),
             'stops_fee' => $stopsFee,
             'subtotal' => $standardSubtotal,
             'surge_multiplier' => $surgeMultiplier,
@@ -350,8 +350,8 @@ class PricingService
             'country_name' => $pricing->country_name,
             'pricing_source' => $pricing->pricing_source ?? 'admin_configured',
             'exchange_rate' => (float) ($pricing->exchange_rate ?: 1.0),
-            'formatted_price' => $pricing->currency_symbol . number_format($finalFare, 2),
-            'formatted_grand_total' => $pricing->currency_symbol . number_format($grandTotal, 2),
+            'formatted_price' => $pricing->currency_symbol . number_format($finalFare, 0),
+            'formatted_grand_total' => $pricing->currency_symbol . number_format($grandTotal, 0),
             'target_vehicle' => $tier['target'] ?? ($tier['name'] ?? 'Economy'),
         ];
     }
@@ -369,7 +369,7 @@ class PricingService
     ): array {
         $pricing = CountryPricing::forCountry($country);
 
-        $baseFare = (float) ($pricing->delivery_base_fare ?: 15.00);
+        $baseFare = round((float) ($pricing->delivery_base_fare ?: 15.00), 0);
         $perKmRate = (float) ($pricing->delivery_per_km_rate ?: 1.50);
         $distanceFare = max(1.0, $distanceKm) * $perKmRate;
 
@@ -394,17 +394,17 @@ class PricingService
         $serviceFeeRate = round($serviceFeePercent / 100, 4);
         $isPharmeasy = strtolower(trim((string)$packageCategory)) === 'pharmeasy';
 
-        $subtotal = round(($baseFare + $distanceFare + $typeAddon + $weightAddon) * $sizeMultiplier, 2);
-        $serviceFee = round($subtotal * $serviceFeeRate, 2);
-        $tax = round($subtotal * 0.05, 2);
-        $totalPrice = round($subtotal + $serviceFee + $tax, 2);
+        $subtotal = round(($baseFare + $distanceFare + $typeAddon + $weightAddon) * $sizeMultiplier, 0);
+        $serviceFee = round($subtotal * $serviceFeeRate, 0);
+        $tax = round($subtotal * 0.05, 0);
+        $totalPrice = round($subtotal + $serviceFee + $tax, 0);
 
         return [
             'base_fare' => $baseFare,
             'distance_km' => round($distanceKm, 2),
-            'distance_fare' => round($distanceFare, 2),
-            'type_addon' => round($typeAddon, 2),
-            'weight_addon' => round($weightAddon, 2),
+            'distance_fare' => round($distanceFare, 0),
+            'type_addon' => round($typeAddon, 0),
+            'weight_addon' => round($weightAddon, 0),
             'subtotal' => $subtotal,
             'service_fee' => $serviceFee,
             'service_fee_rate' => $serviceFeeRate,
@@ -419,7 +419,7 @@ class PricingService
             'country_name' => $pricing->country_name,
             'pricing_source' => $pricing->pricing_source ?? 'admin_configured',
             'exchange_rate' => (float) ($pricing->exchange_rate ?: 1.0),
-            'formatted_price' => $pricing->currency_symbol . number_format($totalPrice, 2),
+            'formatted_price' => $pricing->currency_symbol . number_format($totalPrice, 0),
         ];
     }
 
@@ -437,27 +437,27 @@ class PricingService
 
         // Convert base USD daily rate using country multiplier
         $multiplier = (float) ($pricing->rental_price_multiplier ?: 1.0);
-        $dailyRate = round((float) $vehicle->daily_rate * $multiplier, 2);
-        $baseTotal = round($days * $dailyRate, 2);
+        $dailyRate = round((float) $vehicle->daily_rate * $multiplier, 0);
+        $baseTotal = round($days * $dailyRate, 0);
 
         // Protection fee in country currency
-        $protectionDaily = (float) ($pricing->rental_protection_daily_rate ?: 12.00);
-        $protectionFee = ($protectionOption === 'full_cover') ? round($days * $protectionDaily, 2) : 0.00;
+        $protectionDaily = round((float) ($pricing->rental_protection_daily_rate ?: 12.00), 0);
+        $protectionFee = ($protectionOption === 'full_cover') ? round($days * $protectionDaily, 0) : 0.00;
 
         // Extras in country currency
-        $extraDriverDaily = (float) ($pricing->rental_additional_driver_rate ?: 10.00);
-        $childSeatDaily = (float) ($pricing->rental_child_seat_rate ?: 8.00);
-        $gpsDaily = (float) ($pricing->rental_gps_rate ?: 5.00);
+        $extraDriverDaily = round((float) ($pricing->rental_additional_driver_rate ?: 10.00), 0);
+        $childSeatDaily = round((float) ($pricing->rental_child_seat_rate ?: 8.00), 0);
+        $gpsDaily = round((float) ($pricing->rental_gps_rate ?: 5.00), 0);
 
         $extrasFee = 0.00;
-        if (in_array('additional_driver', $extras)) $extrasFee += round($days * $extraDriverDaily, 2);
-        if (in_array('child_seat', $extras)) $extrasFee += round($days * $childSeatDaily, 2);
-        if (in_array('gps', $extras)) $extrasFee += round($days * $gpsDaily, 2);
+        if (in_array('additional_driver', $extras)) $extrasFee += round($days * $extraDriverDaily, 0);
+        if (in_array('child_seat', $extras)) $extrasFee += round($days * $childSeatDaily, 0);
+        if (in_array('gps', $extras)) $extrasFee += round($days * $gpsDaily, 0);
 
-        $totalAmount = round($baseTotal + $protectionFee + $extrasFee, 2);
-        $depositAmount = round($totalAmount * 0.20, 2);
-        $pickupBalance = round($totalAmount - $depositAmount, 2);
-        $securityDeposit = round((float) ($vehicle->security_deposit_amount ?: 200.00) * $multiplier, 2);
+        $totalAmount = round($baseTotal + $protectionFee + $extrasFee, 0);
+        $depositAmount = round($totalAmount * 0.20, 0);
+        $pickupBalance = round($totalAmount - $depositAmount, 0);
+        $securityDeposit = round((float) ($vehicle->security_deposit_amount ?: 200.00) * $multiplier, 0);
 
         return [
             'days' => $days,
@@ -475,7 +475,7 @@ class PricingService
             'country_name' => $pricing->country_name,
             'pricing_source' => $pricing->pricing_source ?? 'admin_configured',
             'exchange_rate' => (float) ($pricing->exchange_rate ?: 1.0),
-            'formatted_price' => $pricing->currency_symbol . number_format($totalAmount, 2),
+            'formatted_price' => $pricing->currency_symbol . number_format($totalAmount, 0),
         ];
     }
 }

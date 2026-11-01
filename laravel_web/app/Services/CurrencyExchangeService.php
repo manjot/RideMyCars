@@ -174,12 +174,7 @@ class CurrencyExchangeService
         $rate = static::getExchangeRate($targetCurrency);
         $converted = $usdAmount * $rate;
 
-        // Currencies with zero decimal places standard
-        if (in_array(strtoupper($targetCurrency), ['JPY', 'KRW', 'UGX', 'RWF', 'IDR'])) {
-            return round($converted);
-        }
-
-        return round($converted, 2);
+        return round($converted, 0);
     }
 
     /**
@@ -189,10 +184,10 @@ class CurrencyExchangeService
     {
         $rate = static::getExchangeRate($sourceCurrency);
         if ($rate <= 0) {
-            return $amount;
+            return round($amount, 0);
         }
 
-        return round($amount / $rate, 2);
+        return round($amount / $rate, 0);
     }
 
     /**
@@ -204,21 +199,25 @@ class CurrencyExchangeService
         $to = strtoupper(trim($toCurrency));
 
         if ($from === $to) {
-            return $amount;
+            return round($amount, 0);
         }
 
-        $usd = ($from === 'USD') ? $amount : static::convertToUsd($amount, $from);
-        return ($to === 'USD') ? $usd : static::convertFromUsd($usd, $to);
+        $rateFrom = ($from === 'USD') ? 1.0 : static::getExchangeRate($from);
+        $rateTo = ($to === 'USD') ? 1.0 : static::getExchangeRate($to);
+        if ($rateFrom <= 0) {
+            $rateFrom = 1.0;
+        }
+        $usd = $amount / $rateFrom;
+        return round($usd * $rateTo, 0);
     }
 
     /**
-     * Format a price with currency symbol and precision.
+     * Format a price with currency symbol and precision (rounded to nearest whole number).
      */
     public static function format(float $amount, string $currencyCode, ?string $symbol = null): string
     {
         $sym = $symbol ?: CountryService::getCurrencySymbolByCode($currencyCode);
-        $decimals = in_array(strtoupper($currencyCode), ['JPY', 'KRW', 'UGX', 'RWF', 'IDR']) ? 0 : 2;
 
-        return $sym . number_format($amount, $decimals);
+        return $sym . number_format(round($amount, 0), 0);
     }
 }

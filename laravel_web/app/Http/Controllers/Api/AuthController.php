@@ -202,7 +202,7 @@ class AuthController extends Controller
                         ['user_id' => $user->id],
                         [
                             'license_number' => 'DL-' . strtoupper(Str::random(8)),
-                            'verification_status' => 'verified',
+                            'verification_status' => 'pending',
                             'is_available' => true,
                             'is_live' => true,
                             'rating' => 5.0,
@@ -1020,7 +1020,7 @@ class AuthController extends Controller
                                     ['user_id' => $user->id],
                                     [
                                         'license_number' => $licNumber,
-                                        'verification_status' => 'verified',
+                                        'verification_status' => 'pending',
                                         'is_available' => true,
                                         'rating' => 5.0,
                                         'total_trips' => 0,
@@ -1192,7 +1192,7 @@ class AuthController extends Controller
                                 ['user_id' => $user->id],
                                 [
                                     'license_number' => $licNumber,
-                                    'verification_status' => 'verified',
+                                    'verification_status' => 'pending',
                                     'is_available' => true,
                                     'rating' => 5.0,
                                     'total_trips' => 0,

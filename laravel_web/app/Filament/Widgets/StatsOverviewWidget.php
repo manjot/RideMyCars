@@ -7,18 +7,36 @@ use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\CurrencyExchangeService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsOverviewWidget extends BaseWidget
 {
     protected static ?int $sort = 2;
+    protected static ?string $pollingInterval = '10s';
 
     protected function getStats(): array
     {
-        $totalRideEarnings = Ride::where('status', 'completed')->sum('fare');
-        $totalBookingEarnings = DriverBooking::where('booking_status', 'completed')->sum('total_price');
-        $totalEarnings = $totalRideEarnings + $totalBookingEarnings;
+        $totalGhs = 0.0;
+        $totalUsd = 0.0;
+
+        foreach (Ride::where('status', 'completed')->get(['fare', 'currency']) as $r) {
+            $fare = (float) ($r->fare ?? 0);
+            $curr = strtoupper(trim($r->currency ?: 'GHS'));
+            $totalGhs += $curr === 'GHS' ? round($fare) : (float) CurrencyExchangeService::convert($fare, $curr, 'GHS');
+            $totalUsd += $curr === 'USD' ? round($fare) : (float) CurrencyExchangeService::convert($fare, $curr, 'USD');
+        }
+
+        foreach (DriverBooking::where('booking_status', 'completed')->get(['total_price', 'currency']) as $b) {
+            $price = (float) ($b->total_price ?? 0);
+            $curr = strtoupper(trim($b->currency ?: 'GHS'));
+            $totalGhs += $curr === 'GHS' ? round($price) : (float) CurrencyExchangeService::convert($price, $curr, 'GHS');
+            $totalUsd += $curr === 'USD' ? round($price) : (float) CurrencyExchangeService::convert($price, $curr, 'USD');
+        }
+
+        $totalGhs = round($totalGhs);
+        $totalUsd = round($totalUsd);
 
         $activeRides = Ride::whereIn('status', ['pending', 'accepted', 'in_progress'])->count();
         $activeBookings = DriverBooking::whereIn('booking_status', ['pending', 'accepted', 'in_progress'])->count();
@@ -28,10 +46,10 @@ class StatsOverviewWidget extends BaseWidget
         $totalUsers = User::count();
 
         return [
-            Stat::make('Total Platform Revenue', '$' . number_format($totalEarnings, 2))
-                ->description('Completed rides & driver bookings')
+            Stat::make('Total Platform Revenue', 'GH₵ ' . number_format($totalGhs, 0) . ' ($' . number_format($totalUsd, 0) . ')')
+                ->description('Completed rides & driver bookings (GHS & USD)')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->chart([12, 18, 25, 32, 45, 60, 85, $totalEarnings > 0 ? (int)$totalEarnings : 100])
+                ->chart([12, 18, 25, 32, 45, 60, 85, $totalGhs > 0 ? (int)$totalGhs : 100])
                 ->color('success'),
 
             Stat::make('Active Bookings & Rides', $activeRides + $activeBookings)

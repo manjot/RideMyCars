@@ -428,7 +428,7 @@
                             <div class="flex items-center justify-between text-xs">
                                 <span class="text-gray-900 font-black uppercase tracking-wider">Available Balance:</span>
                                 <span class="font-black text-gray-950 text-2xl" 
-                                      x-text="(data.wallet_summary?.currency || '$') + Number(data.wallet_summary?.balance || 0).toFixed(2)"></span>
+                                      x-text="(data.wallet_summary?.currency || '$') + Number(data.wallet_summary?.balance || 0).toFixed(0)"></span>
                             </div>
 
                             <a href="/wallet" class="w-full py-4 rounded-xl bg-gray-950 hover:bg-black text-amber-300 hover:text-white font-black text-xs text-center uppercase tracking-wider shadow-2xl transition-all flex items-center justify-center gap-2 hover:scale-102 active:scale-98">

@@ -272,7 +272,7 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '$currencySymbol${fare.toStringAsFixed(2)}',
+                            '$currencySymbol${fare.toStringAsFixed(0)}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 32,
@@ -727,7 +727,7 @@ class _DriverTripsScreenState extends State<DriverTripsScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          fare > 0 ? '+$currSym${fare.toStringAsFixed(2)}' : '$currSym 0.00',
+                          fare > 0 ? '+$currSym${fare.toStringAsFixed(0)}' : '$currSym 0',
                           style: TextStyle(
                             color: isCancelled ? AppColors.textMuted : AppColors.success,
                             fontWeight: FontWeight.w900,

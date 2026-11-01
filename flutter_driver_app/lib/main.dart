@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
 import 'core/services/local_notification_service.dart';
+import 'core/services/sound_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/country_provider.dart';
 import 'providers/driver_provider.dart';
@@ -12,6 +13,7 @@ import 'screens/splash_screen.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp();
   } catch (_) {}
@@ -20,17 +22,29 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await LocalNotificationService.instance.initialize();
     final title = message.notification?.title ??
         message.data['title'] ??
-        'New Ride Request';
+        '🚨 New Ride Order Request!';
     final body = message.notification?.body ??
         message.data['message'] ??
         message.data['body'] ??
-        'Incoming ride request. Tap to open and accept.';
-    final id = message.messageId?.hashCode ?? (DateTime.now().millisecondsSinceEpoch ~/ 1000);
-    await LocalNotificationService.instance.showNotification(
-      id: id,
+        'Incoming order request. Tap to open and accept.';
+    final type = (message.data['type'] ?? 'ride').toString();
+    final orderId = message.data['ride_id'] ??
+        message.data['booking_id'] ??
+        message.data['delivery_id'] ??
+        message.messageId ??
+        (DateTime.now().millisecondsSinceEpoch ~/ 1000);
+
+    await LocalNotificationService.instance.showIncomingOrderAlert(
       title: title,
       body: body,
-      force: true,
+      orderKey: '${type}_$orderId',
+      forceRefresh: true,
+    );
+    await SoundService.instance.startIncomingOrderRingtone(
+      orderType: type,
+      orderId: orderId,
+      title: title,
+      body: body,
     );
   } catch (e) {
     debugPrint('[Driver FCM Background] Error displaying notification: $e');

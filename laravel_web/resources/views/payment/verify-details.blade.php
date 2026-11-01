@@ -108,7 +108,7 @@
                         </div>
                         <div class="text-right shrink-0">
                             <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Fare</span>
-                            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }}</span>
+                            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }}</span>
                         </div>
                     </div>
 
@@ -318,7 +318,7 @@
                             </div>
                         </div>
                         <p class="text-[11px] text-gray-500 dark:text-gray-400">
-                            A pre-authorization escrow hold of <strong>{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }}</strong> will be placed on your card via Authorize.Net.
+                            A pre-authorization escrow hold of <strong>{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }}</strong> will be placed on your card via Authorize.Net.
                         </p>
                     </div>
                     @endif
@@ -372,7 +372,7 @@
                                        class="flex-1 px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-white/15 rounded-r-xl text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
                             </div>
                             <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                                A prompt will be triggered on your mobile handset to approve the {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} escrow authorization hold.
+                                A prompt will be triggered on your mobile handset to approve the {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }} escrow authorization hold.
                             </p>
 
                             <!-- MoMo USSD Manual Approval Guide -->
@@ -398,7 +398,7 @@
                             <span class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2.5 py-1 rounded-full">Zero Upfront Charge</span>
                         </div>
                         <p class="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-                            No upfront hold will be placed on your cards or mobile wallet. You agree to pay the total fare of <strong>{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }}</strong> directly to your driver in cash when you arrive at your destination.
+                            No upfront hold will be placed on your cards or mobile wallet. You agree to pay the total fare of <strong>{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }}</strong> directly to your driver in cash when you arrive at your destination.
                         </p>
                     </div>
                     @endif
@@ -411,7 +411,7 @@
                             <button type="button" @click="submitPaymentHold('authorizenet')"
                                     :disabled="isProcessing || !anetCardNumber || !anetCardExpiry || !anetCardCvv"
                                     class="w-full py-4 px-6 bg-[#002C6C] hover:bg-[#001f4d] text-white font-black text-base rounded-2xl shadow-xl shadow-[#002C6C]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
-                                <span x-show="!isProcessing">🔒 Authorize {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} with Authorize.Net →</span>
+                                <span x-show="!isProcessing">🔒 Authorize {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} with Authorize.Net →</span>
                                 <span x-show="isProcessing" class="flex items-center gap-2">
                                     <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                     Authorizing Card Hold...
@@ -425,7 +425,7 @@
                         <template x-if="paymentMethod === 'stripe'">
                             <button type="button" @click="triggerStripePayment()"
                                     class="w-full py-4 px-6 bg-[#635BFF] hover:bg-[#5349e0] text-white font-black text-base rounded-2xl shadow-xl shadow-[#635BFF]/25 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                                <span>🔒 Pay {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} with Stripe</span>
+                                <span>🔒 Pay {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }} with Stripe</span>
                                 <span>→</span>
                             </button>
                         </template>
@@ -437,7 +437,7 @@
                             <button type="button" @click="submitPaymentHold('momo')"
                                     :disabled="isProcessing || !momoPhone"
                                     class="w-full py-4 px-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                                <span x-show="!isProcessing">📱 Authorize MoMo Hold ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})</span>
+                                <span x-show="!isProcessing">📱 Authorize MoMo Hold ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }})</span>
                                 <span x-show="isProcessing" class="flex items-center gap-2">
                                     <svg class="animate-spin h-5 w-5 text-slate-950" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                     Waiting for MoMo Handset Approval...
@@ -452,7 +452,7 @@
                             <button type="button" @click="submitPaymentHold('cash')"
                                     :disabled="isProcessing"
                                     class="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-2xl shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
-                                <span x-show="!isProcessing">💵 Confirm {{ $serviceType === 'ride' ? 'Ride' : 'Delivery' }} with Cash ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} on Drop-off) →</span>
+                                <span x-show="!isProcessing">💵 Confirm {{ $serviceType === 'ride' ? 'Ride' : 'Delivery' }} with Cash ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }} on Drop-off) →</span>
                                 <span x-show="isProcessing" class="flex items-center gap-2">
                                     <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                     Confirming Cash Order...
@@ -483,7 +483,7 @@
                     <div class="space-y-2 max-w-md mx-auto">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-extrabold text-xs">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span x-text="paymentMethod === 'cash' ? '💵 Cash on Drop-off Confirmed ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})' : (serviceType === 'rental' ? '✓ Rental Deposit Escrow Held ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})' : '✓ Escrow Payment Held ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }})')"></span>
+                            <span x-text="paymentMethod === 'cash' ? '💵 Cash on Drop-off Confirmed ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }})' : (serviceType === 'rental' ? '✓ Rental Deposit Escrow Held ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }})' : '✓ Escrow Payment Held ({{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }})')"></span>
                         </span>
                         <h3 class="text-2xl font-black text-gray-900 dark:text-white"
                             x-text="serviceType === 'rental' ? 'Vehicle Reservation Request Submitted' : (serviceType === 'package_delivery' || serviceType === 'delivery' ? 'Searching for Available Courier...' : 'Searching for Available Driver...')">
@@ -492,7 +492,7 @@
                         <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300">
                             <span x-show="serviceType === 'rental'">Your deposit is held safely in escrow. We have notified the vehicle host to review and approve your reservation for <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. Host contact channels unlock immediately upon confirmation.</span>
                             <span x-show="serviceType !== 'rental'">We are broadcasting your pickup request to vetted partners within <strong class="text-amber-500 font-bold">10 km</strong> of <strong class="text-gray-900 dark:text-white">{{ $pickupLocation }}</strong>. 
-                            <span x-show="paymentMethod === 'cash'">Please have {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }} ready in physical cash upon completing your trip.</span>
+                            <span x-show="paymentMethod === 'cash'">Please have {{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }} ready in physical cash upon completing your trip.</span>
                             <span x-show="paymentMethod !== 'cash'">Your payment is held safely in escrow and provider contact details will appear the moment a nearby partner confirms.</span></span>
                         </p>
                     </div>
@@ -660,7 +660,7 @@
                         </div>
                         <div>
                             <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Amount</span>
-                            <span class="font-black text-gray-900 dark:text-white">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }}</span>
+                            <span class="font-black text-gray-900 dark:text-white">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }}</span>
                         </div>
                         <div>
                             <span class="text-gray-400 font-bold block uppercase tracking-wider text-[10px]">Payment Method</span>
@@ -708,7 +708,7 @@
 
                     <div class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl space-y-1 border border-gray-100 dark:border-white/5">
                         <span class="font-extrabold text-gray-400 uppercase tracking-wider block">💵 Total Approved Fare</span>
-                        <p class="font-black text-emerald-600 dark:text-emerald-400 text-lg">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 2) }} {{ $currency }}</p>
+                        <p class="font-black text-emerald-600 dark:text-emerald-400 text-lg">{{ $currencySymbol ?? '$' }}{{ number_format($totalAmount, 0) }} {{ $currency }}</p>
                     </div>
                 </div>
 

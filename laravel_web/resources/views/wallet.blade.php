@@ -84,7 +84,7 @@
                     </span>
                     
                     <div class="text-4xl sm:text-5xl font-black tracking-tight text-white mb-5 flex items-baseline justify-center gap-1.5">
-                        <span x-text="balance.toFixed(2)"></span>
+                        <span x-text="balance.toFixed(0)"></span>
                         <span class="text-3xl sm:text-4xl font-extrabold text-white/90" x-text="currency"></span>
                     </div>
 
@@ -127,7 +127,7 @@
                     </div>
                     
                     <div class="text-4xl sm:text-5xl font-black tracking-tight text-white mb-2 flex items-baseline justify-center gap-1.5">
-                        <span x-text="commissionBalance.toFixed(2)"></span>
+                        <span x-text="commissionBalance.toFixed(0)"></span>
                         <span class="text-3xl sm:text-4xl font-extrabold text-indigo-300" x-text="currency"></span>
                     </div>
 
@@ -227,7 +227,7 @@
                             <div class="text-base font-black"
                                  :class="trx.type === 'withdrawal' ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
                                 <span x-text="trx.type === 'withdrawal' ? '- ' : '+ '"></span>
-                                <span x-text="(trx.currency || currency) + parseFloat(trx.amount).toFixed(2)"></span>
+                                <span x-text="(trx.currency || currency) + parseFloat(trx.amount).toFixed(0)"></span>
                             </div>
                             <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full"
                                   :class="trx.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 text-gray-600'">
@@ -250,7 +250,7 @@
                 </div>
                 <div class="text-right">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Commission Deducted</span>
-                    <span class="text-base font-black text-indigo-500" x-text="currency + commissionBalance.toFixed(2)"></span>
+                    <span class="text-base font-black text-indigo-500" x-text="currency + commissionBalance.toFixed(0)"></span>
                 </div>
             </div>
 
@@ -277,7 +277,7 @@
                                     <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300" x-text="comm.service_type"></span>
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Gross Cash Fare: <strong class="text-gray-700 dark:text-gray-200" x-text="(comm.currency || currency) + parseFloat(comm.gross_fare || 0).toFixed(2)"></strong> 
+                                    Gross Cash Fare: <strong class="text-gray-700 dark:text-gray-200" x-text="(comm.currency || currency) + parseFloat(comm.gross_fare || 0).toFixed(0)"></strong> 
                                     • Commission Rate: <span class="font-bold text-indigo-500" x-text="parseFloat(comm.commission_rate || 10).toFixed(0) + '%'"></span>
                                 </p>
                                 <p class="text-[11px] text-gray-400" x-text="formatDate(comm.created_at)"></p>
@@ -287,7 +287,7 @@
                         <div class="text-right flex sm:flex-col justify-between items-center sm:items-end border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100 dark:border-white/5">
                             <div class="text-base font-black text-rose-500">
                                 <span>- </span>
-                                <span x-text="(comm.currency || currency) + parseFloat(comm.commission_amount).toFixed(2)"></span>
+                                <span x-text="(comm.currency || currency) + parseFloat(comm.commission_amount).toFixed(0)"></span>
                             </div>
                             <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
                                 <span>✓ Auto-Deducted</span>
@@ -361,7 +361,7 @@
 
                             <div class="text-left sm:text-right">
                                 <div class="text-xl font-black text-gray-900 dark:text-white"
-                                     x-text="(item.currency || currency) + parseFloat(item.amount).toFixed(2)"></div>
+                                     x-text="(item.currency || currency) + parseFloat(item.amount).toFixed(0)"></div>
                                 <div class="text-[11px] font-bold text-gray-500" x-text="item.payout_method === 'momo' ? '📱 Mobile Money (MoMo)' : '🏦 Bank Transfer'"></div>
                             </div>
                         </div>
@@ -504,7 +504,7 @@
                     <!-- Available Balance Badge -->
                     <div class="p-3.5 rounded-2xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/40 flex items-center justify-between mb-5">
                         <span class="text-xs font-bold text-orange-900 dark:text-orange-200">Available Wallet Balance</span>
-                        <span class="text-base font-black text-orange-600 dark:text-orange-400" x-text="(currency || '₹') + balance.toFixed(2)"></span>
+                        <span class="text-base font-black text-orange-600 dark:text-orange-400" x-text="(currency || '₹') + balance.toFixed(0)"></span>
                     </div>
 
                     <form @submit.prevent="submitWithdrawal()">
@@ -950,7 +950,7 @@
                         if (data.data.transaction) {
                             this.transactions.unshift(data.data.transaction);
                         }
-                        this.showToast(data.message || `Wallet topped up successfully! +${this.currency}${amt.toFixed(2)}`, 'success');
+                        this.showToast(data.message || `Wallet topped up successfully! +${this.currency}${amt.toFixed(0)}`, 'success');
                     } else {
                         this.showToast(data.message || 'Top-up failed.', 'error');
                     }
@@ -1013,28 +1013,28 @@
                 const val = parseFloat(this.withdrawForm.amount);
                 if (!val || isNaN(val)) return null;
                 if (val > this.balance) {
-                    return `Amount exceeds available wallet balance (${this.currency}${this.balance.toFixed(2)})`;
+                    return `Amount exceeds available wallet balance (${this.currency}${this.balance.toFixed(0)})`;
                 }
                 const min = this.settings.min_amount || 50;
                 if (val < min) {
-                    return `Minimum withdrawal amount is ${this.currency}${min.toFixed(2)}`;
+                    return `Minimum withdrawal amount is ${this.currency}${min.toFixed(0)}`;
                 }
                 const max = this.settings.max_amount || 10000;
                 if (val > max) {
-                    return `Maximum withdrawal amount is ${this.currency}${max.toFixed(2)}`;
+                    return `Maximum withdrawal amount is ${this.currency}${max.toFixed(0)}`;
                 }
                 return null;
             },
 
             setAmount(amt) {
-                this.withdrawForm.amount = parseFloat(amt).toFixed(2);
+                this.withdrawForm.amount = parseFloat(amt).toFixed(0);
             },
 
             openWithdrawModal() {
                 this.showWithdrawModal = true;
                 const min = this.settings.min_amount || 50;
                 if (!this.withdrawForm.amount || parseFloat(this.withdrawForm.amount) <= 0) {
-                    this.withdrawForm.amount = Math.min(this.balance, Math.max(min, 50)).toFixed(2);
+                    this.withdrawForm.amount = Math.min(this.balance, Math.max(min, 50)).toFixed(0);
                 }
             },
 

@@ -2782,7 +2782,7 @@
                     <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
                         <div>
                             <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Estimated Fare</p>
-                            <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride && ride.fare ? '$' + parseFloat(ride.fare).toFixed(2) : '$28.50'"></p>
+                            <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride && ride.fare ? '{{ $currentCurrencySymbol ?? 'GH₵' }}' + Math.round(parseFloat(ride.fare)) : '{{ $currentCurrencySymbol ?? 'GH₵' }}29'"></p>
                         </div>
                         <div class="text-right">
                             <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Payment</p>
@@ -2795,8 +2795,8 @@
                         <p class="text-xs font-bold text-gray-800 dark:text-gray-200 mb-2">💰 Need a ride faster? Increase fare to attract drivers</p>
                         <div class="flex gap-2">
                             <div class="flex-1 relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
-                                <input type="number" step="1.00" min="0" x-model="boostFare" 
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">{{ $currentCurrencySymbol ?? 'GH₵' }}</span>
+                                <input type="number" step="1" min="0" x-model="boostFare" 
                                        class="w-full pl-7 pr-3 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                        placeholder="Enter new fare">
                             </div>
@@ -3105,7 +3105,7 @@
                             localStorage.setItem('rmc_active_ride_id', newRide.id);
                             this.ride = newRide;
                             if (this.ride && !this.boostFare) {
-                                this.boostFare = (parseFloat(this.ride.fare || 0) + 5).toFixed(2);
+                                this.boostFare = (parseFloat(this.ride.fare || 0) + 5).toFixed(0);
                             }
                         } else {
                             try {
@@ -3139,7 +3139,7 @@
                     if (res.ok && data.success) {
                         this.boostSuccess = true;
                         this.ride.fare = data.new_fare;
-                        this.boostFare = (parseFloat(data.new_fare) + 5).toFixed(2);
+                        this.boostFare = (parseFloat(data.new_fare) + 5).toFixed(0);
                         setTimeout(() => this.boostSuccess = false, 4000);
                     } else {
                         this.boostError = data.error || data.message || 'Failed to boost fare';
@@ -3202,5 +3202,6 @@
     </script>
     @endif
 
+    @include('partials.trip-chat-modal')
 </body>
 </html>

@@ -585,7 +585,7 @@ class _RentalCatalogScreenState extends State<RentalCatalogScreen> {
                           ),
                         ),
                         Text(
-                          '${v.currencySymbol}${(v.dailyRate * _rentalDays).toStringAsFixed(2)}',
+                          '${v.currencySymbol}${(v.dailyRate * _rentalDays).toStringAsFixed(0)}',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w900,

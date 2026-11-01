@@ -101,9 +101,18 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, {{ $user->name }}</h1>
-                    <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your driver hiring requests, active jobs, and verification.</p>
+                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+                        @php
+                            $isProfVerified = $profile->is_chauffeur ? $profile->is_guarantor_verified : $profile->is_driver_docs_verified;
+                        @endphp
+                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold {{ $isProfVerified ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300 dark:border-amber-700' }}">
+                            <span>{{ $isProfVerified ? '✓' : '⏳' }}</span>
+                            <span>{{ $profile->professional_badge_label }}</span>
+                        </span>
+                        <span class="text-gray-500 dark:text-gray-400 text-sm">Manage your driver hiring requests, active jobs, and verification.</span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase
                         {{ $profile->is_live ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/30' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-300 dark:border-red-800/30' }}">
                         <span class="w-2 h-2 rounded-full {{ $profile->is_live ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
@@ -123,14 +132,15 @@
                         <span class="animate-pulse">🚨</span>
                         <span>SOS Emergency</span>
                     </a>
+                </div>
             </div>
 
-            {{-- Requirement 5: Active Chauffeur Switch for Upgraded Chauffeurs --}}
+            {{-- Active Chauffeur Switch for Upgraded Chauffeurs --}}
             @if($profile->is_chauffeur || $profile->driver_type === 'chauffeur')
             <div x-data="{
                 isChauffeurOnline: {{ ($profile->active_chauffeur_online || $profile->chauffeur_mode) ? 'true' : 'false' }},
                 loading: false,
-                statusMessage: '{{ ($profile->active_chauffeur_online || $profile->chauffeur_mode) ? 'Online: Exclusively receiving Driver Hire requests' : 'Offline: SMS alerts active for pending Driver Hire requests' }}',
+                statusMessage: '{{ ($profile->active_chauffeur_online || $profile->chauffeur_mode) ? 'Online: Receiving Driver Hire requests and SMS notifications' : 'Offline: Switch Online to receive Driver Hire requests and SMS notifications' }}',
                 async toggleChauffeurSwitch() {
                     this.loading = true;
                     try {
@@ -172,7 +182,7 @@
                         <div>
                             <div class="flex flex-wrap items-center gap-2 mb-1.5">
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300 border border-purple-300 dark:border-purple-700">
-                                    Upgraded VIP Chauffeur
+                                    {{ $profile->is_guarantor_verified ? 'Verified Professional Chauffeur' : 'Chauffeur (Guarantor Verification Pending)' }}
                                 </span>
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase transition"
                                       :class="isChauffeurOnline 
@@ -189,12 +199,12 @@
                             <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 max-w-2xl">
                                 <template x-if="isChauffeurOnline">
                                     <span>
-                                        ✅ <strong>Online Mode:</strong> You are operating as an Active Chauffeur and receiving <strong>Driver Hire requests only</strong>. Standard ride-hailing requests will not be dispatched to you.
+                                        ✅ <strong>Online Mode:</strong> You are operating as an Active Chauffeur and will receive <strong>Driver Hire requests and SMS notifications</strong> when a customer books a Chauffeur in your operating zone.
                                     </span>
                                 </template>
                                 <template x-if="!isChauffeurOnline">
                                     <span>
-                                        📲 <strong>Offline Mode:</strong> Whenever a customer requests a Driver Hire in your operating zone, an <strong>SMS notification</strong> will prompt you to switch Online and accept.
+                                        ⏸️ <strong>Offline Mode:</strong> You will not receive Driver Hire requests or SMS notifications while offline. Switch to <strong>Online</strong> whenever you are ready to receive Hiring Requests and SMS notifications.
                                     </span>
                                 </template>
                             </p>
@@ -281,17 +291,17 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Today's Earnings</h3>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format($dailyEarnings, 2) }}</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format(round($dailyEarnings), 0) }}</p>
                     <p class="text-xs text-gray-400 mt-1">{{ $todayTrips }} trip{{ $todayTrips !== 1 ? 's' : '' }} completed</p>
                 </div>
                 <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">This Week</h3>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format($weeklyEarnings, 2) }}</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format(round($weeklyEarnings), 0) }}</p>
                     <p class="text-xs text-gray-400 mt-1">{{ $weekTrips }} trip{{ $weekTrips !== 1 ? 's' : '' }} completed</p>
                 </div>
                 <div class="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">This Month</h3>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format($monthlyEarnings, 2) }}</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">${{ number_format(round($monthlyEarnings), 0) }}</p>
                     <p class="text-xs text-gray-400 mt-1">{{ $monthTrips }} trip{{ $monthTrips !== 1 ? 's' : '' }} completed</p>
                 </div>
             </div>
@@ -339,8 +349,8 @@
                                             <p class="text-xs text-gray-500 dark:text-gray-400" x-text="'Customer: ' + item.customer_name"></p>
                                         </div>
                                         <div class="text-right">
-                                            <span class="font-black text-xl text-emerald-600 dark:text-emerald-400" x-text="item.formatted_amount ? item.formatted_amount : ((item.currency_symbol || '$') + item.amount.toFixed(2) + ' ' + (item.currency || ''))"></span>
-                                            <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-0.5">💳 Stripe Verification Pending</div>
+                                            <span class="font-black text-xl text-emerald-600 dark:text-emerald-400" x-text="item.formatted_amount ? item.formatted_amount : ((item.currency_symbol || '$') + Math.round(item.amount) + ' ' + (item.currency || ''))"></span>
+                                            <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-0.5" x-text="item.payment_label || (item.payment_method === 'cash' ? '💵 Cash on Drop-off Verification' : (item.payment_method === 'momo' ? '📱 MoMo Payment Verification' : '💳 Card Verification Pending'))"></div>
                                         </div>
                                     </div>
 
@@ -446,8 +456,8 @@
                                                 <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="req.booking_id ? ('Booking #' + req.booking_id) : (req.ride_id ? ('Ride #' + req.ride_id) : (req.delivery_id ? ('Delivery #' + req.delivery_id) : 'New Request'))"></h4>
                                             </div>
                                             <div class="text-right">
-                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="'$' + parseFloat(req.fare || req.total_price || 35.00).toFixed(2)"></p>
-                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.payment_method || 'Stripe / MoMo'"></span>
+                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="(req.currency_symbol || '$') + Math.round(parseFloat(req.fare || req.total_price || 35))"></p>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="req.payment_method ? (req.payment_method.toLowerCase() === 'cash' ? '💵 Cash' : (req.payment_method.toLowerCase() === 'momo' ? '📱 MoMo' : '💳 ' + req.payment_method)) : 'Cash / MoMo'"></span>
                                             </div>
                                         </div>
 
@@ -490,7 +500,7 @@
                                         <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/30">
                                             <button type="button" @click.stop.prevent="respondToRequest(req.assignment_id || req.id, 'accepted')" :disabled="responding" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer">
                                                 <svg x-show="responding" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/></svg>
-                                                <span>✓ Accept Request & Earn</span> <span x-text="'$' + parseFloat(req.fare || req.total_price || 35.00).toFixed(2)"></span>
+                                                <span>✓ Accept Request & Earn</span> <span x-text="(req.currency_symbol || '$') + Math.round(parseFloat(req.fare || req.total_price || 35))"></span>
                                             </button>
                                             <button type="button" @click.stop.prevent="respondToRequest(req.assignment_id || req.id, 'rejected')" :disabled="responding" class="px-4 py-2.5 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 font-bold rounded-xl text-xs cursor-pointer">
                                                 Decline
@@ -545,19 +555,31 @@
                                                 <h4 class="font-bold text-gray-900 dark:text-white text-base mt-2" x-text="'Ride #' + ride.id"></h4>
                                             </div>
                                             <div class="text-right">
-                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="ride.fare && parseFloat(ride.fare) > 0 ? '$' + parseFloat(ride.fare).toFixed(2) : '$35.00'"></p>
-                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="ride.payment_method || 'Stripe / MoMo'"></span>
+                                                <p class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="(ride.currency_symbol || '$') + Math.round(parseFloat(ride.fare || ride.total_price || 35))"></p>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded" x-text="ride.payment_method ? (ride.payment_method.toLowerCase() === 'cash' ? '💵 Cash' : (ride.payment_method.toLowerCase() === 'momo' ? '📱 MoMo' : '💳 ' + ride.payment_method)) : 'Cash / MoMo'"></span>
                                             </div>
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-4">
-                                            <div class="flex items-center justify-between">
+                                            <div class="flex flex-wrap items-center justify-between gap-2">
                                                 <p><strong>Customer:</strong> <span class="font-bold text-gray-900 dark:text-white" x-text="ride.customer_name || ride.rider?.name || ride.rider_name || 'Customer'"></span></p>
-                                                <template x-if="ride.customer_phone || ride.rider_phone">
-                                                    <a :href="'tel:' + (ride.customer_phone || ride.rider_phone)" class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
-                                                        <span>📞 Call</span>
-                                                        <span x-text="ride.customer_phone || ride.rider_phone"></span>
-                                                    </a>
-                                                </template>
+                                                <div class="flex flex-wrap items-center gap-1.5">
+                                                    <button type="button"
+                                                            @click="window.openTripChat(ride.type || 'ride', ride.id, ride.customer_name || ride.rider?.name || ride.rider_name || 'Customer', 'driver')"
+                                                            class="inline-flex items-center gap-1 px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg text-xs font-black shadow-sm transition-all cursor-pointer">
+                                                        <span>💬 In-App Chat</span>
+                                                    </button>
+                                                    <template x-if="ride.customer_phone || ride.rider_phone">
+                                                        <a :href="'https://wa.me/' + (ride.customer_phone || ride.rider_phone).replace(/[^0-9]/g, '')" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-3 py-1 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-lg text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
+                                                            <span>💬 WhatsApp</span>
+                                                        </a>
+                                                    </template>
+                                                    <template x-if="ride.customer_phone || ride.rider_phone">
+                                                        <a :href="'tel:' + (ride.customer_phone || ride.rider_phone)" class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
+                                                            <span>📞 Call</span>
+                                                            <span x-text="ride.customer_phone || ride.rider_phone"></span>
+                                                        </a>
+                                                    </template>
+                                                </div>
                                             </div>
                                             <template x-if="ride.poc_name && ride.poc_name !== (ride.customer_name || ride.rider?.name || ride.rider_name)">
                                                 <div class="flex items-center justify-between bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40">
@@ -695,12 +717,13 @@
                                                 </div>
                                                 <!-- Fare -->
                                                 <div class="text-right shrink-0">
-                                                    <p class="font-black text-lg text-green-600 dark:text-green-400">${{ number_format($tripFare, 2) }}</p>
+                                                    <p class="font-black text-lg text-green-600 dark:text-green-400">${{ number_format(round($tripFare), 0) }}</p>
                                                     <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-gray-400">
                                                         {{ ucfirst($trip->payment_method ?? 'Stripe') }}
                                                     </span>
                                                 </div>
-                                                      <!-- Footer: Date + Rider -->
+                                            </div>
+                                            <!-- Footer: Date + Rider -->
                                             <div class="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-white/10 text-xs text-gray-400">
                                                 <span class="flex items-center gap-1 font-semibold text-gray-600 dark:text-gray-300">
                                                     <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -723,10 +746,9 @@
                                             <p class="font-bold text-sm text-gray-900 dark:text-white">Hire: {{ $bk->client->name ?? 'Client' }}</p>
                                             <p class="text-xs text-gray-500">{{ $bk->start_date }} — {{ $bk->duration_days ?? 1 }} day(s)</p>
                                             <span class="text-xs text-gray-500 font-semibold block">Requested: {{ $bk->created_at ? $bk->created_at->format('M d, Y • h:i A') : $bk->updated_at->format('M d, h:i A') }}</span>
-                                        </div>>updated_at->format('M d, h:i A') }}</span>
                                         </div>
                                         <div class="text-right shrink-0">
-                                            <p class="font-extrabold text-base text-green-600 dark:text-green-400">${{ number_format($bk->total_price, 2) }}</p>
+                                            <p class="font-extrabold text-base text-green-600 dark:text-green-400">${{ number_format(round($bk->total_price), 0) }}</p>
                                             <p class="text-xs text-gray-400">Hiring</p>
                                         </div>
                                     </div>
@@ -798,7 +820,7 @@
                                                 @endif
                                             </div>
                                             <div class="text-right">
-                                                <span class="font-black text-2xl text-emerald-600 dark:text-emerald-400">${{ number_format($pr->fare ?: $pr->total_amount, 2) }}</span>
+                                                <span class="font-black text-2xl text-emerald-600 dark:text-emerald-400">${{ number_format(round($pr->fare ?: $pr->total_amount), 0) }}</span>
                                                 <span class="text-xs text-gray-400 block font-bold uppercase">{{ $pr->payment_method ?? 'Stripe' }}</span>
                                                 @if($custPhone)
                                                     <a href="tel:{{ $custPhone }}" class="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
@@ -842,7 +864,7 @@
                                             <form action="/driver/ride/{{ $pr->id }}/accept" method="POST" class="inline" onsubmit="var btn=this.querySelector('button'); btn.disabled=true; btn.innerHTML='Accepting...';">
                                                 @csrf
                                                 <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-all">
-                                                    <span>✓ Accept Ride & Earn ${{ number_format($pr->fare ?: $pr->total_amount, 2) }}</span>
+                                                    <span>✓ Accept Ride & Earn ${{ number_format(round($pr->fare ?: $pr->total_amount), 0) }}</span>
                                                 </button>
                                             </form>
                                             <form action="/driver/ride/{{ $pr->id }}/decline" method="POST" class="inline" onsubmit="var btn=this.querySelector('button'); btn.disabled=true; btn.innerHTML='Declining...';">
@@ -895,7 +917,7 @@
                                                 @endif
                                             </div>
                                             <div class="text-right">
-                                                <span class="font-extrabold text-lg text-gray-900 dark:text-white">{{ $bk->currency }} {{ number_format($bk->total_price, 2) }}</span>
+                                                <span class="font-extrabold text-lg text-gray-900 dark:text-white">{{ $bk->currency }} {{ number_format(round($bk->total_price), 0) }}</span>
                                                 <span class="text-xs text-gray-400 block font-bold">Method: {{ strtoupper($bk->payment_method) }}</span>
                                                 @if($clientPhone)
                                                     <a href="tel:{{ $clientPhone }}" class="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all" style="color: #ffffff !important;">
@@ -1379,12 +1401,13 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     <h3 class="font-black text-gray-900 dark:text-white text-base truncate">{{ $user->name }}</h3>
-                                    @if(($profile->verification_status ?? '') === 'verified')
-                                        <span class="text-amber-500 inline-flex items-center" title="Verified Chauffeur">
+                                    @if(($profile->is_chauffeur && $profile->is_guarantor_verified) || (!$profile->is_chauffeur && $profile->is_driver_docs_verified))
+                                        <span class="text-amber-500 inline-flex items-center" title="{{ $profile->professional_badge_label }}">
                                             <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2m-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                                         </span>
                                     @endif
                                 </div>
+                                <p class="text-[11px] font-bold {{ (($profile->is_chauffeur && $profile->is_guarantor_verified) || (!$profile->is_chauffeur && $profile->is_driver_docs_verified)) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }} mt-0.5">{{ $profile->professional_badge_label }}</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $user->phone ?? 'No phone added' }}</p>
                                 <button type="button" @click="showEditModal = true" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-400/15 hover:bg-amber-400/25 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-bold transition-all cursor-pointer">
                                     <span>⚙️ Edit Profile & Documents</span>
@@ -1809,15 +1832,15 @@
                             </li>
                             <li class="flex justify-between">
                                 <span class="text-gray-500 dark:text-gray-400">Total Earnings</span>
-                                <span class="font-extrabold text-emerald-600 dark:text-emerald-400">${{ number_format($monthlyEarnings, 2) }}</span>
+                                <span class="font-extrabold text-emerald-600 dark:text-emerald-400">${{ number_format(round($monthlyEarnings), 0) }}</span>
                             </li>
                             <li class="flex justify-between">
                                 <span class="text-gray-500 dark:text-gray-400">Hourly Rate</span>
-                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format($profile->hourly_rate ?? 25.00, 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format(round($profile->hourly_rate ?? 25), 0) }}</span>
                             </li>
                             <li class="flex justify-between">
                                 <span class="text-gray-500 dark:text-gray-400">Daily Rate</span>
-                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format($profile->daily_rate ?? (($profile->hourly_rate ?? 25) * 8 * 0.85), 2) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-white">${{ number_format(round($profile->daily_rate ?? (($profile->hourly_rate ?? 25) * 8 * 0.85)), 0) }}</span>
                             </li>
 
                             <li class="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-white/10">

@@ -7,7 +7,9 @@ use App\Models\DriverProfile;
 use App\Models\PaymentTransaction;
 use App\Models\Ride;
 use App\Models\DriverBooking;
+use App\Models\PackageDelivery;
 use App\Models\User;
+use App\Services\CurrencyExchangeService;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
@@ -152,98 +154,287 @@ class CommissionsReport extends Page
     }
 
     /**
-     * Compute platform commission metrics for a given date range.
+     * Convert an amount from any currency into both GHS and USD (rounded to whole numbers).
      */
-    protected function calculateMetricsForRange(Carbon $start, Carbon $end): array
+    protected function toGhsAndUsd(float $amount, ?string $currency = 'GHS'): array
     {
-        $cashCommissionTotal = 0.0;
-        $cashTripsCount = 0;
-        $cashGrossVolume = 0.0;
-
-        // 1. Cash trip auto-deductions from driver main wallets
-        try {
-            if (Schema::hasTable('driver_cash_commissions')) {
-                $cashQuery = DriverCashCommission::whereBetween('created_at', [$start, $end]);
-                $cashCommissionTotal = (float) $cashQuery->sum('commission_amount');
-                $cashTripsCount = $cashQuery->count();
-                $cashGrossVolume = (float) $cashQuery->sum('cash_amount_collected');
-            }
-        } catch (\Throwable $e) {
-            $cashCommissionTotal = 0.0;
+        $curr = strtoupper(trim($currency ?: 'GHS'));
+        if ($curr === 'GH₵' || $curr === 'CEDIS') {
+            $curr = 'GHS';
+        } elseif ($curr === '$') {
+            $curr = 'USD';
         }
 
-        // 2. Online payments platform fee / commission
-        $onlineCommissionTotal = 0.0;
-        $onlineTripsCount = 0;
-        $onlineGrossVolume = 0.0;
+        $ghs = $curr === 'GHS'
+            ? round($amount)
+            : (float) CurrencyExchangeService::convert($amount, $curr, 'GHS');
 
-        try {
-            if (Schema::hasTable('payment_transactions')) {
-                $onlineQuery = PaymentTransaction::whereBetween('created_at', [$start, $end])
-                    ->where('status', 'succeeded');
-                $onlineCommissionTotal = (float) $onlineQuery->sum('platform_fee');
-                $onlineTripsCount = $onlineQuery->count();
-                $onlineGrossVolume = (float) $onlineQuery->sum('gross_amount');
-            }
-        } catch (\Throwable $e) {
-            $onlineCommissionTotal = 0.0;
-        }
-
-        // 3. Fallback from completed rides & bookings if payment_transactions is sparse
-        try {
-            if ($onlineCommissionTotal == 0.0 && Schema::hasTable('rides')) {
-                $completedRides = Ride::whereBetween('completed_at', [$start, $end])
-                    ->where('status', 'completed')
-                    ->where(function ($q) {
-                        $q->whereNull('payment_method')->orWhere('payment_method', '!=', 'cash');
-                    });
-                $ridesFare = (float) $completedRides->sum('fare');
-                if ($ridesFare > 0) {
-                    $inferredCommission = round($ridesFare * 0.15, 2); // 15% platform commission
-                    $onlineCommissionTotal += $inferredCommission;
-                    $onlineGrossVolume += $ridesFare;
-                    $onlineTripsCount += $completedRides->count();
-                }
-            }
-
-            if (Schema::hasTable('driver_bookings')) {
-                $completedBookings = DriverBooking::whereBetween('updated_at', [$start, $end])
-                    ->where('booking_status', 'completed')
-                    ->where('payment_status', 'paid');
-                $bookingsPrice = (float) $completedBookings->sum('total_price');
-                if ($bookingsPrice > 0) {
-                    $inferredBookingCommission = round($bookingsPrice * 0.15, 2);
-                    $onlineCommissionTotal += $inferredBookingCommission;
-                    $onlineGrossVolume += $bookingsPrice;
-                    $onlineTripsCount += $completedBookings->count();
-                }
-            }
-        } catch (\Throwable $e) {
-            // Ignore fallback errors
-        }
-
-        $totalCommission = round($cashCommissionTotal + $onlineCommissionTotal, 2);
-        $totalGross = round($cashGrossVolume + $onlineGrossVolume, 2);
-        $totalTrips = $cashTripsCount + $onlineTripsCount;
+        $usd = $curr === 'USD'
+            ? round($amount)
+            : (float) CurrencyExchangeService::convert($amount, $curr, 'USD');
 
         return [
-            'total_commission' => $totalCommission,
-            'cash_commission' => round($cashCommissionTotal, 2),
-            'online_commission' => round($onlineCommissionTotal, 2),
-            'gross_volume' => $totalGross,
-            'trips_count' => $totalTrips,
-            'cash_trips_count' => $cashTripsCount,
-            'online_trips_count' => $onlineTripsCount,
-            'average_commission_per_trip' => $totalTrips > 0 ? round($totalCommission / $totalTrips, 2) : 0.0,
+            'ghs' => round($ghs),
+            'usd' => round($usd),
         ];
     }
 
     /**
-     * Get list of individual driver commission records.
+     * Compute platform commission metrics for a given date range in both GHS and USD.
+     * Automatically aggregates all completed Rides, Driver Bookings, Package Deliveries,
+     * Driver Cash Commissions, and Payment Transactions without skipping completed trips.
+     */
+    protected function calculateMetricsForRange(Carbon $start, Carbon $end): array
+    {
+        $cashCommissionGhs = 0.0;
+        $cashCommissionUsd = 0.0;
+        $cashGrossGhs = 0.0;
+        $cashGrossUsd = 0.0;
+        $cashTripsCount = 0;
+
+        $onlineCommissionGhs = 0.0;
+        $onlineCommissionUsd = 0.0;
+        $onlineGrossGhs = 0.0;
+        $onlineGrossUsd = 0.0;
+        $onlineTripsCount = 0;
+
+        $countedRideIds = [];
+        $countedBookingIds = [];
+        $countedDeliveryIds = [];
+
+        // 1. Cash trip auto-deductions from driver_cash_commissions
+        try {
+            if (Schema::hasTable('driver_cash_commissions')) {
+                $cashRows = DriverCashCommission::whereBetween('created_at', [$start, $end])->get();
+                foreach ($cashRows as $row) {
+                    $curr = $row->currency ?? 'GHS';
+                    $commConv = $this->toGhsAndUsd((float) $row->commission_amount, $curr);
+                    $grossConv = $this->toGhsAndUsd((float) $row->cash_amount_collected, $curr);
+
+                    $cashCommissionGhs += $commConv['ghs'];
+                    $cashCommissionUsd += $commConv['usd'];
+                    $cashGrossGhs += $grossConv['ghs'];
+                    $cashGrossUsd += $grossConv['usd'];
+                    $cashTripsCount++;
+
+                    $tripType = strtolower((string) ($row->trip_type ?? 'ride'));
+                    if ($row->trip_id) {
+                        if (str_contains($tripType, 'booking') || str_contains($tripType, 'chauffeur')) {
+                            $countedBookingIds[$row->trip_id] = true;
+                        } elseif (str_contains($tripType, 'delivery')) {
+                            $countedDeliveryIds[$row->trip_id] = true;
+                        } else {
+                            $countedRideIds[$row->trip_id] = true;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Continue
+        }
+
+        // 2. Online payments platform fee / commission from payment_transactions
+        try {
+            if (Schema::hasTable('payment_transactions')) {
+                $onlineRows = PaymentTransaction::whereBetween('created_at', [$start, $end])
+                    ->whereIn('status', ['succeeded', 'completed', 'paid'])
+                    ->get();
+
+                foreach ($onlineRows as $row) {
+                    $curr = $row->currency ?? 'GHS';
+                    $grossVal = (float) ($row->gross_amount ?: $row->amount ?: 0);
+                    $feeVal = (float) ($row->platform_fee > 0 ? $row->platform_fee : round($grossVal * 0.15));
+
+                    $commConv = $this->toGhsAndUsd($feeVal, $curr);
+                    $grossConv = $this->toGhsAndUsd($grossVal, $curr);
+
+                    $onlineCommissionGhs += $commConv['ghs'];
+                    $onlineCommissionUsd += $commConv['usd'];
+                    $onlineGrossGhs += $grossConv['ghs'];
+                    $onlineGrossUsd += $grossConv['usd'];
+                    $onlineTripsCount++;
+
+                    if (!empty($row->ride_id)) {
+                        $countedRideIds[$row->ride_id] = true;
+                    }
+                    if (!empty($row->driver_booking_id)) {
+                        $countedBookingIds[$row->driver_booking_id] = true;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Continue
+        }
+
+        // 3. Always include any completed Rides in the range that aren't already counted above
+        try {
+            if (Schema::hasTable('rides')) {
+                $completedRides = Ride::where('status', 'completed')
+                    ->where(function ($q) use ($start, $end) {
+                        $q->whereBetween('completed_at', [$start, $end])
+                          ->orWhere(function ($q2) use ($start, $end) {
+                              $q2->whereNull('completed_at')->whereBetween('updated_at', [$start, $end]);
+                          });
+                    })
+                    ->get();
+
+                foreach ($completedRides as $ride) {
+                    if (isset($countedRideIds[$ride->id])) {
+                        continue;
+                    }
+                    $countedRideIds[$ride->id] = true;
+
+                    $fare = (float) ($ride->fare ?? 0);
+                    if ($fare <= 0) {
+                        continue;
+                    }
+                    $curr = $ride->currency ?? 'GHS';
+                    $comm = round($fare * 0.15);
+
+                    $commConv = $this->toGhsAndUsd($comm, $curr);
+                    $grossConv = $this->toGhsAndUsd($fare, $curr);
+
+                    $pm = strtolower((string) ($ride->payment_method ?? 'cash'));
+                    if ($pm === 'cash') {
+                        $cashCommissionGhs += $commConv['ghs'];
+                        $cashCommissionUsd += $commConv['usd'];
+                        $cashGrossGhs += $grossConv['ghs'];
+                        $cashGrossUsd += $grossConv['usd'];
+                        $cashTripsCount++;
+                    } else {
+                        $onlineCommissionGhs += $commConv['ghs'];
+                        $onlineCommissionUsd += $commConv['usd'];
+                        $onlineGrossGhs += $grossConv['ghs'];
+                        $onlineGrossUsd += $grossConv['usd'];
+                        $onlineTripsCount++;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Continue
+        }
+
+        // 4. Always include any completed Driver Bookings in the range not already counted
+        try {
+            if (Schema::hasTable('driver_bookings')) {
+                $completedBookings = DriverBooking::where('booking_status', 'completed')
+                    ->whereBetween('updated_at', [$start, $end])
+                    ->get();
+
+                foreach ($completedBookings as $booking) {
+                    if (isset($countedBookingIds[$booking->id])) {
+                        continue;
+                    }
+                    $countedBookingIds[$booking->id] = true;
+
+                    $price = (float) ($booking->total_price ?? $booking->total_amount ?? 0);
+                    if ($price <= 0) {
+                        continue;
+                    }
+                    $curr = $booking->currency ?? 'GHS';
+                    $comm = round($price * 0.15);
+
+                    $commConv = $this->toGhsAndUsd($comm, $curr);
+                    $grossConv = $this->toGhsAndUsd($price, $curr);
+
+                    $pm = strtolower((string) ($booking->payment_method ?? 'online'));
+                    if ($pm === 'cash') {
+                        $cashCommissionGhs += $commConv['ghs'];
+                        $cashCommissionUsd += $commConv['usd'];
+                        $cashGrossGhs += $grossConv['ghs'];
+                        $cashGrossUsd += $grossConv['usd'];
+                        $cashTripsCount++;
+                    } else {
+                        $onlineCommissionGhs += $commConv['ghs'];
+                        $onlineCommissionUsd += $commConv['usd'];
+                        $onlineGrossGhs += $grossConv['ghs'];
+                        $onlineGrossUsd += $grossConv['usd'];
+                        $onlineTripsCount++;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Continue
+        }
+
+        // 5. Always include any completed/delivered Package Deliveries in the range not already counted
+        try {
+            if (Schema::hasTable('package_deliveries')) {
+                $completedDeliveries = PackageDelivery::whereIn('status', ['delivered', 'completed'])
+                    ->whereBetween('updated_at', [$start, $end])
+                    ->get();
+
+                foreach ($completedDeliveries as $delivery) {
+                    if (isset($countedDeliveryIds[$delivery->id])) {
+                        continue;
+                    }
+                    $countedDeliveryIds[$delivery->id] = true;
+
+                    $price = (float) ($delivery->total_price ?? $delivery->price ?? $delivery->estimated_fare ?? 0);
+                    if ($price <= 0) {
+                        continue;
+                    }
+                    $curr = $delivery->currency ?? 'GHS';
+                    $comm = round($price * 0.15);
+
+                    $commConv = $this->toGhsAndUsd($comm, $curr);
+                    $grossConv = $this->toGhsAndUsd($price, $curr);
+
+                    $pm = strtolower((string) ($delivery->payment_method ?? 'cash'));
+                    if ($pm === 'cash') {
+                        $cashCommissionGhs += $commConv['ghs'];
+                        $cashCommissionUsd += $commConv['usd'];
+                        $cashGrossGhs += $grossConv['ghs'];
+                        $cashGrossUsd += $grossConv['usd'];
+                        $cashTripsCount++;
+                    } else {
+                        $onlineCommissionGhs += $commConv['ghs'];
+                        $onlineCommissionUsd += $commConv['usd'];
+                        $onlineGrossGhs += $grossConv['ghs'];
+                        $onlineGrossUsd += $grossConv['usd'];
+                        $onlineTripsCount++;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Continue
+        }
+
+        $totalCommissionGhs = round($cashCommissionGhs + $onlineCommissionGhs);
+        $totalCommissionUsd = round($cashCommissionUsd + $onlineCommissionUsd);
+        $totalGrossGhs = round($cashGrossGhs + $onlineGrossGhs);
+        $totalGrossUsd = round($cashGrossUsd + $onlineGrossUsd);
+        $totalTrips = $cashTripsCount + $onlineTripsCount;
+
+        return [
+            'total_commission' => $totalCommissionGhs,
+            'total_commission_ghs' => $totalCommissionGhs,
+            'total_commission_usd' => $totalCommissionUsd,
+            'cash_commission' => round($cashCommissionGhs),
+            'cash_commission_ghs' => round($cashCommissionGhs),
+            'cash_commission_usd' => round($cashCommissionUsd),
+            'online_commission' => round($onlineCommissionGhs),
+            'online_commission_ghs' => round($onlineCommissionGhs),
+            'online_commission_usd' => round($onlineCommissionUsd),
+            'gross_volume' => $totalGrossGhs,
+            'gross_volume_ghs' => $totalGrossGhs,
+            'gross_volume_usd' => $totalGrossUsd,
+            'trips_count' => $totalTrips,
+            'cash_trips_count' => $cashTripsCount,
+            'online_trips_count' => $onlineTripsCount,
+            'average_commission_per_trip' => $totalTrips > 0 ? round($totalCommissionGhs / $totalTrips) : 0,
+            'average_commission_per_trip_usd' => $totalTrips > 0 ? round($totalCommissionUsd / $totalTrips) : 0,
+        ];
+    }
+
+    /**
+     * Get list of individual driver commission records (with both GHS and USD whole-number values).
      */
     protected function getDriverCommissionsHistory(): array
     {
         $records = [];
+        $seenRides = [];
+        $seenBookings = [];
 
         // 1. Fetch cash trip commission deductions
         try {
@@ -258,6 +449,19 @@ class CommissionsReport extends Page
                     $user = $rec->driverProfile?->user ?? $rec->driver?->user ?? $rec->driverProfile ?? null;
                     $driverName = $user?->name ?? 'Driver #' . ($rec->driver_profile_id ?? $rec->driver_id ?? 'N/A');
                     $driverPhone = $user?->phone ?? '';
+                    $curr = $rec->currency ?? 'GHS';
+
+                    $grossConv = $this->toGhsAndUsd((float) $rec->cash_amount_collected, $curr);
+                    $commConv = $this->toGhsAndUsd((float) $rec->commission_amount, $curr);
+
+                    $tripType = strtolower((string) ($rec->trip_type ?? 'ride'));
+                    if ($rec->trip_id) {
+                        if (str_contains($tripType, 'booking') || str_contains($tripType, 'chauffeur')) {
+                            $seenBookings[$rec->trip_id] = true;
+                        } else {
+                            $seenRides[$rec->trip_id] = true;
+                        }
+                    }
 
                     $records[] = [
                         'id' => 'cash_' . $rec->id,
@@ -271,10 +475,14 @@ class CommissionsReport extends Page
                         'trip_ref' => '#' . ($rec->trip_id ?? 'N/A'),
                         'payment_mode' => 'Cash (Auto-Deducted from Main Wallet)',
                         'is_cash' => true,
-                        'gross_fare' => (float) $rec->cash_amount_collected,
-                        'commission_rate' => (float) $rec->commission_rate,
-                        'commission_amount' => (float) $rec->commission_amount,
-                        'currency' => $rec->currency ?? 'GHS',
+                        'gross_fare' => $grossConv['ghs'],
+                        'gross_fare_ghs' => $grossConv['ghs'],
+                        'gross_fare_usd' => $grossConv['usd'],
+                        'commission_rate' => round((float) $rec->commission_rate),
+                        'commission_amount' => $commConv['ghs'],
+                        'commission_amount_ghs' => $commConv['ghs'],
+                        'commission_amount_usd' => $commConv['usd'],
+                        'currency' => 'GHS',
                         'deducted_from_wallet' => (bool) $rec->deducted_from_wallet,
                         'status' => 'Auto-Deducted',
                         'status_color' => 'success',
@@ -289,8 +497,7 @@ class CommissionsReport extends Page
         try {
             if (Schema::hasTable('payment_transactions')) {
                 $onlineRecords = PaymentTransaction::with(['user'])
-                    ->where('status', 'succeeded')
-                    ->where('platform_fee', '>', 0)
+                    ->whereIn('status', ['succeeded', 'completed', 'paid'])
                     ->orderBy('created_at', 'desc')
                     ->limit(100)
                     ->get();
@@ -299,8 +506,21 @@ class CommissionsReport extends Page
                     $user = $rec->user;
                     $driverName = $user?->name ?? 'Account #' . ($rec->user_id ?? 'N/A');
                     $driverPhone = $user?->phone ?? '';
+                    $curr = $rec->currency ?? 'GHS';
 
-                    $rate = $rec->gross_amount > 0 ? round(($rec->platform_fee / $rec->gross_amount) * 100, 1) : 15.0;
+                    $grossVal = (float) ($rec->gross_amount ?: $rec->amount ?: 0);
+                    $feeVal = (float) ($rec->platform_fee > 0 ? $rec->platform_fee : round($grossVal * 0.15));
+                    $rate = $grossVal > 0 ? round(($feeVal / $grossVal) * 100) : 15;
+
+                    $grossConv = $this->toGhsAndUsd($grossVal, $curr);
+                    $commConv = $this->toGhsAndUsd($feeVal, $curr);
+
+                    if (!empty($rec->ride_id)) {
+                        $seenRides[$rec->ride_id] = true;
+                    }
+                    if (!empty($rec->driver_booking_id)) {
+                        $seenBookings[$rec->driver_booking_id] = true;
+                    }
 
                     $records[] = [
                         'id' => 'online_' . $rec->id,
@@ -314,13 +534,72 @@ class CommissionsReport extends Page
                         'trip_ref' => $rec->transaction_ref ?: ('#' . ($rec->ride_id ?: $rec->driver_booking_id ?: $rec->id)),
                         'payment_mode' => 'Online Gateway Split (' . ucfirst($rec->provider ?? 'Gateway') . ')',
                         'is_cash' => false,
-                        'gross_fare' => (float) ($rec->gross_amount ?: $rec->amount),
+                        'gross_fare' => $grossConv['ghs'],
+                        'gross_fare_ghs' => $grossConv['ghs'],
+                        'gross_fare_usd' => $grossConv['usd'],
                         'commission_rate' => $rate,
-                        'commission_amount' => (float) $rec->platform_fee,
-                        'currency' => $rec->currency ?? 'USD',
+                        'commission_amount' => $commConv['ghs'],
+                        'commission_amount_ghs' => $commConv['ghs'],
+                        'commission_amount_usd' => $commConv['usd'],
+                        'currency' => 'GHS',
                         'deducted_from_wallet' => false,
                         'status' => 'Gateway Disbursed',
                         'status_color' => 'info',
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore
+        }
+
+        // 3. Also include completed Rides not already in driver_cash_commissions / payment_transactions
+        try {
+            if (Schema::hasTable('rides')) {
+                $completedRides = Ride::with(['driver'])
+                    ->where('status', 'completed')
+                    ->orderBy('updated_at', 'desc')
+                    ->limit(100)
+                    ->get();
+
+                foreach ($completedRides as $ride) {
+                    if (isset($seenRides[$ride->id])) {
+                        continue;
+                    }
+                    $fare = (float) ($ride->fare ?? 0);
+                    if ($fare <= 0) {
+                        continue;
+                    }
+                    $curr = $ride->currency ?? 'GHS';
+                    $comm = round($fare * 0.15);
+                    $grossConv = $this->toGhsAndUsd($fare, $curr);
+                    $commConv = $this->toGhsAndUsd($comm, $curr);
+
+                    $isCash = strtolower((string) ($ride->payment_method ?? 'cash')) === 'cash';
+                    $ts = $ride->completed_at ?? $ride->updated_at ?? $ride->created_at;
+
+                    $records[] = [
+                        'id' => 'ride_' . $ride->id,
+                        'date' => $ts ? Carbon::parse($ts)->format('M d, Y H:i') : 'N/A',
+                        'timestamp' => $ts ? Carbon::parse($ts)->timestamp : 0,
+                        'driver_id' => $ride->driver_id,
+                        'driver_name' => $ride->driver?->name ?? ('Driver #' . ($ride->driver_id ?? 'N/A')),
+                        'driver_phone' => $ride->driver?->phone ?? '',
+                        'driver_avatar' => $ride->driver?->avatar_url ?? null,
+                        'vertical' => 'Ride',
+                        'trip_ref' => '#RIDE-' . $ride->id,
+                        'payment_mode' => $isCash ? 'Cash (Auto-Deducted from Main Wallet)' : 'Online / Digital Payment',
+                        'is_cash' => $isCash,
+                        'gross_fare' => $grossConv['ghs'],
+                        'gross_fare_ghs' => $grossConv['ghs'],
+                        'gross_fare_usd' => $grossConv['usd'],
+                        'commission_rate' => 15,
+                        'commission_amount' => $commConv['ghs'],
+                        'commission_amount_ghs' => $commConv['ghs'],
+                        'commission_amount_usd' => $commConv['usd'],
+                        'currency' => 'GHS',
+                        'deducted_from_wallet' => $isCash,
+                        'status' => $isCash ? 'Auto-Deducted' : 'Completed',
+                        'status_color' => $isCash ? 'success' : 'info',
                     ];
                 }
             }

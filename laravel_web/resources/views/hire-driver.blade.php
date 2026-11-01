@@ -82,10 +82,10 @@
                   const dc = (driver.country || '').toUpperCase();
                   const sym = symbolMap[dc] || this.currencySymbol || '$';
                   if (type === 'hourly') {
-                      return sym + parseFloat(driver.hourly_rate || 25).toFixed(2) + '/hr';
+                      return sym + parseFloat(driver.hourly_rate || 25).toFixed(0) + '/hr';
                   }
                   const daily = driver.daily_rate || (driver.hourly_rate * 8 * 0.85);
-                  return sym + parseFloat(daily).toFixed(2) + '/day';
+                  return sym + parseFloat(daily).toFixed(0) + '/day';
               },
 
               get totalPages() {

@@ -128,7 +128,7 @@
             }
 
             $fmt = function($amt) use ($rate, $displayCurrencySymbol) {
-                return $displayCurrencySymbol . number_format((float)$amt * $rate, 2);
+                return $displayCurrencySymbol . number_format((float)$amt * $rate, 0);
             };
         @endphp
 
@@ -158,7 +158,7 @@
                 </div>
                 @if($isConverted)
                     <div class="mt-1 text-xs text-gray-400 font-semibold tracking-wide">
-                        ≈ ${{ number_format($receipt->total_amount, 2) }} USD
+                        ≈ ${{ number_format($receipt->total_amount, 0) }} USD
                     </div>
                 @endif
                 <div class="mt-2 font-mono text-xs font-bold text-gray-400 tracking-wider">

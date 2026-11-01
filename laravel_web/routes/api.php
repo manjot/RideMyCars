@@ -63,10 +63,17 @@ Route::get('/payment/expresspay/status/{token}', [\App\Http\Controllers\ExpressP
 
 // Authorize.Net Gateway & Active Gateways Discovery
 Route::get('/payment/gateways', [\App\Http\Controllers\AuthorizeNetController::class, 'getActiveGateways']);
+Route::get('/api/payment/gateways', [\App\Http\Controllers\AuthorizeNetController::class, 'getActiveGateways']);
 Route::post('/payment/authorizenet/charge', [\App\Http\Controllers\AuthorizeNetController::class, 'charge']);
 Route::post('/payment/authorizenet/authorize-hold', [\App\Http\Controllers\AuthorizeNetController::class, 'authorizeHold']);
 Route::post('/authorizenet/charge', [\App\Http\Controllers\AuthorizeNetController::class, 'charge']);
 Route::post('/authorizenet/authorize-hold', [\App\Http\Controllers\AuthorizeNetController::class, 'authorizeHold']);
+
+// Active Chauffeur Switch (Supports both /api/driver/chauffeur-switch and /api/api/driver/chauffeur-switch for mobile app compatibility)
+Route::post('/driver/chauffeur-switch', [DriverApiController::class, 'toggleChauffeurOnlineSwitch']);
+Route::get('/driver/chauffeur-switch', [DriverApiController::class, 'getChauffeurSwitchStatus']);
+Route::post('/api/driver/chauffeur-switch', [DriverApiController::class, 'toggleChauffeurOnlineSwitch']);
+Route::get('/api/driver/chauffeur-switch', [DriverApiController::class, 'getChauffeurSwitchStatus']);
 
 // Stripe Driver Verification & Multi-Payment Flow
 Route::post('/payment/submit-verification', [StripeVerificationController::class, 'submitForVerification']);
@@ -141,6 +148,10 @@ Route::post('/drivers/calculate-price', [DriverApiController::class, 'calculateP
 Route::post('/drivers/book', [DriverApiController::class, 'bookDriver']);
 Route::post('/hire-driver/book', [DriverApiController::class, 'bookDriver']);
 
+// In-App Trip Chat API Routes (Issue 3.7: Rider & Driver In-App Chat alongside WhatsApp)
+Route::get('/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'index']);
+Route::post('/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'store']);
+
 // Public Package Delivery API Routes
 Route::get('/delivery/categories', [\App\Http\Controllers\PackageDeliveryController::class, 'getCategories']);
 Route::post('/delivery/calculate-price', [\App\Http\Controllers\PackageDeliveryController::class, 'calculatePrice']);
@@ -153,7 +164,7 @@ Route::delete('/delivery/prescriptions/{id}', [\App\Http\Controllers\PackageDeli
 Route::get('/package-delivery/prescriptions/{id}/view', [\App\Http\Controllers\PackageDeliveryController::class, 'viewPrescription']);
 Route::get('/package-delivery/prescriptions/{id}/download', [\App\Http\Controllers\PackageDeliveryController::class, 'downloadPrescription']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(\App\Http\Middleware\ResolveApiUser::class)->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -229,16 +240,19 @@ Route::middleware('auth:sanctum')->group(function () {
             ->toArray();
         $userIds = array_unique(array_merge($userIds, $matchingIds));
 
+        $activeCountry = $request->input('country') ?: (\App\Services\CountryService::getCurrentCountryCode($request) ?: 'GHA');
+        $fallbackCurrencyCode = \App\Models\CountryPricing::forCountry($activeCountry)->currency_code ?? 'GHS';
+
         $notifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
             ->orderBy('created_at', 'desc')
             ->take(30)
             ->get()
-            ->map(function ($n) {
+            ->map(function ($n) use ($fallbackCurrencyCode) {
                 return [
                     'id' => $n->id,
                     'type' => $n->type,
                     'title' => $n->title,
-                    'message' => $n->message,
+                    'message' => \App\Services\NotificationService::formatNotificationMessage($n, $fallbackCurrencyCode),
                     'link' => $n->link,
                     'data' => $n->data,
                     'is_read' => (bool)$n->is_read,
@@ -362,9 +376,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/emergency-contacts/{id}', [\App\Http\Controllers\Api\SosApiController::class, 'update']);
     Route::delete('/emergency-contacts/{id}', [\App\Http\Controllers\Api\SosApiController::class, 'destroy']);
     Route::post('/sos/trigger', [\App\Http\Controllers\Api\SosApiController::class, 'trigger']);
-
-    // Requirement 5: Active Chauffeur Switch
-    Route::post('/driver/chauffeur-switch', [DriverApiController::class, 'toggleChauffeurOnlineSwitch']);
-    Route::get('/driver/chauffeur-switch', [DriverApiController::class, 'getChauffeurSwitchStatus']);
 });
 

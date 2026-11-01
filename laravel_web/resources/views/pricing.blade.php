@@ -168,7 +168,7 @@
                                                     class="p-3 rounded-2xl border text-left transition-all cursor-pointer">
                                                 <div class="flex items-center justify-between">
                                                     <span class="text-xl" x-text="veh.icon"></span>
-                                                    <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400" x-text="currencySymbol + (veh.perKm || 0).toFixed(2) + '/km'"></span>
+                                                    <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400" x-text="currencySymbol + (veh.perKm || 0).toFixed(0) + '/km'"></span>
                                                 </div>
                                                 <p class="font-extrabold text-xs mt-1.5 truncate" x-text="veh.name"></p>
                                                 <p class="text-[10px] text-gray-500 truncate" x-text="veh.seats"></p>
@@ -232,11 +232,11 @@
                                         <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.base"></span>
                                     </div>
                                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                                        <span>Distance (<span x-text="calcDistance"></span> km @ <span x-text="currencySymbol"></span><span x-text="(currentVehicle.perKm || 0).toFixed(2)"></span>/km)</span>
+                                        <span>Distance (<span x-text="calcDistance"></span> km @ <span x-text="currencySymbol"></span><span x-text="(currentVehicle.perKm || 0).toFixed(0)"></span>/km)</span>
                                         <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.distFare"></span>
                                     </div>
                                     <div class="flex justify-between text-gray-600 dark:text-gray-400">
-                                        <span>Duration (~<span x-text="calcDuration"></span> min @ <span x-text="currencySymbol"></span><span x-text="(currentVehicle.perMin || 0).toFixed(2)"></span>/min)</span>
+                                        <span>Duration (~<span x-text="calcDuration"></span> min @ <span x-text="currencySymbol"></span><span x-text="(currentVehicle.perMin || 0).toFixed(0)"></span>/min)</span>
                                         <span class="font-mono font-bold text-gray-900 dark:text-white" x-text="currencySymbol + calcFare.durFare"></span>
                                     </div>
                                     <div x-show="calcStops > 0" class="flex justify-between text-gray-600 dark:text-gray-400">
@@ -321,10 +321,10 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $v['target'] ?? ($v['desc'] ?? 'City mobility') }}</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-2 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($v['base'], 2) }}</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($v['perKm'], 2) }} / km</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($v['perMin'], 2) }} / min</span></div>
-                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($v['min'], 2) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($v['base'], 0) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per km:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($v['perKm'], 0) }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Rate per min:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($v['perMin'], 0) }} / min</span></div>
+                                <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-white/10"><span class="text-gray-500 font-semibold">Minimum Fare:</span><span class="font-black text-emerald-600 dark:text-emerald-400">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($v['min'], 0) }}</span></div>
                             </div>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
                                 <li class="flex items-center gap-2"><span class="text-emerald-500 font-bold">✓</span> {{ $v['seats'] }} & {{ $v['luggage'] ?? 'Luggage room' }}</li>
@@ -633,8 +633,8 @@
                                 <p class="text-xs text-gray-500 mt-0.5">Documents, keys, pharmacy, lightweight goods (≤ 5 kg)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-1.5 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->delivery_base_fare ?? 8.00, 2) }}</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->delivery_per_km_rate ?? 1.00, 2) }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->delivery_base_fare ?? 8.00, 0) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format($currentPricing?->delivery_per_km_rate ?? 1.00, 0) }} / km</span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Typical Speed:</span><span class="font-bold text-emerald-600">~30–45 mins</span></div>
                             </div>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Live GPS tracking link generated automatically for sender & recipient.</p>
@@ -653,8 +653,8 @@
                                 <p class="text-xs text-gray-500 mt-0.5">Electronics, retail purchases, fragile boxes (≤ 25 kg)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-1.5 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_base_fare ?? 15.00) * 1.25, 2) }}</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_per_km_rate ?? 1.50) * 1.25, 2) }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_base_fare ?? 15.00) * 1.25, 0) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_per_km_rate ?? 1.50) * 1.25, 0) }} / km</span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Cargo Space:</span><span class="font-bold text-amber-500">Full Trunk & Backseat</span></div>
                             </div>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Climate-controlled transport with digital photo proof of delivery at dropoff.</p>
@@ -673,8 +673,8 @@
                                 <p class="text-xs text-gray-500 mt-0.5">Furniture, commercial supplies, wholesale pallets (≤ 250 kg)</p>
                             </div>
                             <div class="p-4 bg-gray-50 dark:bg-[#0b0f17] rounded-2xl space-y-1.5 text-xs">
-                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_base_fare ?? 15.00) * 2.2, 2) }}</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_per_km_rate ?? 1.50) * 1.8, 2) }} / km</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Base Fare:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_base_fare ?? 15.00) * 2.2, 0) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Distance Rate:</span><span class="font-bold text-gray-900 dark:text-white">{{ $currentCurrencySymbol ?? '$' }}{{ number_format(($currentPricing?->delivery_per_km_rate ?? 1.50) * 1.8, 0) }} / km</span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Loading Help:</span><span class="font-bold text-blue-500">Driver Assistance Included</span></div>
                             </div>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Heavy payload dispatch with scheduled multi-point routes available.</p>
@@ -990,13 +990,13 @@
                     const tax = finalFare * 0.05;
                     const total = finalFare + tax;
                     return {
-                        base: (v.base || 0).toFixed(2),
-                        distFare: distFare.toFixed(2),
-                        durFare: durFare.toFixed(2),
-                        stopsFee: stopsFee.toFixed(2),
-                        subtotal: subtotal.toFixed(2),
-                        tax: tax.toFixed(2),
-                        total: total.toFixed(2)
+                        base: (v.base || 0).toFixed(0),
+                        distFare: distFare.toFixed(0),
+                        durFare: durFare.toFixed(0),
+                        stopsFee: stopsFee.toFixed(0),
+                        subtotal: subtotal.toFixed(0),
+                        tax: tax.toFixed(0),
+                        total: total.toFixed(0)
                     };
                 }
             };

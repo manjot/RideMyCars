@@ -257,29 +257,29 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
 
     if (_durationType == 'weekly') {
       sub = _weeklyRate * _durationCount;
-      rateText = '$_durationCount Week(s) @ $_currencySymbol${_weeklyRate.toStringAsFixed(2)}/week';
+      rateText = '$_durationCount Week(s) @ $_currencySymbol${_weeklyRate.toStringAsFixed(0)}/week';
     } else if (_durationType == 'daily') {
       sub = _dailyRate * _durationCount;
-      rateText = '$_durationCount Day(s) @ $_currencySymbol${_dailyRate.toStringAsFixed(2)}/day';
+      rateText = '$_durationCount Day(s) @ $_currencySymbol${_dailyRate.toStringAsFixed(0)}/day';
     } else {
       final hours = _durationCount;
       if (hours >= 8) {
         final days = (hours / 8.0).ceil();
         sub = _dailyRate * days;
-        rateText = 'Full Day Rate (8+ hrs) @ $_currencySymbol${_dailyRate.toStringAsFixed(2)}';
+        rateText = 'Full Day Rate (8+ hrs) @ $_currencySymbol${_dailyRate.toStringAsFixed(0)}';
       } else if (hours > 4) {
         final effective = _hourlyRate * 0.95;
         sub = effective * hours;
-        rateText = '$hours Hours (Tiered 4-8 hr) @ $_currencySymbol${effective.toStringAsFixed(2)}/hr';
+        rateText = '$hours Hours (Tiered 4-8 hr) @ $_currencySymbol${effective.toStringAsFixed(0)}/hr';
       } else {
         sub = _hourlyRate * hours;
-        rateText = '$hours Hours @ $_currencySymbol${_hourlyRate.toStringAsFixed(2)}/hr';
+        rateText = '$hours Hours @ $_currencySymbol${_hourlyRate.toStringAsFixed(0)}/hr';
       }
     }
 
-    final fee = double.parse((sub * 0.05).toStringAsFixed(2));
-    final tx = double.parse((sub * 0.05).toStringAsFixed(2));
-    final tot = double.parse((sub + fee + tx).toStringAsFixed(2));
+    final fee = double.parse((sub * 0.05).toStringAsFixed(0));
+    final tx = double.parse((sub * 0.05).toStringAsFixed(0));
+    final tot = double.parse((sub + fee + tx).toStringAsFixed(0));
 
     if (mounted) {
       setState(() {
@@ -531,7 +531,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                         const Text('Estimated Fare',
                             style: TextStyle(color: Colors.white70, fontSize: 12)),
                         Text(
-                          '$_currencySymbol${_totalPrice.toStringAsFixed(2)}',
+                          '$_currencySymbol${_totalPrice.toStringAsFixed(0)}',
                           style: const TextStyle(
                             color: Color(0xFF10B981),
                             fontWeight: FontWeight.w900,
@@ -1793,7 +1793,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
               Text('Driver Service Fee:',
                   style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12.5)),
               Text(
-                '$_currencySymbol${_subtotal.toStringAsFixed(2)}',
+                '$_currencySymbol${_subtotal.toStringAsFixed(0)}',
                 style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
               ),
             ],
@@ -1805,7 +1805,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
               Text('Service Fee (5%):',
                   style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12.5)),
               Text(
-                '$_currencySymbol${_serviceFee.toStringAsFixed(2)}',
+                '$_currencySymbol${_serviceFee.toStringAsFixed(0)}',
                 style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
               ),
             ],
@@ -1817,7 +1817,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
               Text('Taxes (5%):',
                   style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12.5)),
               Text(
-                '$_currencySymbol${_tax.toStringAsFixed(2)}',
+                '$_currencySymbol${_tax.toStringAsFixed(0)}',
                 style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
               ),
             ],
@@ -1841,7 +1841,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF10B981)),
                     )
                   : Text(
-                      '$_currencySymbol${_totalPrice.toStringAsFixed(2)}',
+                      '$_currencySymbol${_totalPrice.toStringAsFixed(0)}',
                       style: const TextStyle(
                         color: Color(0xFFFFB703),
                         fontSize: 22,
@@ -2099,7 +2099,7 @@ class _DriverDetailScreenState extends State<DriverDetailScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '($_currencySymbol${_totalPrice.toStringAsFixed(2)})',
+                          '($_currencySymbol${_totalPrice.toStringAsFixed(0)})',
                           style: const TextStyle(
                             color: Color(0xFFFFB703),
                             fontSize: 14,

@@ -1,36 +1,43 @@
 <x-filament-panels::page>
-    <div x-data="{
+    <div wire:poll.10s x-data="{
         activeTab: 'overview',
         driverSearch: '',
         selectedType: 'all',
         selectedVertical: 'all'
     }" class="space-y-6">
 
-        {{-- Top Header Banner --}}
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 via-orange-600 to-amber-700 p-6 md:p-8 text-white shadow-xl">
+        {{-- Top Header Banner (Issue 2.5: Explicit high-contrast dark gradient & white text) --}}
+        <div class="relative overflow-hidden rounded-2xl p-6 md:p-8 shadow-xl"
+             style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #0f172a 100%) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.14);">
             <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-white/20 rounded-full backdrop-blur-sm">
-                            Platform Financials
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full"
+                              style="background: rgba(245, 158, 11, 0.22); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4);">
+                            Platform Financials (GHS &amp; USD)
                         </span>
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-emerald-500/80 rounded-full flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                            Live Ledger Active
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1.5"
+                              style="background: rgba(16, 185, 129, 0.25); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4);">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Live Auto-Updating Ledger
                         </span>
                     </div>
-                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">
-                        Platform Commissions & Driver Ledger
+                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight" style="color: #ffffff !important;">
+                        Platform Commissions &amp; Driver Ledger
                     </h1>
-                    <p class="text-sm md:text-base text-amber-100 max-w-2xl mt-1">
-                        Comprehensive Daily, Weekly, Monthly & Yearly platform commission earnings, including automatic deductions from Driver main wallets for cash trips.
+                    <p class="text-sm md:text-base max-w-2xl mt-1" style="color: #e2e8f0 !important;">
+                        Comprehensive Daily, Weekly, Monthly &amp; Yearly platform commission earnings displayed in both Ghana Cedis (GH₵) and US Dollars ($), with automatic real-time updates on trip completion.
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="bg-black/20 backdrop-blur-md rounded-xl p-3 border border-white/10 text-right">
-                        <div class="text-xs text-amber-200 uppercase font-semibold">All-Time Platform Revenue</div>
-                        <div class="text-2xl font-black">${{ number_format($metrics['all_time']['total_commission'] ?? 0, 2) }}</div>
-                        <div class="text-xs text-amber-200/80">{{ $metrics['all_time']['trips_count'] ?? 0 }} total completed trips</div>
+                    <div class="rounded-xl p-4 text-right"
+                         style="background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(255, 255, 255, 0.18);">
+                        <div class="text-xs uppercase font-bold tracking-wider" style="color: #fcd34d !important;">All-Time Platform Revenue</div>
+                        <div class="text-2xl font-black mt-0.5" style="color: #ffffff !important;">
+                            GH₵ {{ number_format($metrics['all_time']['total_commission_ghs'] ?? $metrics['all_time']['total_commission'] ?? 0, 0) }}
+                            <span class="text-base font-bold" style="color: #93c5fd !important;">(${{ number_format($metrics['all_time']['total_commission_usd'] ?? 0, 0) }})</span>
+                        </div>
+                        <div class="text-xs mt-0.5" style="color: #cbd5e1 !important;">{{ $metrics['all_time']['trips_count'] ?? 0 }} total completed trips</div>
                     </div>
                 </div>
             </div>
@@ -45,20 +52,22 @@
                     <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Daily Commissions</span>
                     <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Today</span>
                 </div>
-                <div class="mt-3 flex items-baseline justify-between">
-                    <div class="text-3xl font-black text-gray-900 dark:text-white">
-                        ${{ number_format($metrics['daily']['total_commission'] ?? 0, 2) }}
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-gray-900 dark:text-white">
+                        GH₵ {{ number_format($metrics['daily']['total_commission_ghs'] ?? $metrics['daily']['total_commission'] ?? 0, 0) }}
+                        <span class="text-sm font-bold text-blue-600 dark:text-blue-400">(${{ number_format($metrics['daily']['total_commission_usd'] ?? 0, 0) }})</span>
                     </div>
                     @php
-                        $dayDiff = ($metrics['daily']['total_commission'] ?? 0) - ($metrics['yesterday']['total_commission'] ?? 0);
+                        $dayDiffGhs = ($metrics['daily']['total_commission_ghs'] ?? 0) - ($metrics['yesterday']['total_commission_ghs'] ?? 0);
+                        $dayDiffUsd = ($metrics['daily']['total_commission_usd'] ?? 0) - ($metrics['yesterday']['total_commission_usd'] ?? 0);
                     @endphp
-                    <span class="text-xs font-bold {{ $dayDiff >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
-                        {{ $dayDiff >= 0 ? '+' : '' }}${{ number_format($dayDiff, 2) }} vs yest
-                    </span>
+                    <div class="mt-1 text-xs font-bold {{ $dayDiffGhs >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                        {{ $dayDiffGhs >= 0 ? '+' : '-' }}GH₵ {{ number_format(abs($dayDiffGhs), 0) }} ({{ $dayDiffUsd >= 0 ? '+' : '-' }}${{ number_format(abs($dayDiffUsd), 0) }}) vs yesterday
+                    </div>
                 </div>
-                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex flex-wrap items-center justify-between gap-1 text-xs text-gray-500 dark:text-gray-400">
                     <span>{{ $metrics['daily']['trips_count'] ?? 0 }} trips today</span>
-                    <span class="text-amber-600 dark:text-amber-400 font-semibold">${{ number_format($metrics['daily']['cash_commission'] ?? 0, 2) }} cash auto-deductions</span>
+                    <span class="text-amber-600 dark:text-amber-400 font-semibold">GH₵ {{ number_format($metrics['daily']['cash_commission_ghs'] ?? 0, 0) }} (${{ number_format($metrics['daily']['cash_commission_usd'] ?? 0, 0) }}) cash commission</span>
                 </div>
             </div>
 
@@ -68,20 +77,22 @@
                     <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Weekly Commissions</span>
                     <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">This Week</span>
                 </div>
-                <div class="mt-3 flex items-baseline justify-between">
-                    <div class="text-3xl font-black text-gray-900 dark:text-white">
-                        ${{ number_format($metrics['weekly']['total_commission'] ?? 0, 2) }}
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-gray-900 dark:text-white">
+                        GH₵ {{ number_format($metrics['weekly']['total_commission_ghs'] ?? $metrics['weekly']['total_commission'] ?? 0, 0) }}
+                        <span class="text-sm font-bold text-blue-600 dark:text-blue-400">(${{ number_format($metrics['weekly']['total_commission_usd'] ?? 0, 0) }})</span>
                     </div>
                     @php
-                        $weekDiff = ($metrics['weekly']['total_commission'] ?? 0) - ($metrics['last_week']['total_commission'] ?? 0);
+                        $weekDiffGhs = ($metrics['weekly']['total_commission_ghs'] ?? 0) - ($metrics['last_week']['total_commission_ghs'] ?? 0);
+                        $weekDiffUsd = ($metrics['weekly']['total_commission_usd'] ?? 0) - ($metrics['last_week']['total_commission_usd'] ?? 0);
                     @endphp
-                    <span class="text-xs font-bold {{ $weekDiff >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
-                        {{ $weekDiff >= 0 ? '+' : '' }}${{ number_format($weekDiff, 2) }} vs last wk
-                    </span>
+                    <div class="mt-1 text-xs font-bold {{ $weekDiffGhs >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                        {{ $weekDiffGhs >= 0 ? '+' : '-' }}GH₵ {{ number_format(abs($weekDiffGhs), 0) }} ({{ $weekDiffUsd >= 0 ? '+' : '-' }}${{ number_format(abs($weekDiffUsd), 0) }}) vs last week
+                    </div>
                 </div>
-                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex flex-wrap items-center justify-between gap-1 text-xs text-gray-500 dark:text-gray-400">
                     <span>{{ $metrics['weekly']['trips_count'] ?? 0 }} trips this week</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">${{ number_format($metrics['weekly']['gross_volume'] ?? 0, 2) }} vol</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-300">GH₵ {{ number_format($metrics['weekly']['gross_volume_ghs'] ?? 0, 0) }} (${{ number_format($metrics['weekly']['gross_volume_usd'] ?? 0, 0) }}) gross volume</span>
                 </div>
             </div>
 
@@ -91,20 +102,22 @@
                     <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Monthly Commissions</span>
                     <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{{ now()->format('M Y') }}</span>
                 </div>
-                <div class="mt-3 flex items-baseline justify-between">
-                    <div class="text-3xl font-black text-gray-900 dark:text-white">
-                        ${{ number_format($metrics['monthly']['total_commission'] ?? 0, 2) }}
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-gray-900 dark:text-white">
+                        GH₵ {{ number_format($metrics['monthly']['total_commission_ghs'] ?? $metrics['monthly']['total_commission'] ?? 0, 0) }}
+                        <span class="text-sm font-bold text-blue-600 dark:text-blue-400">(${{ number_format($metrics['monthly']['total_commission_usd'] ?? 0, 0) }})</span>
                     </div>
                     @php
-                        $monthDiff = ($metrics['monthly']['total_commission'] ?? 0) - ($metrics['last_month']['total_commission'] ?? 0);
+                        $monthDiffGhs = ($metrics['monthly']['total_commission_ghs'] ?? 0) - ($metrics['last_month']['total_commission_ghs'] ?? 0);
+                        $monthDiffUsd = ($metrics['monthly']['total_commission_usd'] ?? 0) - ($metrics['last_month']['total_commission_usd'] ?? 0);
                     @endphp
-                    <span class="text-xs font-bold {{ $monthDiff >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
-                        {{ $monthDiff >= 0 ? '+' : '' }}${{ number_format($monthDiff, 2) }} vs last mo
-                    </span>
+                    <div class="mt-1 text-xs font-bold {{ $monthDiffGhs >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                        {{ $monthDiffGhs >= 0 ? '+' : '-' }}GH₵ {{ number_format(abs($monthDiffGhs), 0) }} ({{ $monthDiffUsd >= 0 ? '+' : '-' }}${{ number_format(abs($monthDiffUsd), 0) }}) vs last month
+                    </div>
                 </div>
-                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex flex-wrap items-center justify-between gap-1 text-xs text-gray-500 dark:text-gray-400">
                     <span>{{ $metrics['monthly']['trips_count'] ?? 0 }} trips this month</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">${{ number_format($metrics['monthly']['gross_volume'] ?? 0, 2) }} vol</span>
+                    <span class="font-semibold text-gray-700 dark:text-gray-300">GH₵ {{ number_format($metrics['monthly']['gross_volume_ghs'] ?? 0, 0) }} (${{ number_format($metrics['monthly']['gross_volume_usd'] ?? 0, 0) }}) gross volume</span>
                 </div>
             </div>
 
@@ -114,17 +127,18 @@
                     <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Yearly Commissions</span>
                     <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{{ now()->format('Y') }}</span>
                 </div>
-                <div class="mt-3 flex items-baseline justify-between">
-                    <div class="text-3xl font-black text-gray-900 dark:text-white">
-                        ${{ number_format($metrics['yearly']['total_commission'] ?? 0, 2) }}
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-gray-900 dark:text-white">
+                        GH₵ {{ number_format($metrics['yearly']['total_commission_ghs'] ?? $metrics['yearly']['total_commission'] ?? 0, 0) }}
+                        <span class="text-sm font-bold text-blue-600 dark:text-blue-400">(${{ number_format($metrics['yearly']['total_commission_usd'] ?? 0, 0) }})</span>
                     </div>
-                    <span class="text-xs font-semibold text-gray-400">
-                        Annual total
-                    </span>
+                    <div class="mt-1 text-xs font-semibold text-gray-400">
+                        Annual total commission revenue
+                    </div>
                 </div>
-                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 flex flex-wrap items-center justify-between gap-1 text-xs text-gray-500 dark:text-gray-400">
                     <span>{{ $metrics['yearly']['trips_count'] ?? 0 }} trips in {{ now()->format('Y') }}</span>
-                    <span class="font-semibold text-amber-600 dark:text-amber-400">${{ number_format($metrics['yearly']['cash_commission'] ?? 0, 2) }} cash cut</span>
+                    <span class="font-semibold text-amber-600 dark:text-amber-400">GH₵ {{ number_format($metrics['yearly']['cash_commission_ghs'] ?? 0, 0) }} (${{ number_format($metrics['yearly']['cash_commission_usd'] ?? 0, 0) }}) cash commission</span>
                 </div>
             </div>
 
@@ -149,7 +163,7 @@
             </div>
             <div class="flex items-center gap-4 text-xs font-semibold text-amber-900 dark:text-amber-200">
                 <div class="text-right">
-                    <div>Cash Deductions (Month): <span class="font-bold">${{ number_format($metrics['monthly']['cash_commission'] ?? 0, 2) }}</span></div>
+                    <div>Cash Deductions (Month): <span class="font-bold">GH₵ {{ number_format($metrics['monthly']['cash_commission_ghs'] ?? 0, 0) }} (${{ number_format($metrics['monthly']['cash_commission_usd'] ?? 0, 0) }})</span></div>
                     <div class="text-amber-600 dark:text-amber-400">{{ $metrics['monthly']['cash_trips_count'] ?? 0 }} cash transactions</div>
                 </div>
             </div>
@@ -211,7 +225,7 @@
                                 <tr>
                                     <th class="py-2.5 px-3">Date</th>
                                     <th class="py-2.5 px-3">Trips</th>
-                                    <th class="py-2.5 px-3">Gross Vol</th>
+                                    <th class="py-2.5 px-3">Gross Volume</th>
                                     <th class="py-2.5 px-3 text-right">Commission</th>
                                 </tr>
                             </thead>
@@ -225,9 +239,13 @@
                                         @endif
                                     </td>
                                     <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300">{{ $row['trips_count'] }}</td>
-                                    <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300">${{ number_format($row['gross_volume'], 2) }}</td>
+                                    <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300">
+                                        GH₵ {{ number_format($row['gross_volume_ghs'] ?? $row['gross_volume'] ?? 0, 0) }}
+                                        <span class="text-gray-400">(${{ number_format($row['gross_volume_usd'] ?? 0, 0) }})</span>
+                                    </td>
                                     <td class="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 font-bold">
-                                        ${{ number_format($row['total_commission'], 2) }}
+                                        GH₵ {{ number_format($row['total_commission_ghs'] ?? $row['total_commission'] ?? 0, 0) }}
+                                        <span class="text-blue-600 dark:text-blue-400">(${{ number_format($row['total_commission_usd'] ?? 0, 0) }})</span>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -264,9 +282,13 @@
                                         @endif
                                     </td>
                                     <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300">{{ $row['trips_count'] }}</td>
-                                    <td class="py-2.5 px-3 text-amber-600 dark:text-amber-400">${{ number_format($row['cash_commission'], 2) }}</td>
+                                    <td class="py-2.5 px-3 text-amber-600 dark:text-amber-400">
+                                        GH₵ {{ number_format($row['cash_commission_ghs'] ?? $row['cash_commission'] ?? 0, 0) }}
+                                        <span class="text-gray-400">(${{ number_format($row['cash_commission_usd'] ?? 0, 0) }})</span>
+                                    </td>
                                     <td class="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 font-bold">
-                                        ${{ number_format($row['total_commission'], 2) }}
+                                        GH₵ {{ number_format($row['total_commission_ghs'] ?? $row['total_commission'] ?? 0, 0) }}
+                                        <span class="text-blue-600 dark:text-blue-400">(${{ number_format($row['total_commission_usd'] ?? 0, 0) }})</span>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -282,7 +304,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Daily Platform Commissions (Past 14 Days)</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Day-by-day platform commission revenue, trip counts, and cash auto-deductions.</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Day-by-day platform commission revenue, trip counts, and cash auto-deductions in GH₵ (GHS) and $ (USD).</p>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -311,11 +333,17 @@
                             <td class="py-3 px-4 text-gray-500 dark:text-gray-400">{{ $row['day_name'] }}</td>
                             <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-semibold">{{ $row['trips_count'] }}</td>
                             <td class="py-3 px-4 text-amber-600 dark:text-amber-400">{{ $row['cash_trips_count'] }}</td>
-                            <td class="py-3 px-4 text-gray-700 dark:text-gray-300">${{ number_format($row['gross_volume'], 2) }}</td>
-                            <td class="py-3 px-4 text-amber-600 dark:text-amber-400 font-semibold">${{ number_format($row['cash_commission'], 2) }}</td>
-                            <td class="py-3 px-4 text-blue-600 dark:text-blue-400 font-semibold">${{ number_format($row['online_commission'], 2) }}</td>
+                            <td class="py-3 px-4 text-gray-700 dark:text-gray-300">
+                                GH₵ {{ number_format($row['gross_volume_ghs'] ?? 0, 0) }} (${{ number_format($row['gross_volume_usd'] ?? 0, 0) }})
+                            </td>
+                            <td class="py-3 px-4 text-amber-600 dark:text-amber-400 font-semibold">
+                                GH₵ {{ number_format($row['cash_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['cash_commission_usd'] ?? 0, 0) }})
+                            </td>
+                            <td class="py-3 px-4 text-blue-600 dark:text-blue-400 font-semibold">
+                                GH₵ {{ number_format($row['online_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['online_commission_usd'] ?? 0, 0) }})
+                            </td>
                             <td class="py-3 px-4 text-right text-emerald-600 dark:text-emerald-400 font-black text-sm">
-                                ${{ number_format($row['total_commission'], 2) }}
+                                GH₵ {{ number_format($row['total_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['total_commission_usd'] ?? 0, 0) }})
                             </td>
                         </tr>
                         @endforeach
@@ -329,7 +357,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Weekly Platform Commissions (Past 10 Weeks)</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aggregated weekly commission performance.</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aggregated weekly commission performance in GH₵ (GHS) and $ (USD).</p>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -354,11 +382,17 @@
                                 @endif
                             </td>
                             <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-semibold">{{ $row['trips_count'] }}</td>
-                            <td class="py-3 px-4 text-gray-700 dark:text-gray-300">${{ number_format($row['gross_volume'], 2) }}</td>
-                            <td class="py-3 px-4 text-amber-600 dark:text-amber-400 font-semibold">${{ number_format($row['cash_commission'], 2) }}</td>
-                            <td class="py-3 px-4 text-blue-600 dark:text-blue-400 font-semibold">${{ number_format($row['online_commission'], 2) }}</td>
+                            <td class="py-3 px-4 text-gray-700 dark:text-gray-300">
+                                GH₵ {{ number_format($row['gross_volume_ghs'] ?? 0, 0) }} (${{ number_format($row['gross_volume_usd'] ?? 0, 0) }})
+                            </td>
+                            <td class="py-3 px-4 text-amber-600 dark:text-amber-400 font-semibold">
+                                GH₵ {{ number_format($row['cash_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['cash_commission_usd'] ?? 0, 0) }})
+                            </td>
+                            <td class="py-3 px-4 text-blue-600 dark:text-blue-400 font-semibold">
+                                GH₵ {{ number_format($row['online_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['online_commission_usd'] ?? 0, 0) }})
+                            </td>
                             <td class="py-3 px-4 text-right text-emerald-600 dark:text-emerald-400 font-black text-sm">
-                                ${{ number_format($row['total_commission'], 2) }}
+                                GH₵ {{ number_format($row['total_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['total_commission_usd'] ?? 0, 0) }})
                             </td>
                         </tr>
                         @endforeach
@@ -372,7 +406,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Monthly Platform Commissions (Past 12 Months)</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Month-by-month platform commission audit.</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Month-by-month platform commission audit in GH₵ (GHS) and $ (USD).</p>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -397,11 +431,17 @@
                                 @endif
                             </td>
                             <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-semibold">{{ $row['trips_count'] }}</td>
-                            <td class="py-3 px-4 text-gray-700 dark:text-gray-300">${{ number_format($row['gross_volume'], 2) }}</td>
-                            <td class="py-3 px-4 text-amber-600 dark:text-amber-400 font-semibold">${{ number_format($row['cash_commission'], 2) }}</td>
-                            <td class="py-3 px-4 text-blue-600 dark:text-blue-400 font-semibold">${{ number_format($row['online_commission'], 2) }}</td>
+                            <td class="py-3 px-4 text-gray-700 dark:text-gray-300">
+                                GH₵ {{ number_format($row['gross_volume_ghs'] ?? 0, 0) }} (${{ number_format($row['gross_volume_usd'] ?? 0, 0) }})
+                            </td>
+                            <td class="py-3 px-4 text-amber-600 dark:text-amber-400 font-semibold">
+                                GH₵ {{ number_format($row['cash_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['cash_commission_usd'] ?? 0, 0) }})
+                            </td>
+                            <td class="py-3 px-4 text-blue-600 dark:text-blue-400 font-semibold">
+                                GH₵ {{ number_format($row['online_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['online_commission_usd'] ?? 0, 0) }})
+                            </td>
                             <td class="py-3 px-4 text-right text-emerald-600 dark:text-emerald-400 font-black text-sm">
-                                ${{ number_format($row['total_commission'], 2) }}
+                                GH₵ {{ number_format($row['total_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['total_commission_usd'] ?? 0, 0) }})
                             </td>
                         </tr>
                         @endforeach
@@ -415,7 +455,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Yearly Platform Commissions (Past 5 Years)</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Annual platform revenue overview.</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Annual platform revenue overview in GH₵ (GHS) and $ (USD).</p>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -440,11 +480,17 @@
                                 @endif
                             </td>
                             <td class="py-3 px-4 text-gray-700 dark:text-gray-300 font-semibold">{{ $row['trips_count'] }}</td>
-                            <td class="py-3 px-4 text-gray-700 dark:text-gray-300">${{ number_format($row['gross_volume'], 2) }}</td>
-                            <td class="py-3 px-4 text-amber-600 dark:text-amber-400 font-semibold">${{ number_format($row['cash_commission'], 2) }}</td>
-                            <td class="py-3 px-4 text-blue-600 dark:text-blue-400 font-semibold">${{ number_format($row['online_commission'], 2) }}</td>
+                            <td class="py-3 px-4 text-gray-700 dark:text-gray-300">
+                                GH₵ {{ number_format($row['gross_volume_ghs'] ?? 0, 0) }} (${{ number_format($row['gross_volume_usd'] ?? 0, 0) }})
+                            </td>
+                            <td class="py-3 px-4 text-amber-600 dark:text-amber-400 font-semibold">
+                                GH₵ {{ number_format($row['cash_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['cash_commission_usd'] ?? 0, 0) }})
+                            </td>
+                            <td class="py-3 px-4 text-blue-600 dark:text-blue-400 font-semibold">
+                                GH₵ {{ number_format($row['online_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['online_commission_usd'] ?? 0, 0) }})
+                            </td>
                             <td class="py-3 px-4 text-right text-emerald-600 dark:text-emerald-400 font-black text-sm">
-                                ${{ number_format($row['total_commission'], 2) }}
+                                GH₵ {{ number_format($row['total_commission_ghs'] ?? 0, 0) }} (${{ number_format($row['total_commission_usd'] ?? 0, 0) }})
                             </td>
                         </tr>
                         @endforeach
@@ -459,7 +505,7 @@
                 <div>
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Individual Driver's Commission History</h3>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        Detailed transaction ledger showing trip fares, commission rates, and main wallet deductions for each driver.
+                        Detailed transaction ledger showing trip fares, commission rates, and main wallet deductions for each driver in GH₵ (GHS) and $ (USD).
                     </p>
                 </div>
                 
@@ -487,14 +533,14 @@
                 <table class="w-full text-left text-xs">
                     <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 uppercase">
                         <tr>
-                            <th class="py-3 px-3">Date & Time</th>
+                            <th class="py-3 px-3">Date &amp; Time</th>
                             <th class="py-3 px-3">Driver</th>
                             <th class="py-3 px-3">Vertical</th>
-                            <th class="py-3 px-3">Trip Ref</th>
+                            <th class="py-3 px-3">Trip Reference</th>
                             <th class="py-3 px-3">Payment Mode</th>
                             <th class="py-3 px-3">Gross Fare</th>
-                            <th class="py-3 px-3">Comm %</th>
-                            <th class="py-3 px-3">Platform Comm</th>
+                            <th class="py-3 px-3">Commission Rate</th>
+                            <th class="py-3 px-3">Platform Commission</th>
                             <th class="py-3 px-3 text-right">Deduction Status</th>
                         </tr>
                     </thead>
@@ -543,14 +589,16 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="py-3 px-3 text-gray-800 dark:text-gray-200">
-                                {{ $item['currency'] }} {{ number_format($item['gross_fare'], 2) }}
+                            <td class="py-3 px-3 text-gray-800 dark:text-gray-200 font-semibold">
+                                GH₵ {{ number_format($item['gross_fare_ghs'] ?? $item['gross_fare'] ?? 0, 0) }}
+                                <span class="text-gray-400">(${{ number_format($item['gross_fare_usd'] ?? 0, 0) }})</span>
                             </td>
                             <td class="py-3 px-3 text-gray-500 dark:text-gray-400">
-                                {{ number_format($item['commission_rate'], 1) }}%
+                                {{ number_format($item['commission_rate'], 0) }}%
                             </td>
                             <td class="py-3 px-3 font-bold text-emerald-600 dark:text-emerald-400">
-                                {{ $item['currency'] }} {{ number_format($item['commission_amount'], 2) }}
+                                GH₵ {{ number_format($item['commission_amount_ghs'] ?? $item['commission_amount'] ?? 0, 0) }}
+                                <span class="text-blue-600 dark:text-blue-400">(${{ number_format($item['commission_amount_usd'] ?? 0, 0) }})</span>
                             </td>
                             <td class="py-3 px-3 text-right">
                                 @if($item['is_cash'])
