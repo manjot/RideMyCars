@@ -8,7 +8,8 @@ plugins {
 
 android {
     namespace = "com.ridemycars.flutter_driver_app"
-    compileSdk = 35
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true

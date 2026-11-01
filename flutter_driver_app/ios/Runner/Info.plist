@@ -65,6 +65,11 @@
 		<string>processing</string>
 		<string>remote-notification</string>
 	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.ridemycars.driver.orderMonitor</string>
+		<string>com.ridemycars.driver.refresh</string>
+	</array>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>tel</string>
