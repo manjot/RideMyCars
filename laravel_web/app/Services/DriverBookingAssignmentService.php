@@ -27,10 +27,12 @@ class DriverBookingAssignmentService
             $targetDriverUserId = $dp->user_id;
         }
 
-        // Chauffeurs should receive Hiring Requests and SMS notifications ONLY when online
-        $isTargetChauffeurOnline = $dp
-            && $dp->is_available
-            && (!$dp->is_chauffeur || $dp->active_chauffeur_online || $dp->chauffeur_mode);
+        // Chauffeurs should receive Hiring Requests and SMS notifications ONLY when their Chauffeur switch is online (even if regular ride/delivery switch is off)
+        $isTargetChauffeurOnline = $dp && (
+            $dp->is_chauffeur
+                ? ($dp->active_chauffeur_online || $dp->chauffeur_mode)
+                : (bool) $dp->is_available
+        );
 
         if ($targetDriverUserId && $isTargetChauffeurOnline) {
             $assignment = RideAssignment::updateOrCreate(
@@ -86,9 +88,12 @@ class DriverBookingAssignmentService
         if ($booking->driver_profile_id && !in_array($booking->driver_id, $excludedDriverIds)) {
             $requestedDriver = DriverProfile::find($booking->driver_profile_id);
             $requestedIsOnline = $requestedDriver
-                && $requestedDriver->is_available
                 && $requestedDriver->is_live
-                && (!$requestedDriver->is_chauffeur || $requestedDriver->active_chauffeur_online || $requestedDriver->chauffeur_mode);
+                && (
+                    $requestedDriver->is_chauffeur
+                        ? ($requestedDriver->active_chauffeur_online || $requestedDriver->chauffeur_mode)
+                        : (bool) $requestedDriver->is_available
+                );
             if ($requestedIsOnline && !in_array($requestedDriver->user_id, $allExcluded)) {
                 $assignment = RideAssignment::create([
                     'driver_booking_id' => $booking->id,
@@ -104,13 +109,19 @@ class DriverBookingAssignmentService
         }
 
         // 4. Proximity matching for online available and live (active) drivers/chauffeurs
-        $query = DriverProfile::where('is_available', true)
-            ->where('is_live', true)
+        $query = DriverProfile::where('is_live', true)
             ->where(function ($q) {
-                $q->where('is_chauffeur', false)
-                  ->orWhereNull('is_chauffeur')
-                  ->orWhere('active_chauffeur_online', true)
-                  ->orWhere('chauffeur_mode', true);
+                $q->where(function ($cq) {
+                    $cq->where('is_chauffeur', true)
+                       ->where(function ($sq) {
+                           $sq->where('active_chauffeur_online', true)
+                              ->orWhere('chauffeur_mode', true);
+                       });
+                })->orWhere(function ($dq) {
+                    $dq->where(function ($nq) {
+                        $nq->where('is_chauffeur', false)->orWhereNull('is_chauffeur');
+                    })->where('is_available', true);
+                });
             })
             ->whereNotIn('user_id', $allExcluded);
 
@@ -221,10 +232,9 @@ class DriverBookingAssignmentService
     public static function notifyOnlineChauffeursViaSms(DriverBooking $booking, string $countryCode, float $pickupLat, float $pickupLng, array $specificProfileIds = []): void
     {
         try {
-            // Query Chauffeurs who are currently ONLINE (active_chauffeur_online = true and is_available = true)
+            // Query Chauffeurs who are currently ONLINE (active_chauffeur_online = true, even if regular ride/delivery switch is off)
             $query = DriverProfile::with('user')
                 ->where('is_chauffeur', true)
-                ->where('is_available', true)
                 ->where(function ($q) {
                     $q->where('active_chauffeur_online', true)
                       ->orWhere('chauffeur_mode', true);

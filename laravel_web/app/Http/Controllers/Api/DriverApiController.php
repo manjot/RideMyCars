@@ -1202,10 +1202,12 @@ class DriverApiController extends Controller
             return true;
         });
 
-        $canReceiveChauffeurBookings = !$user->driverProfile || !$user->driverProfile->is_chauffeur || $user->driverProfile->active_chauffeur_online || $user->driverProfile->chauffeur_mode;
+        $isChauffeurProfile = (bool) ($user->driverProfile && ($user->driverProfile->is_chauffeur || $user->driverProfile->driver_type === 'chauffeur'));
+        $canReceiveChauffeurBookings = !$isChauffeurProfile || $user->driverProfile->active_chauffeur_online || $user->driverProfile->chauffeur_mode;
+        $canReceiveRegularRides = !$isChauffeurProfile || (bool) $user->driverProfile->is_available;
 
         foreach ($assignments as $a) {
-            if ($a->ride && $a->ride->status === 'pending' && !$a->ride->isExpired()) {
+            if ($canReceiveRegularRides && $a->ride && $a->ride->status === 'pending' && !$a->ride->isExpired()) {
                 $rawMethod = strtolower((string)($a->ride->payment_method ?? ''));
                 $isCash = in_array($rawMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment'], true) || str_contains($rawMethod, 'cash');
                 $isPaidOrHold = in_array(strtolower((string)($a->ride->payment_status ?? '')), ['hold', 'authorized', 'paid', 'pending_cash'], true);
@@ -1304,7 +1306,7 @@ class DriverApiController extends Controller
                     'remaining_seconds' => max(0, now()->diffInSeconds($a->expires_at, false)),
                     'waiting_time_seconds' => 300,
                 ];
-            } elseif ($a->packageDelivery && in_array($a->packageDelivery->delivery_status, ['pending', 'created', 'searching']) && !$a->packageDelivery->isExpired()) {
+            } elseif ($canReceiveRegularRides && $a->packageDelivery && in_array($a->packageDelivery->delivery_status, ['pending', 'created', 'searching']) && !$a->packageDelivery->isExpired()) {
                 $rawPdMethod = strtolower((string)($a->packageDelivery->payment_method ?? ''));
                 $isPdCash = in_array($rawPdMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment', 'cash_on_delivery'], true) || str_contains($rawPdMethod, 'cash');
                 $isPdPaidOrHold = in_array(strtolower((string)($a->packageDelivery->payment_status ?? '')), ['hold', 'authorized', 'paid', 'pending_cash', 'successful'], true);
@@ -1447,7 +1449,7 @@ class DriverApiController extends Controller
             ->take(30)
             ->get();
 
-        if (!$driverLat || !$driverLng) {
+        if (!$canReceiveRegularRides || !$driverLat || !$driverLng) {
             $openPendingRides = collect();
         } else {
             $openPendingRides = $openPendingRides->filter(function($pr) use ($driverLat, $driverLng, $driverCountry, $maxRadiusKm) {
@@ -2479,11 +2481,16 @@ class DriverApiController extends Controller
             ? filter_var($request->input('online'), FILTER_VALIDATE_BOOLEAN)
             : !($profile->active_chauffeur_online);
 
-        $profile->update([
+        $updatePayload = [
             'active_chauffeur_online' => $newState,
             'chauffeur_mode' => $newState,
             'last_location_update' => now(),
-        ]);
+        ];
+        if ($newState && !$profile->is_live) {
+            $updatePayload['is_live'] = true;
+        }
+
+        $profile->update($updatePayload);
 
         $message = $newState 
             ? 'Active Chauffeur Switch turned ONLINE. You will receive Driver Hire requests and SMS notifications.'

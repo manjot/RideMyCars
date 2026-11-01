@@ -63,10 +63,17 @@ Route::get('/payment/expresspay/status/{token}', [\App\Http\Controllers\ExpressP
 
 // Authorize.Net Gateway & Active Gateways Discovery
 Route::get('/payment/gateways', [\App\Http\Controllers\AuthorizeNetController::class, 'getActiveGateways']);
+Route::get('/api/payment/gateways', [\App\Http\Controllers\AuthorizeNetController::class, 'getActiveGateways']);
 Route::post('/payment/authorizenet/charge', [\App\Http\Controllers\AuthorizeNetController::class, 'charge']);
 Route::post('/payment/authorizenet/authorize-hold', [\App\Http\Controllers\AuthorizeNetController::class, 'authorizeHold']);
 Route::post('/authorizenet/charge', [\App\Http\Controllers\AuthorizeNetController::class, 'charge']);
 Route::post('/authorizenet/authorize-hold', [\App\Http\Controllers\AuthorizeNetController::class, 'authorizeHold']);
+
+// Active Chauffeur Switch (Supports both /api/driver/chauffeur-switch and /api/api/driver/chauffeur-switch for mobile app compatibility)
+Route::post('/driver/chauffeur-switch', [DriverApiController::class, 'toggleChauffeurOnlineSwitch']);
+Route::get('/driver/chauffeur-switch', [DriverApiController::class, 'getChauffeurSwitchStatus']);
+Route::post('/api/driver/chauffeur-switch', [DriverApiController::class, 'toggleChauffeurOnlineSwitch']);
+Route::get('/api/driver/chauffeur-switch', [DriverApiController::class, 'getChauffeurSwitchStatus']);
 
 // Stripe Driver Verification & Multi-Payment Flow
 Route::post('/payment/submit-verification', [StripeVerificationController::class, 'submitForVerification']);
@@ -369,9 +376,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/emergency-contacts/{id}', [\App\Http\Controllers\Api\SosApiController::class, 'update']);
     Route::delete('/emergency-contacts/{id}', [\App\Http\Controllers\Api\SosApiController::class, 'destroy']);
     Route::post('/sos/trigger', [\App\Http\Controllers\Api\SosApiController::class, 'trigger']);
-
-    // Requirement 5: Active Chauffeur Switch
-    Route::post('/driver/chauffeur-switch', [DriverApiController::class, 'toggleChauffeurOnlineSwitch']);
-    Route::get('/driver/chauffeur-switch', [DriverApiController::class, 'getChauffeurSwitchStatus']);
 });
 

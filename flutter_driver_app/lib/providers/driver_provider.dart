@@ -79,13 +79,12 @@ class DriverProvider extends ChangeNotifier {
             _professionalBadgeLabel = _isDriverDocsVerified ? 'Verified Professional Driver' : 'Driver (Document Verification Pending)';
           }
           final available = profile['is_available'] == true || profile['is_available'] == 1 || profile['is_available'] == '1';
-          if (_isLive && available) {
-            _isOnline = true;
+          _isOnline = _isLive && available;
+          if (_isOnline || _activeChauffeurOnline) {
             _startDispatchLoop();
             notifyListeners();
             return;
           } else {
-            _isOnline = false;
             _stopDispatchLoop();
             notifyListeners();
           }
@@ -93,17 +92,17 @@ class DriverProvider extends ChangeNotifier {
       }
     } catch (_) {}
 
-    // If online and live, ensure dispatch loop runs
-    if (_isOnline && _isLive) {
+    // If online (driver or chauffeur), ensure dispatch loop runs
+    if ((_isOnline && _isLive) || _activeChauffeurOnline) {
       _startDispatchLoop();
     }
     // Initial fetch of pending requests
-    if (_isLive) {
+    if (_isLive || _activeChauffeurOnline) {
       pollPendingRequests();
     }
   }
 
-  /// Requirement 5: Toggle Active Chauffeur Switch
+  /// Requirement 5: Toggle Active Chauffeur Switch (works independently even when regular Driver status is offline)
   Future<bool> toggleChauffeurOnline() async {
     final targetState = !_activeChauffeurOnline;
     _isLoading = true;
@@ -111,13 +110,21 @@ class DriverProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await _dio.post('/api/driver/chauffeur-switch', data: {
+      final res = await _dio.post(ApiConstants.driverChauffeurSwitch, data: {
         'online': targetState,
       });
 
       if (res.statusCode == 200 && (res.data['success'] == true || res.data['status'] == 'success')) {
         _activeChauffeurOnline = res.data['active_chauffeur_online'] == true || res.data['active_chauffeur_online'] == 1;
         _isChauffeur = res.data['is_chauffeur'] == true || _isChauffeur;
+        if (_activeChauffeurOnline) {
+          _isLive = true;
+        }
+        if (_activeChauffeurOnline || _isOnline) {
+          _startDispatchLoop();
+        } else {
+          _stopDispatchLoop();
+        }
         _isLoading = false;
         notifyListeners();
         await pollPendingRequests();
@@ -156,7 +163,7 @@ class DriverProvider extends ChangeNotifier {
           _isLive = true;
         }
 
-        if (_isOnline) {
+        if (_isOnline || _activeChauffeurOnline) {
           _startDispatchLoop();
         } else {
           _stopDispatchLoop();
@@ -300,12 +307,11 @@ class DriverProvider extends ChangeNotifier {
                 }
                 final type = j['type']?.toString().toLowerCase() ?? '';
                 final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking') || j['driver_booking_id'] != null;
-                if (_isChauffeur) {
-                  if (_activeChauffeurOnline) {
-                    if (!isDriverHire) return false;
-                  } else {
-                    if (isDriverHire) return false;
-                  }
+                if (isDriverHire) {
+                  if (_isChauffeur && !_activeChauffeurOnline) return false;
+                  if (!_isChauffeur && !_isOnline) return false;
+                } else {
+                  if (!_isOnline) return false;
                 }
                 return true;
               })
@@ -334,13 +340,14 @@ class DriverProvider extends ChangeNotifier {
           final List items = verifRes.data['items'] ?? [];
           final mapped = items.map((e) => Map<String, dynamic>.from(e)).toList();
 
-          if (_isChauffeur) {
-            mapped.removeWhere((item) {
-              final type = item['type']?.toString().toLowerCase() ?? '';
-              final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking');
-              return _activeChauffeurOnline ? !isDriverHire : isDriverHire;
-            });
-          }
+          mapped.removeWhere((item) {
+            final type = item['type']?.toString().toLowerCase() ?? '';
+            final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking');
+            if (isDriverHire) {
+              return _isChauffeur ? !_activeChauffeurOnline : !_isOnline;
+            }
+            return !_isOnline;
+          });
 
           if (mapped.isNotEmpty && mapped.length > _pendingVerifications.length) {
             final firstVerif = mapped.first;
