@@ -182,9 +182,13 @@ class SoundService {
     });
   }
 
+  static const MethodChannel _nativeChannel =
+      MethodChannel('com.ridemycars.driver/order_alert_service');
+
   /// Immediately stop the incoming order ringtone and clear the lock-screen alert
   /// when the driver responds (Accept, Decline, Dismiss, or order expired).
   Future<void> stopRingtone() async {
+    final prevKey = _currentOrderKey;
     isRingingNotifier.value = false;
     isMutedNotifier.value = false;
     _currentOrderKey = null;
@@ -195,6 +199,9 @@ class SoundService {
     _ringWatchdogTimer = null;
 
     LocalNotificationService.instance.cancelIncomingOrderAlert();
+    try {
+      await _nativeChannel.invokeMethod('stopRingtone', {'orderKey': prevKey});
+    } catch (_) {}
 
     try {
       await _ringtonePlayer.stop();
@@ -216,6 +223,9 @@ class SoundService {
       _vibrateTimer?.cancel();
       _vibrateTimer = null;
       LocalNotificationService.instance.cancelIncomingOrderAlert();
+      try {
+        await _nativeChannel.invokeMethod('stopRingtone', {'orderKey': _currentOrderKey});
+      } catch (_) {}
     } else {
       // Unmute audio back to maximum volume and resume vibration
       await _ringtonePlayer.setVolume(1.0);

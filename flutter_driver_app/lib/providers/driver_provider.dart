@@ -3,14 +3,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import '../core/api/api_client.dart';
 import '../core/constants/api_constants.dart';
 import '../core/services/sound_service.dart';
 import '../core/services/local_notification_service.dart';
+import '../core/storage/token_storage.dart';
 
 class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
   final Dio _dio = ApiClient().dio;
+  static const MethodChannel _nativeAlertChannel =
+      MethodChannel('com.ridemycars.driver/order_alert_service');
 
   bool _isOnline = false;
   bool _isLive = false;
@@ -229,6 +233,7 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   void _startDispatchLoop() {
     SoundService.instance.setOnlineKeepAlive(true);
+    _syncNativeOrderAlertService(true);
     _startBackgroundLocationStream();
     pollPendingRequests();
     fetchActiveRides();
@@ -254,9 +259,35 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
     _positionStreamSubscription?.cancel();
     _positionStreamSubscription = null;
     _pendingRequests.clear();
+    _syncNativeOrderAlertService(false);
     SoundService.instance.setOnlineKeepAlive(false);
     SoundService.instance.stopRingtone();
     notifyListeners();
+  }
+
+  Future<void> _syncNativeOrderAlertService(bool active) async {
+    if (!Platform.isAndroid) return;
+    try {
+      if (active) {
+        final token = await TokenStorage.getToken() ?? '';
+        final email = await TokenStorage.getUserEmail() ?? '';
+        final countryCode = await TokenStorage.getSelectedCountryCode() ?? '';
+        await _nativeAlertChannel.invokeMethod('startService', {
+          'token': token,
+          'email': email,
+          'countryCode': countryCode,
+          'baseUrl': ApiConstants.baseUrl,
+          'isOnline': _isOnline,
+          'isChauffeurOnline': _activeChauffeurOnline,
+          'lat': _currentLat?.toString() ?? '',
+          'lng': _currentLng?.toString() ?? '',
+        });
+      } else {
+        await _nativeAlertChannel.invokeMethod('stopService');
+      }
+    } catch (e) {
+      debugPrint('Native order alert service sync notice: $e');
+    }
   }
 
   Future<void> _startBackgroundLocationStream() async {
@@ -370,6 +401,15 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
         );
         _currentLat = position.latitude;
         _currentLng = position.longitude;
+
+        if (Platform.isAndroid) {
+          try {
+            _nativeAlertChannel.invokeMethod('updateLocation', {
+              'lat': _currentLat.toString(),
+              'lng': _currentLng.toString(),
+            });
+          } catch (_) {}
+        }
 
         await _dio.post(ApiConstants.driverLocation, data: {
           'lat': _currentLat,
