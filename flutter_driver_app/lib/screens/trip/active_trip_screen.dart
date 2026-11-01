@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
 import '../../providers/driver_provider.dart';
+import '../../widgets/trip_chat_sheet.dart';
 import '../safety/widgets/sos_floating_button.dart';
 
 class ActiveTripScreen extends StatefulWidget {
@@ -407,8 +408,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
       final rawMethod = (_ride['payment_method'] ?? 'cash').toString().toLowerCase();
       final isCash = rawMethod.contains('cash');
       final confirmMsg = isCash
-          ? 'Are you sure you want to end this trip and collect $currSym${fareAmount.toStringAsFixed(2)} cash from rider? (Collect directly in cash; no digital wallet credit).'
-          : 'Are you sure you want to end this trip? Fare of $currSym${fareAmount.toStringAsFixed(2)} was prepaid digitally and will be credited to your earnings.';
+          ? 'Are you sure you want to end this trip and collect $currSym${fareAmount.toStringAsFixed(0)} cash from rider? (Collect directly in cash; no digital wallet credit).'
+          : 'Are you sure you want to end this trip? Fare of $currSym${fareAmount.toStringAsFixed(0)} was prepaid digitally and will be credited to your earnings.';
 
       final confirmed = await showDialog<bool>(
         context: context,
@@ -1196,7 +1197,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                '$currSym${fare.toStringAsFixed(2)}',
+                                '$currSym${fare.toStringAsFixed(0)}',
                                 style: const TextStyle(
                                   color: AppColors.success,
                                   fontWeight: FontWeight.w900,
@@ -1240,6 +1241,31 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          final tripId = _ride['id'] ?? _ride['ride_id'] ?? _ride['driver_booking_id'] ?? _ride['package_delivery_id'] ?? 0;
+                                          final rawType = (_ride['type'] ?? _ride['request_type'] ?? 'ride').toString();
+                                          TripChatSheet.show(
+                                            context,
+                                            tripType: rawType,
+                                            tripId: tripId,
+                                            peerName: customerName,
+                                            senderRole: 'driver',
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          foregroundColor: Colors.black,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          elevation: 2,
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        icon: const Icon(Icons.forum_rounded, size: 13),
+                                        label: const Text('Chat', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11)),
+                                      ),
+                                      const SizedBox(width: 6),
                                       ElevatedButton.icon(
                                         onPressed: () => _callRider(customerPhone.toString()),
                                         style: ElevatedButton.styleFrom(

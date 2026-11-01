@@ -333,7 +333,7 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
                         ),
                       ),
                       Text(
-                        '${widget.currencySymbol}${widget.payNowAmount.toStringAsFixed(2)}',
+                        '${widget.currencySymbol}${widget.payNowAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
@@ -391,7 +391,7 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
               title: 'RideMyCars Wallet',
               subtitle: _isLoadingWallet
                   ? 'Loading balance...'
-                  : 'Balance: ${widget.currencySymbol}${_walletBalance.toStringAsFixed(2)}',
+                  : 'Balance: ${widget.currencySymbol}${_walletBalance.toStringAsFixed(0)}',
               icon: Icons.account_balance_wallet_rounded,
               isDark: isDark,
             ),
@@ -452,7 +452,7 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
                 elevation: 4,
               ),
               child: Text(
-                'Authorize & Pay ${widget.currencySymbol}${widget.payNowAmount.toStringAsFixed(2)} →',
+                'Authorize & Pay ${widget.currencySymbol}${widget.payNowAmount.toStringAsFixed(0)} →',
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 15,
@@ -927,7 +927,7 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
                 Text(
                   hasEnough
                       ? 'Funds will be immediately deducted from your in-app wallet balance.'
-                      : 'You need ${widget.currencySymbol}${(widget.payNowAmount - _walletBalance).toStringAsFixed(2)} more. Please top up your wallet.',
+                      : 'You need ${widget.currencySymbol}${(widget.payNowAmount - _walletBalance).toStringAsFixed(0)} more. Please top up your wallet.',
                   style: const TextStyle(fontSize: 11),
                 ),
               ],

@@ -1783,6 +1783,12 @@ Route::post('/api/ride/{id}/review', function (\Illuminate\Http\Request $request
     return response()->json(['success' => true]);
 })->middleware('auth');
 
+// In-App Trip Chat Web & API Routes (Issue 3.7: Rider & Driver In-App Chat alongside WhatsApp)
+Route::get('/api/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'index']);
+Route::post('/api/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'store']);
+Route::get('/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'index']);
+Route::post('/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'store']);
+
 // Get Notifications for Current User
 Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
     $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
@@ -1795,16 +1801,19 @@ Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
         ->toArray();
     $userIds = array_unique(array_merge($userIds, $matchingIds));
 
+    $activeCountry = $request->input('country') ?: (\App\Services\CountryService::getCurrentCountryCode($request) ?: 'GHA');
+    $fallbackCurrencyCode = \App\Models\CountryPricing::forCountry($activeCountry)->currency_code ?? 'GHS';
+
     $notifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
         ->orderBy('created_at', 'desc')
         ->take(40)
         ->get()
-        ->map(function ($n) {
+        ->map(function ($n) use ($fallbackCurrencyCode) {
             return [
                 'id' => $n->id,
                 'type' => $n->type,
                 'title' => $n->title,
-                'message' => $n->message,
+                'message' => \App\Services\NotificationService::formatNotificationMessage($n, $fallbackCurrencyCode),
                 'link' => $n->link,
                 'data' => $n->data,
                 'is_read' => (bool)$n->is_read,
@@ -2531,14 +2540,19 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->pluck('ride_id')
             ->toArray();
 
-        // Requirement 5: When operating in Chauffeur mode, receive ONLY Driver Hire requests
-        $isChauffeurOperating = ($profile->is_chauffeur || $profile->driver_type === 'chauffeur') 
+        // Chauffeurs receive Hiring Requests and SMS notifications ONLY when online
+        $isChauffeurRole = ($profile->is_chauffeur || $profile->driver_type === 'chauffeur');
+        $isChauffeurOperating = $isChauffeurRole
             && ($profile->active_chauffeur_online || $profile->chauffeur_mode);
+        $canReceiveChauffeurBookings = !$isChauffeurRole || $isChauffeurOperating;
 
         $unassignedPendingRideIds = [];
         if ($profile->is_available && $profile->is_live && !$isChauffeurOperating) {
             $unassignedPendingRideIds = \App\Models\Ride::where('status', 'pending')
                 ->whereNull('driver_id')
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
                 ->whereNotIn('id', $rejectedRideIds)
                 ->latest()
                 ->take(10)
@@ -2564,16 +2578,18 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->pluck('driver_booking_id')
             ->toArray();
 
-        $assignedBookingIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
-            ->where('status', 'pending')
-            ->where('expires_at', '>', now())
-            ->whereNotNull('driver_booking_id')
-            ->whereNotIn('driver_booking_id', $rejectedBookingIds)
-            ->pluck('driver_booking_id')
-            ->toArray();
+        $assignedBookingIds = $canReceiveChauffeurBookings
+            ? \App\Models\RideAssignment::whereIn('driver_id', $userIds)
+                ->where('status', 'pending')
+                ->where('expires_at', '>', now())
+                ->whereNotNull('driver_booking_id')
+                ->whereNotIn('driver_booking_id', $rejectedBookingIds)
+                ->pluck('driver_booking_id')
+                ->toArray()
+            : [];
 
         $unassignedBookingIds = [];
-        if ($profile->is_available && $profile->is_live) {
+        if ($profile->is_available && $profile->is_live && $canReceiveChauffeurBookings) {
             $unassignedBookingIds = \App\Models\DriverBooking::where('booking_status', 'pending')
                 ->whereNull('driver_id')
                 ->whereNotIn('id', $rejectedBookingIds)
@@ -2596,11 +2612,17 @@ Route::prefix('driver')->middleware('auth')->group(function () {
             ->get();
             
         $activeDriverBookings = $driverBookings->whereIn('booking_status', ['accepted', 'in_progress']);
-        $pendingDriverBookings = $driverBookings->where('booking_status', 'pending')->whereNotIn('id', $rejectedBookingIds);
+        $pendingDriverBookings = $canReceiveChauffeurBookings
+            ? $driverBookings->where('booking_status', 'pending')->whereNotIn('id', $rejectedBookingIds)
+            : collect();
         $completedDriverBookings = $driverBookings->where('booking_status', 'completed');
         
         $activeRides = $rides->whereIn('status', ['accepted', 'en_route', 'arrived', 'in_progress']);
-        $pendingRides = $isChauffeurOperating ? collect() : $rides->where('status', 'pending')->whereNotIn('id', $rejectedRideIds);
+        $pendingRides = $isChauffeurOperating
+            ? collect()
+            : $rides->where('status', 'pending')
+                ->whereNotIn('id', $rejectedRideIds)
+                ->filter(fn ($r) => !$r->isExpired());
         $completedRides = $rides->where('status', 'completed');
         
         $today = now()->startOfDay();
@@ -2648,8 +2670,8 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         ]);
 
         $message = $newState 
-            ? 'Active Chauffeur Switch turned ONLINE. You will receive Driver Hire requests only.'
-            : 'Active Chauffeur Switch turned OFFLINE. SMS notifications are now active for pending Driver Hire requests.';
+            ? 'Active Chauffeur Switch turned ONLINE. You will receive Driver Hire requests and SMS notifications.'
+            : 'Active Chauffeur Switch turned OFFLINE. You will not receive Driver Hire requests or SMS notifications while offline.';
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -2658,7 +2680,7 @@ Route::prefix('driver')->middleware('auth')->group(function () {
                 'active_chauffeur_online' => (bool) $profile->active_chauffeur_online,
                 'chauffeur_mode' => (bool) $profile->chauffeur_mode,
                 'message' => $message,
-                'status_label' => $newState ? 'Online (Driver Hire Only)' : 'Offline (SMS Alerts Active)',
+                'status_label' => $newState ? 'Online (Receiving Hire Requests & SMS)' : 'Offline (No Hire Requests or SMS)',
             ]);
         }
 

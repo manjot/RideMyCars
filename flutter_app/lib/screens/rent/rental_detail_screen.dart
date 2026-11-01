@@ -301,14 +301,14 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
     if (countryProv.selectedCountryCode == 'USA') {
       return _baseUsdRate;
     }
-    return double.parse((_baseUsdRate * countryProv.rentalMultiplier).toStringAsFixed(2));
+    return double.parse((_baseUsdRate * countryProv.rentalMultiplier).toStringAsFixed(0));
   }
 
   double _getSecurityDeposit(CountryProvider countryProv) {
     if (countryProv.selectedCountryCode == 'USA') {
       return _baseUsdDeposit;
     }
-    return double.parse((_baseUsdDeposit * countryProv.rentalMultiplier).toStringAsFixed(2));
+    return double.parse((_baseUsdDeposit * countryProv.rentalMultiplier).toStringAsFixed(0));
   }
 
   double _getBaseTotal(CountryProvider countryProv) {
@@ -662,7 +662,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                     children: [
                       Text('Online Paid:', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
                       Text(
-                        '$sym${payNow.toStringAsFixed(2)}',
+                        '$sym${payNow.toStringAsFixed(0)}',
                         style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ],
@@ -673,7 +673,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                       children: [
                         Text('Due at Pickup:', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
                         Text(
-                          '$sym${balance.toStringAsFixed(2)}',
+                          '$sym${balance.toStringAsFixed(0)}',
                           style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ],
@@ -898,7 +898,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      '$sym${dailyRate.toStringAsFixed(2)}',
+                      '$sym${dailyRate.toStringAsFixed(0)}',
                       style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 20, fontWeight: FontWeight.w900),
                     ),
                   ),
@@ -1332,7 +1332,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                           const SizedBox(height: 2),
                           const Text('Full Protection Cover', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13.5)),
                           Text(
-                            '+$sym${protDaily.toStringAsFixed(2)} / day',
+                            '+$sym${protDaily.toStringAsFixed(0)} / day',
                             style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 10.5, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -1386,19 +1386,19 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
           _buildExtraItem(
             'additional_driver',
             '👨‍✈️ Additional Driver',
-            '+$sym${countryProv.additionalDriverDailyRate.toStringAsFixed(2)} / day',
+            '+$sym${countryProv.additionalDriverDailyRate.toStringAsFixed(0)} / day',
           ),
           const SizedBox(height: 8),
           _buildExtraItem(
             'child_seat',
             '👶 Child Safety Seat',
-            '+$sym${countryProv.childSeatDailyRate.toStringAsFixed(2)} / day',
+            '+$sym${countryProv.childSeatDailyRate.toStringAsFixed(0)} / day',
           ),
           const SizedBox(height: 8),
           _buildExtraItem(
             'gps',
             '🗺️ GPS Navigation',
-            '+$sym${countryProv.gpsDailyRate.toStringAsFixed(2)} / day',
+            '+$sym${countryProv.gpsDailyRate.toStringAsFixed(0)} / day',
           ),
         ],
       ),
@@ -1650,18 +1650,18 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
 
           // Itemized Breakdown
           _buildSummaryRow(
-            'Base Rental ($_daysCount Days @ $sym${dailyRate.toStringAsFixed(2)}):',
-            '$sym${baseTotal.toStringAsFixed(2)}',
+            'Base Rental ($_daysCount Days @ $sym${dailyRate.toStringAsFixed(0)}):',
+            '$sym${baseTotal.toStringAsFixed(0)}',
           ),
           const SizedBox(height: 6),
           _buildSummaryRow(
             'Protection Cover:',
-            '+ $sym${protectionTotal.toStringAsFixed(2)}',
+            '+ $sym${protectionTotal.toStringAsFixed(0)}',
           ),
           const SizedBox(height: 6),
           _buildSummaryRow(
             'Optional Extras:',
-            '+ $sym${extrasTotal.toStringAsFixed(2)}',
+            '+ $sym${extrasTotal.toStringAsFixed(0)}',
           ),
 
           const SizedBox(height: 10),
@@ -1680,7 +1680,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    '$sym${totalAmount.toStringAsFixed(2)}',
+                    '$sym${totalAmount.toStringAsFixed(0)}',
                     style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 20, fontWeight: FontWeight.w900),
                   ),
                 ),
@@ -1717,7 +1717,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '$sym${(totalAmount * 0.20).toStringAsFixed(2)}',
+                            '$sym${(totalAmount * 0.20).toStringAsFixed(0)}',
                             style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 13),
                           ),
                         ),
@@ -1749,7 +1749,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '$sym${totalAmount.toStringAsFixed(2)}',
+                            '$sym${totalAmount.toStringAsFixed(0)}',
                             style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 13),
                           ),
                         ),
@@ -1783,7 +1783,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          '$sym${payNowDeposit.toStringAsFixed(2)}',
+                          '$sym${payNowDeposit.toStringAsFixed(0)}',
                           style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w900, fontSize: 14),
                         ),
                       ),
@@ -1803,7 +1803,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '$sym${balanceAtPickup.toStringAsFixed(2)}',
+                            '$sym${balanceAtPickup.toStringAsFixed(0)}',
                             style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900, fontSize: 14),
                           ),
                         ),
@@ -2019,7 +2019,7 @@ class _RentalDetailScreenState extends State<RentalDetailScreen> {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          'Confirm & Pay Deposit ($sym${payNow.toStringAsFixed(2)}) →',
+                          'Confirm & Pay Deposit ($sym${payNow.toStringAsFixed(0)}) →',
                           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

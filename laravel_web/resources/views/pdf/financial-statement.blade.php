@@ -54,15 +54,15 @@
         </div>
         <div class="stat-item">
             <div class="stat-label">Gross Passenger Fares</div>
-            <div class="stat-value">GH₵ {{ number_format($totalGross, 2) }}</div>
+            <div class="stat-value">GH₵ {{ number_format($totalGross, 0) }}</div>
         </div>
         <div class="stat-item">
             <div class="stat-label">Platform Share</div>
-            <div class="stat-value" style="color: #ea580c;">GH₵ {{ number_format($totalPlatform, 2) }}</div>
+            <div class="stat-value" style="color: #ea580c;">GH₵ {{ number_format($totalPlatform, 0) }}</div>
         </div>
         <div class="stat-item">
             <div class="stat-label">Net Fleet Owner Payout</div>
-            <div class="stat-value" style="color: #16a34a;">GH₵ {{ number_format($totalNet, 2) }}</div>
+            <div class="stat-value" style="color: #16a34a;">GH₵ {{ number_format($totalNet, 0) }}</div>
         </div>
     </div>
 
@@ -90,10 +90,10 @@
                     <td>{{ $txn->user ? $txn->user->name : 'N/A' }}</td>
                     <td>{{ $txn->vehicle ? ($txn->vehicle->make . ' ' . $txn->vehicle->model) : 'N/A' }}</td>
                     <td><strong>{{ $txn->service_vertical ?? 'RIDE_HAILING' }}</strong></td>
-                    <td class="text-right"><strong>{{ number_format((float) ($txn->gross_amount ?? $txn->amount), 2) }}</strong></td>
-                    <td class="text-right" style="color: #ea580c;">{{ number_format((float) ($txn->platform_fee ?? 0), 2) }}</td>
-                    <td class="text-right">{{ number_format((float) ($txn->maintenance_fee ?? 0), 2) }}</td>
-                    <td class="text-right" style="color: #16a34a;"><strong>{{ number_format((float) ($txn->net_payout ?? 0), 2) }}</strong></td>
+                    <td class="text-right"><strong>{{ number_format((float) ($txn->gross_amount ?? $txn->amount), 0) }}</strong></td>
+                    <td class="text-right" style="color: #ea580c;">{{ number_format((float) ($txn->platform_fee ?? 0), 0) }}</td>
+                    <td class="text-right">{{ number_format((float) ($txn->maintenance_fee ?? 0), 0) }}</td>
+                    <td class="text-right" style="color: #16a34a;"><strong>{{ number_format((float) ($txn->net_payout ?? 0), 0) }}</strong></td>
                     <td>
                         @php
                             $st = strtolower($txn->payout_status ?? 'pending');

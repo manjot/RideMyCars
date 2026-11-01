@@ -82,6 +82,9 @@ class DriverProfile extends Model
         'masked_license',
         'is_verified',
         'is_chauffeur',
+        'is_driver_docs_verified',
+        'is_guarantor_verified',
+        'professional_badge_label',
         'insurance_certificate_url',
         'fitness_certificate_url',
         'is_certificates_approved',
@@ -278,6 +281,73 @@ class DriverProfile extends Model
     public function guarantor()
     {
         return $this->hasOne(GuarantorVerification::class, 'driver_profile_id')->latestOfMany();
+    }
+
+    /**
+     * Check if the driver's documents (License, ID card, or Vehicle Certificates) are verified.
+     * Only after the Driver's documents are verified should it display "Verified Professional Driver".
+     */
+    public function getIsDriverDocsVerifiedAttribute(): bool
+    {
+        $licenseVerified = in_array(strtolower((string) $this->verification_status), ['verified', 'approved']);
+        $idVerified = in_array(strtolower((string) $this->id_card_status), ['verified', 'approved']);
+        $certsApproved = $this->is_certificates_approved;
+
+        if (!$licenseVerified) {
+            return false;
+        }
+
+        // If driver uploaded ID card or vehicle certificates, require at least one or both to be approved/verified
+        // or if admin explicitly verified the driver's documents (verification_status = verified and id_card_status not pending/rejected)
+        if ($certsApproved || $idVerified) {
+            return true;
+        }
+
+        // If no pending/unverified ID card or certificate rejection exists and license is verified + live/kyc verified
+        $idPendingOrRejected = in_array(strtolower((string) $this->id_card_status), ['pending', 'submitted', 'under_review', 'rejected']);
+        $insPendingOrRejected = in_array(strtolower((string) $this->vehicle_insurance_status), ['submitted', 'under_review', 'rejected']);
+        $fitPendingOrRejected = in_array(strtolower((string) $this->vehicle_fitness_status), ['submitted', 'under_review', 'rejected']);
+
+        if ($idPendingOrRejected || $insPendingOrRejected || $fitPendingOrRejected) {
+            return false;
+        }
+
+        return !empty($this->license_front_image) || $this->kyc_status === 'verified';
+    }
+
+    /**
+     * Check if the Chauffeur's Guarantor's documents are verified.
+     * Only after the Chauffeur's Guarantor's documents are verified should it display "Verified Professional Chauffeur".
+     */
+    public function getIsGuarantorVerifiedAttribute(): bool
+    {
+        $guarantor = $this->relationLoaded('guarantor') ? $this->guarantor : $this->guarantor()->first();
+        if (!$guarantor) {
+            return false;
+        }
+        return in_array(strtolower((string) $guarantor->status), ['verified', 'approved']);
+    }
+
+    /**
+     * Get the exact status label to display on the Driver / Chauffeur profile & dashboard:
+     * - Only after Chauffeur's Guarantor's documents are verified -> "Verified Professional Chauffeur"
+     * - Only after Driver's documents are verified -> "Verified Professional Driver"
+     * - Otherwise -> pending verification label
+     */
+    public function getProfessionalBadgeLabelAttribute(): string
+    {
+        if ($this->is_chauffeur) {
+            if ($this->is_guarantor_verified) {
+                return 'Verified Professional Chauffeur';
+            }
+            return 'Chauffeur (Guarantor Verification Pending)';
+        }
+
+        if ($this->is_driver_docs_verified) {
+            return 'Verified Professional Driver';
+        }
+
+        return 'Driver (Document Verification Pending)';
     }
 
     /**

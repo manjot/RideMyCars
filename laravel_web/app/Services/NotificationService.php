@@ -253,22 +253,75 @@ class NotificationService
     }
 
     /**
+     * Format notification message so any currency amount uses the user's selected country's currency code
+     * and is rounded to the nearest whole number.
+     */
+    public static function formatNotificationMessage(UserNotification $n, ?string $fallbackCurrencyCode = null): string
+    {
+        $msg = (string) ($n->message ?? '');
+        if ($msg === '') {
+            return '';
+        }
+
+        $data = is_array($n->data) ? $n->data : [];
+        $currencyCode = $data['currency_code'] ?? $data['currency'] ?? null;
+
+        if (empty($currencyCode) && !empty($n->ride_id)) {
+            $ride = Ride::find($n->ride_id);
+            if ($ride) {
+                $currencyCode = CountryService::resolveItemCurrencyCode($ride, $fallbackCurrencyCode);
+            }
+        }
+
+        if (empty($currencyCode)) {
+            $detected = CountryService::detectCountryFromLocation($msg);
+            if ($detected) {
+                $currencyCode = CountryService::getCurrencyCodeByCountryIso($detected);
+            }
+        }
+
+        if (empty($currencyCode)) {
+            $activeCountry = CountryService::getCurrentCountryCode();
+            $currencyCode = \App\Models\CountryPricing::forCountry($activeCountry)->currency_code ?? ($fallbackCurrencyCode ?: 'GHS');
+        }
+
+        $currencyCode = strtoupper(trim((string) $currencyCode)) ?: 'GHS';
+
+        // Replace "$65.65", "GH₵65.65", "GHS 65.65", etc. with "{CURRENCY_CODE} {WHOLE_NUMBER}"
+        $msg = preg_replace_callback(
+            '/(?:GH₵|GHS|USD|INR|NGN|ZAR|GBP|EUR|\$|₹|₦|£|€)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?)/u',
+            function ($matches) use ($currencyCode) {
+                $rawNum = str_replace(',', '', $matches[1]);
+                $rounded = round((float) $rawNum, 0);
+                return $currencyCode . ' ' . number_format($rounded, 0);
+            },
+            $msg
+        );
+
+        return $msg;
+    }
+
+    /**
      * Notify Rider and Driver when trip is completed.
      */
     public static function notifyTripCompleted(Ride $ride): void
     {
         $ride->refresh();
-        $fare = number_format($ride->fare ?? 0, 2);
+        $activeCountry = CountryService::getCurrentCountryCode();
+        $fallbackCurrency = \App\Models\CountryPricing::forCountry($activeCountry)->currency_code ?? 'GHS';
+        $currencyCode = CountryService::resolveItemCurrencyCode($ride, $fallbackCurrency);
+        $rawFare = round((float) ($ride->fare ?? $ride->total_amount ?? 0), 0);
+        $fare = number_format($rawFare, 0);
 
         if ($ride->rider_id) {
             self::send(
                 $ride->rider_id,
                 'completed',
                 'Trip Completed',
-                "You have arrived at {$ride->dropoff_location}! Total fare: \${$fare}. Tap to rate your driver.",
+                "You have arrived at {$ride->dropoff_location}! Total fare: {$currencyCode} {$fare}. Tap to rate your driver.",
                 $ride->id,
                 '/my-rides',
-                ['status' => 'completed', 'icon' => 'flag', 'color' => 'green', 'fare' => $fare]
+                ['status' => 'completed', 'icon' => 'flag', 'color' => 'green', 'fare' => $rawFare, 'currency_code' => $currencyCode]
             );
         }
 
@@ -277,10 +330,10 @@ class NotificationService
                 $ride->driver_id,
                 'completed',
                 'Trip Completed',
-                "Completed Ride #{$ride->id}. Total fare earned: \${$fare}.",
+                "Completed Ride #{$ride->id}. Total fare earned: {$currencyCode} {$fare}.",
                 $ride->id,
                 '/driver/dashboard',
-                ['status' => 'completed', 'icon' => 'dollar', 'color' => 'green', 'fare' => $fare]
+                ['status' => 'completed', 'icon' => 'dollar', 'color' => 'green', 'fare' => $rawFare, 'currency_code' => $currencyCode]
             );
         }
     }
@@ -329,15 +382,17 @@ class NotificationService
      */
     public static function notifyDriverRideAssigned(Ride $ride, int $driverId): void
     {
-        $fare = number_format($ride->fare ?? 0, 2);
+        $currencyCode = CountryService::resolveItemCurrencyCode($ride, 'GHS');
+        $rawFare = round((float) ($ride->fare ?? $ride->total_amount ?? 0), 0);
+        $fare = number_format($rawFare, 0);
         self::send(
             $driverId,
             'ride_assignment',
             'New Ride Request',
-            "New ride request from {$ride->pickup_location} to {$ride->dropoff_location} (\${$fare}). Tap to respond.",
+            "New ride request from {$ride->pickup_location} to {$ride->dropoff_location} ({$currencyCode} {$fare}). Tap to respond.",
             $ride->id,
             '/driver/dashboard',
-            ['ride_id' => $ride->id, 'fare' => $fare, 'icon' => 'car', 'color' => 'indigo']
+            ['ride_id' => $ride->id, 'fare' => $rawFare, 'currency_code' => $currencyCode, 'icon' => 'car', 'color' => 'indigo']
         );
     }
 
@@ -347,7 +402,7 @@ class NotificationService
      */
     public static function notifyDriverHiringAssigned(DriverBooking $booking, int $driverId): void
     {
-        $total = number_format($booking->total_price ?? 0, 2);
+        $total = number_format(round((float) ($booking->total_price ?? 0), 0), 0);
         $clientName = $booking->client?->name ?? 'Client';
 
         $isImmediate = false;

@@ -16,6 +16,9 @@ class DriverProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isChauffeur = false;
   bool _activeChauffeurOnline = false;
+  bool _isDriverDocsVerified = false;
+  bool _isGuarantorVerified = false;
+  String _professionalBadgeLabel = 'Driver (Document Verification Pending)';
   String? _errorMessage;
   double? _currentLat;
   double? _currentLng;
@@ -35,6 +38,9 @@ class DriverProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isChauffeur => _isChauffeur;
   bool get activeChauffeurOnline => _activeChauffeurOnline;
+  bool get isDriverDocsVerified => _isDriverDocsVerified;
+  bool get isGuarantorVerified => _isGuarantorVerified;
+  String get professionalBadgeLabel => _professionalBadgeLabel;
   String? get errorMessage => _errorMessage;
   double? get currentLat => _currentLat;
   double? get currentLng => _currentLng;
@@ -63,6 +69,15 @@ class DriverProvider extends ChangeNotifier {
           _isLive = profile['is_live'] == true || profile['is_live'] == 1 || profile['is_live'] == '1';
           _isChauffeur = profile['is_chauffeur'] == true || profile['is_chauffeur'] == 1 || profile['is_chauffeur'] == '1' || profile['driver_type'] == 'chauffeur';
           _activeChauffeurOnline = profile['active_chauffeur_online'] == true || profile['active_chauffeur_online'] == 1 || profile['active_chauffeur_online'] == '1' || profile['chauffeur_mode'] == true;
+          _isDriverDocsVerified = profile['is_driver_docs_verified'] == true || profile['is_driver_docs_verified'] == 1;
+          _isGuarantorVerified = profile['is_guarantor_verified'] == true || profile['is_guarantor_verified'] == 1;
+          if (profile['professional_badge_label'] != null && profile['professional_badge_label'].toString().isNotEmpty) {
+            _professionalBadgeLabel = profile['professional_badge_label'].toString();
+          } else if (_isChauffeur) {
+            _professionalBadgeLabel = _isGuarantorVerified ? 'Verified Professional Chauffeur' : 'Chauffeur (Guarantor Verification Pending)';
+          } else {
+            _professionalBadgeLabel = _isDriverDocsVerified ? 'Verified Professional Driver' : 'Driver (Document Verification Pending)';
+          }
           final available = profile['is_available'] == true || profile['is_available'] == 1 || profile['is_available'] == '1';
           if (_isLive && available) {
             _isOnline = true;
@@ -283,12 +298,13 @@ class DriverProvider extends ChangeNotifier {
                     if (DateTime.parse(exp.toString()).toLocal().isBefore(DateTime.now())) return false;
                   } catch (_) {}
                 }
-                // Requirement 5: When operating in Active Chauffeur mode, receive ONLY Driver Hire requests!
-                if (_isChauffeur && _activeChauffeurOnline) {
-                  final type = j['type']?.toString().toLowerCase() ?? '';
-                  final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking') || j['driver_booking_id'] != null;
-                  if (!isDriverHire) {
-                    return false; // Suppress regular rides!
+                final type = j['type']?.toString().toLowerCase() ?? '';
+                final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking') || j['driver_booking_id'] != null;
+                if (_isChauffeur) {
+                  if (_activeChauffeurOnline) {
+                    if (!isDriverHire) return false;
+                  } else {
+                    if (isDriverHire) return false;
                   }
                 }
                 return true;
@@ -318,10 +334,11 @@ class DriverProvider extends ChangeNotifier {
           final List items = verifRes.data['items'] ?? [];
           final mapped = items.map((e) => Map<String, dynamic>.from(e)).toList();
 
-          if (_isChauffeur && _activeChauffeurOnline) {
+          if (_isChauffeur) {
             mapped.removeWhere((item) {
               final type = item['type']?.toString().toLowerCase() ?? '';
-              return !type.contains('hire') && !type.contains('chauffeur') && !type.contains('booking');
+              final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking');
+              return _activeChauffeurOnline ? !isDriverHire : isDriverHire;
             });
           }
 

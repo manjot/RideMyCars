@@ -989,6 +989,9 @@ class DriverApiController extends Controller
         return response()->json([
             'success' => true,
             'is_chauffeur' => (bool)$profile->is_chauffeur,
+            'is_driver_docs_verified' => (bool)$profile->is_driver_docs_verified,
+            'is_guarantor_verified' => (bool)$profile->is_guarantor_verified,
+            'professional_badge_label' => $profile->professional_badge_label,
             'driver_type' => $profile->driver_type ?? ($profile->is_chauffeur ? 'chauffeur' : 'standard'),
             'vehicle_certificates' => [
                 'insurance_status' => $profile->vehicle_insurance_status ?? 'pending',
@@ -1199,6 +1202,8 @@ class DriverApiController extends Controller
             return true;
         });
 
+        $canReceiveChauffeurBookings = !$user->driverProfile || !$user->driverProfile->is_chauffeur || $user->driverProfile->active_chauffeur_online || $user->driverProfile->chauffeur_mode;
+
         foreach ($assignments as $a) {
             if ($a->ride && $a->ride->status === 'pending' && !$a->ride->isExpired()) {
                 $rawMethod = strtolower((string)($a->ride->payment_method ?? ''));
@@ -1227,12 +1232,14 @@ class DriverApiController extends Controller
                     'dropoff_location' => $a->ride->dropoff_location,
                     'dropoff_lat' => $a->ride->dropoff_lat,
                     'dropoff_lng' => $a->ride->dropoff_lng,
-                    'fare' => floatval($a->ride->fare ?: $a->ride->total_amount),
-                    'total_price' => floatval($a->ride->fare ?: $a->ride->total_amount),
+                    'fare' => round(floatval($a->ride->fare ?: $a->ride->total_amount), 0),
+                    'total_price' => round(floatval($a->ride->fare ?: $a->ride->total_amount), 0),
                     'currency_symbol' => $rPricing->currency_symbol,
                     'currency_code' => $rPricing->currency_code,
                     'country' => $rPricing->country_code,
                     'vehicle_type' => $a->ride->vehicle_type ?? 'Standard',
+                    'payment_method' => $a->ride->payment_method ?: 'cash',
+                    'payment_status' => $a->ride->payment_status ?: 'pending',
                     'customer_name' => $customerName,
                     'customer_phone' => $customerPhone,
                     'poc_name' => $pocName,
@@ -1253,7 +1260,7 @@ class DriverApiController extends Controller
                     'pickup_date' => $a->ride->pickup_date ? \Carbon\Carbon::parse($a->ride->pickup_date)->format('M d, Y') : null,
                     'pickup_time' => $a->ride->pickup_time ?? null,
                 ];
-            } elseif ($a->driverBooking && $a->driverBooking->booking_status === 'pending') {
+            } elseif ($canReceiveChauffeurBookings && $a->driverBooking && $a->driverBooking->booking_status === 'pending') {
                 $rawDbMethod = strtolower((string)($a->driverBooking->payment_method ?? ''));
                 $isDbCash = in_array($rawDbMethod, ['cash', 'pay_on_pickup', 'cod'], true) || str_contains($rawDbMethod, 'cash');
                 $isDbPaidOrHold = in_array(strtolower((string)($a->driverBooking->payment_status ?? '')), ['hold', 'authorized', 'paid', 'successful'], true);
@@ -1274,11 +1281,13 @@ class DriverApiController extends Controller
                     'service_category' => $a->driverBooking->service_category,
                     'duration_type' => $a->driverBooking->duration_type,
                     'duration_count' => $a->driverBooking->duration_count,
-                    'total_price' => floatval($a->driverBooking->total_price),
-                    'fare' => floatval($a->driverBooking->total_price),
+                    'total_price' => round(floatval($a->driverBooking->total_price), 0),
+                    'fare' => round(floatval($a->driverBooking->total_price), 0),
                     'currency_symbol' => $bPricing->currency_symbol,
                     'currency_code' => $bPricing->currency_code,
                     'country' => $bPricing->country_code,
+                    'payment_method' => $a->driverBooking->payment_method ?: 'cash',
+                    'payment_status' => $a->driverBooking->payment_status ?: 'pending',
                     'customer_name' => $clientName,
                     'customer_phone' => $clientPhone,
                     'client_name' => $clientName,
@@ -1318,11 +1327,13 @@ class DriverApiController extends Controller
                     'package_delivery_id' => $a->packageDelivery->id,
                     'pickup_location' => $a->packageDelivery->pickup_location,
                     'dropoff_location' => $a->packageDelivery->dropoff_location,
-                    'total_price' => floatval($a->packageDelivery->total_price),
-                    'fare' => floatval($a->packageDelivery->total_price),
+                    'total_price' => round(floatval($a->packageDelivery->total_price), 0),
+                    'fare' => round(floatval($a->packageDelivery->total_price), 0),
                     'currency_symbol' => $pPricing->currency_symbol,
                     'currency_code' => $pPricing->currency_code,
                     'country' => $pPricing->country_code,
+                    'payment_method' => $a->packageDelivery->payment_method ?: 'cash',
+                    'payment_status' => $a->packageDelivery->payment_status ?: 'pending',
                     'customer_name' => $custName,
                     'customer_phone' => $custPhone,
                     'poc_name' => $pocName,
@@ -1357,19 +1368,21 @@ class DriverApiController extends Controller
             }
         }
 
-        // 1.5 Also load any direct pending driver bookings assigned to this driver where payment is confirmed
+        // 1.5 Also load any direct pending driver bookings assigned to this driver where payment is confirmed (only when Chauffeur is online)
         $processedBookingIds = collect($requests)->where('type', 'driver_booking')->pluck('booking_id')->toArray();
-        $directBookings = \App\Models\DriverBooking::with('client')
-            ->whereIn('driver_id', $userIds)
-            ->where('booking_status', 'pending')
-            ->where(function ($q) {
-                $q->whereIn('payment_status', ['paid', 'hold', 'authorized', 'successful'])
-                  ->orWhereIn('payment_method', ['cash', 'pay_on_pickup', 'cod']);
-            })
-            ->whereNotIn('id', $rejectedBookingIds)
-            ->whereNotIn('id', $processedBookingIds)
-            ->latest()
-            ->get();
+        $directBookings = $canReceiveChauffeurBookings
+            ? \App\Models\DriverBooking::with('client')
+                ->whereIn('driver_id', $userIds)
+                ->where('booking_status', 'pending')
+                ->where(function ($q) {
+                    $q->whereIn('payment_status', ['paid', 'hold', 'authorized', 'successful'])
+                      ->orWhereIn('payment_method', ['cash', 'pay_on_pickup', 'cod']);
+                })
+                ->whereNotIn('id', $rejectedBookingIds)
+                ->whereNotIn('id', $processedBookingIds)
+                ->latest()
+                ->get()
+            : collect();
 
         foreach ($directBookings as $db) {
             $bPricing = \App\Models\CountryPricing::forCountry($db->country ?? $driverCountry);
@@ -1386,11 +1399,13 @@ class DriverApiController extends Controller
                 'service_category' => $db->service_category,
                 'duration_type' => $db->duration_type,
                 'duration_count' => $db->duration_count,
-                'total_price' => floatval($db->total_price),
-                'fare' => floatval($db->total_price),
+                'total_price' => round(floatval($db->total_price), 0),
+                'fare' => round(floatval($db->total_price), 0),
                 'currency_symbol' => $bPricing->currency_symbol,
                 'currency_code' => $bPricing->currency_code,
                 'country' => $bPricing->country_code,
+                'payment_method' => $db->payment_method ?: 'cash',
+                'payment_status' => $db->payment_status ?: 'pending',
                 'customer_name' => $clientName,
                 'customer_phone' => $clientPhone,
                 'client_name' => $clientName,
@@ -1492,12 +1507,14 @@ class DriverApiController extends Controller
                 'dropoff_location' => $pr->dropoff_location,
                 'dropoff_lat' => $pr->dropoff_lat,
                 'dropoff_lng' => $pr->dropoff_lng,
-                'fare' => floatval($pr->fare ?: $pr->total_amount),
-                'total_price' => floatval($pr->fare ?: $pr->total_amount),
+                'fare' => round(floatval($pr->fare ?: $pr->total_amount), 0),
+                'total_price' => round(floatval($pr->fare ?: $pr->total_amount), 0),
                 'currency_symbol' => $prPricing->currency_symbol,
                 'currency_code' => $prPricing->currency_code,
                 'country' => $prPricing->country_code,
                 'vehicle_type' => $pr->vehicle_type ?? 'Standard',
+                'payment_method' => $pr->payment_method ?: 'cash',
+                'payment_status' => $pr->payment_status ?: 'pending',
                 'customer_name' => $customerName,
                 'customer_phone' => $customerPhone,
                 'poc_name' => $pocName,
@@ -1613,11 +1630,13 @@ class DriverApiController extends Controller
                 'package_delivery_id' => $pd->id,
                 'pickup_location' => $pd->pickup_location,
                 'dropoff_location' => $pd->dropoff_location,
-                'total_price' => floatval($pd->total_price),
-                'fare' => floatval($pd->total_price),
+                'total_price' => round(floatval($pd->total_price), 0),
+                'fare' => round(floatval($pd->total_price), 0),
                 'currency_symbol' => $pdPricing->currency_symbol,
                 'currency_code' => $pdPricing->currency_code,
                 'country' => $pdPricing->country_code,
+                'payment_method' => $pd->payment_method ?: 'cash',
+                'payment_status' => $pd->payment_status ?: 'pending',
                 'customer_name' => $custName,
                 'customer_phone' => $custPhone,
                 'poc_name' => $pocName,
@@ -2383,9 +2402,9 @@ class DriverApiController extends Controller
 
         $totalTrips = $completedRides->count() + $completedDeliveries->count() + $completedBookings->count();
 
-        $today = round(($rideToday + $delToday + $bkToday) * 0.85, 2);
-        $week = round(($rideWeek + $delWeek + $bkWeek) * 0.85, 2);
-        $month = round(($rideMonth + $delMonth + $bkMonth) * 0.85, 2);
+        $today = round(($rideToday + $delToday + $bkToday) * 0.85, 0);
+        $week = round(($rideWeek + $delWeek + $bkWeek) * 0.85, 0);
+        $month = round(($rideMonth + $delMonth + $bkMonth) * 0.85, 0);
 
         return response()->json([
             'success' => true,
@@ -2438,8 +2457,8 @@ class DriverApiController extends Controller
     }
 
     /**
-     * Requirement 5: Active Chauffeur Switch endpoint.
-     * Allows upgraded Chauffeurs to toggle between Online (Driver Hire only) and Offline (SMS alerts active).
+     * Active Chauffeur Switch endpoint.
+     * Chauffeurs receive Hiring Requests and SMS notifications ONLY when online.
      */
     public function toggleChauffeurOnlineSwitch(Request $request)
     {
@@ -2467,8 +2486,8 @@ class DriverApiController extends Controller
         ]);
 
         $message = $newState 
-            ? 'Active Chauffeur Switch turned ONLINE. You will receive Driver Hire requests only.'
-            : 'Active Chauffeur Switch turned OFFLINE. SMS notifications are now active for pending Driver Hire requests.';
+            ? 'Active Chauffeur Switch turned ONLINE. You will receive Driver Hire requests and SMS notifications.'
+            : 'Active Chauffeur Switch turned OFFLINE. You will not receive Driver Hire requests or SMS notifications while offline.';
 
         return response()->json([
             'success' => true,
@@ -2476,7 +2495,7 @@ class DriverApiController extends Controller
             'active_chauffeur_online' => (bool) $profile->active_chauffeur_online,
             'chauffeur_mode' => (bool) $profile->chauffeur_mode,
             'message' => $message,
-            'status_label' => $newState ? 'Online (Driver Hire Only)' : 'Offline (SMS Alerts Active)',
+            'status_label' => $newState ? 'Online (Receiving Hire Requests & SMS)' : 'Offline (No Hire Requests or SMS)',
         ]);
     }
 
@@ -2502,7 +2521,7 @@ class DriverApiController extends Controller
             'is_chauffeur' => (bool) ($profile->is_chauffeur || $profile->driver_type === 'chauffeur'),
             'active_chauffeur_online' => (bool) $profile->active_chauffeur_online,
             'chauffeur_mode' => (bool) $profile->chauffeur_mode,
-            'status_label' => $profile->active_chauffeur_online ? 'Online (Driver Hire Only)' : 'Offline (SMS Alerts Active)',
+            'status_label' => $profile->active_chauffeur_online ? 'Online (Receiving Hire Requests & SMS)' : 'Offline (No Hire Requests or SMS)',
         ]);
     }
 }

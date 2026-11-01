@@ -580,7 +580,7 @@
                                         <div class="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/60 dark:border-slate-800">
                                             <div class="text-left md:text-right">
                                                 <div class="text-lg font-black text-slate-900 dark:text-white">
-                                                    {{ $r->currency }} {{ number_format($r->total_amount, 2) }}
+                                                    {{ $r->currency }} {{ number_format($r->total_amount, 0) }}
                                                 </div>
                                                 <span class="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Paid • {{ ucfirst($r->payment_method ?? 'Card') }}</span>
                                             </div>
@@ -1235,7 +1235,7 @@
                                                     @endif
                                                 </span>
                                                 <div class="text-xs font-bold text-slate-500 dark:text-slate-400">
-                                                    Total: <span class="text-slate-900 dark:text-white font-black text-sm">{{ $rentalCurrency }}{{ number_format($rental->total_amount, 2) }}</span>
+                                                    Total: <span class="text-slate-900 dark:text-white font-black text-sm">{{ $rentalCurrency }}{{ number_format($rental->total_amount, 0) }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1277,9 +1277,9 @@
                                                 <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
                                                     Financials
                                                 </div>
-                                                <p class="text-emerald-600 dark:text-emerald-400 font-bold">Paid: {{ $rentalCurrency }}{{ number_format($rental->paid_amount ?? ($rental->total_amount * 0.2), 2) }}</p>
+                                                <p class="text-emerald-600 dark:text-emerald-400 font-bold">Paid: {{ $rentalCurrency }}{{ number_format($rental->paid_amount ?? ($rental->total_amount * 0.2), 0) }}</p>
                                                 @if(($rental->remaining_balance ?? 0) > 0)
-                                                    <p class="text-amber-600 dark:text-amber-400 font-bold">Due: {{ $rentalCurrency }}{{ number_format($rental->remaining_balance, 2) }}</p>
+                                                    <p class="text-amber-600 dark:text-amber-400 font-bold">Due: {{ $rentalCurrency }}{{ number_format($rental->remaining_balance, 0) }}</p>
                                                 @else
                                                     <p class="text-emerald-600 dark:text-emerald-400 font-semibold">Balance: Cleared</p>
                                                 @endif
@@ -1421,7 +1421,7 @@
 
                                             <div class="text-left sm:text-right">
                                                 <div class="text-xl font-black text-slate-900 dark:text-white">
-                                                    {{ $r->currency }} {{ number_format($r->total_amount, 2) }}
+                                                    {{ $r->currency }} {{ number_format($r->total_amount, 0) }}
                                                 </div>
                                                 <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                                     {{ strtoupper($r->payment_status) }} ({{ ucfirst($r->payment_method) }})
@@ -1528,7 +1528,7 @@
                                         </div>
                                         <div class="flex items-center justify-between pt-3 border-t border-slate-200/60 dark:border-slate-800 text-sm">
                                             <span class="text-slate-500 text-xs">Daily Rate:</span>
-                                            <span class="font-black text-amber-500">${{ number_format($veh->daily_rate, 2) }} / day</span>
+                                            <span class="font-black text-amber-500">${{ number_format($veh->daily_rate, 0) }} / day</span>
                                         </div>
                                     </div>
                                 @endforeach

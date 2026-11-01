@@ -49,7 +49,7 @@ class StripeVerificationController extends Controller
         $booking->update([
             'verification_status' => 'pending_verification',
             'rejection_reason' => null,
-            'payment_method' => 'stripe',
+            'payment_method' => !empty($booking->payment_method) ? $booking->payment_method : ($request->input('payment_method') ?: 'stripe'),
         ]);
 
         // Send notification to assigned driver if available
@@ -143,13 +143,29 @@ class StripeVerificationController extends Controller
 
                 if ($driverId) {
                     $updateData['verified_by_driver_id'] = $driverId;
-                    if (empty($booking->driver_id) || $booking->driver_id != $driverId) {
-                        $updateData['driver_id'] = $driverId;
+                    if (in_array($serviceType, ['package_delivery', 'delivery'], true)) {
+                        if (empty($booking->courier_id) || $booking->courier_id != $driverId) {
+                            $updateData['courier_id'] = $driverId;
+                        }
+                    } else {
+                        if (empty($booking->driver_id) || $booking->driver_id != $driverId) {
+                            $updateData['driver_id'] = $driverId;
+                        }
                     }
                 }
 
-                if (in_array($booking->status, ['pending', 'searching_driver', null], true)) {
-                    $updateData['status'] = 'accepted';
+                if (in_array($serviceType, ['driver_booking', 'hire-driver'], true)) {
+                    if (in_array($booking->booking_status ?? null, ['pending', 'searching_driver', null], true)) {
+                        $updateData['booking_status'] = 'accepted';
+                    }
+                } elseif (in_array($serviceType, ['package_delivery', 'delivery'], true)) {
+                    if (in_array($booking->delivery_status ?? null, ['pending', 'created', 'searching', null], true)) {
+                        $updateData['delivery_status'] = 'accepted';
+                    }
+                } else {
+                    if (in_array($booking->status ?? null, ['pending', 'searching_driver', null], true)) {
+                        $updateData['status'] = 'accepted';
+                    }
                 }
 
                 $booking->update($updateData);
@@ -161,7 +177,10 @@ class StripeVerificationController extends Controller
                             ['status' => 'accepted']
                         );
                     } elseif ($serviceType === 'driver_booking' || $serviceType === 'hire-driver') {
-                        \App\Services\DriverBookingAssignmentService::assignDriverForBooking($booking);
+                        \App\Models\RideAssignment::updateOrCreate(
+                            ['driver_booking_id' => $booking->id, 'driver_id' => $driverId],
+                            ['status' => 'accepted']
+                        );
                     } elseif ($serviceType === 'package_delivery' || $serviceType === 'delivery') {
                         \App\Models\RideAssignment::updateOrCreate(
                             ['package_delivery_id' => $booking->id, 'driver_id' => $driverId],
@@ -187,13 +206,32 @@ class StripeVerificationController extends Controller
                 return response()->json([
                     'success' => true,
                     'verification_status' => 'driver_verified',
-                    'message' => 'Booking verification approved. Customer can now proceed with Stripe Payment.',
+                    'message' => 'Booking verification approved.',
                 ]);
             } else {
                 $booking->update([
                     'verification_status' => 'rejected',
                     'rejection_reason' => $reason ?? 'Driver declined details.',
                 ]);
+
+                if ($driverId) {
+                    if ($serviceType === 'ride' || $serviceType === 'rental') {
+                        \App\Models\RideAssignment::updateOrCreate(
+                            ['ride_id' => $booking->id, 'driver_id' => $driverId],
+                            ['status' => 'rejected']
+                        );
+                    } elseif ($serviceType === 'driver_booking' || $serviceType === 'hire-driver') {
+                        \App\Models\RideAssignment::updateOrCreate(
+                            ['driver_booking_id' => $booking->id, 'driver_id' => $driverId],
+                            ['status' => 'rejected']
+                        );
+                    } elseif ($serviceType === 'package_delivery' || $serviceType === 'delivery') {
+                        \App\Models\RideAssignment::updateOrCreate(
+                            ['package_delivery_id' => $booking->id, 'driver_id' => $driverId],
+                            ['status' => 'rejected']
+                        );
+                    }
+                }
 
                 try {
                     ActivityLogService::log(
@@ -950,11 +988,11 @@ class StripeVerificationController extends Controller
 
             // If base amount is USD and viewer currency is not USD, convert:
             if (($rawCurrency === 'USD' || empty($rawCurrency)) && $activePricing->currency_code !== 'USD') {
-                $convertedAmount = round($baseAmount * $exchangeRate, 2);
+                $convertedAmount = round($baseAmount * $exchangeRate, 0);
             } elseif ($rawCurrency === $activePricing->currency_code) {
-                $convertedAmount = $baseAmount;
+                $convertedAmount = round($baseAmount, 0);
             } else {
-                $convertedAmount = $baseAmount;
+                $convertedAmount = round($baseAmount, 0);
             }
 
             $sym = $activePricing->currency_symbol ?? '$';
@@ -962,25 +1000,56 @@ class StripeVerificationController extends Controller
 
             return [
                 'amount' => $convertedAmount,
-                'base_amount' => $baseAmount,
+                'base_amount' => round($baseAmount, 0),
                 'currency' => $code,
                 'currency_symbol' => $sym,
-                'formatted_amount' => $sym . number_format($convertedAmount, 2),
+                'formatted_amount' => $sym . number_format($convertedAmount, 0),
                 'country' => $activePricing->country_code,
             ];
         };
 
-        // Driver Bookings
-        $driverBookings = DriverBooking::with(['client'])
-            ->where('verification_status', 'pending_verification')
-            ->when($driverId, function ($q) use ($driverId) {
-                $q->where(function ($sub) use ($driverId) {
-                    $sub->where('driver_id', $driverId)->orWhereNull('driver_id');
-                });
-            })
-            ->latest()
-            ->take(20)
-            ->get();
+        $resolvePaymentLabel = function (?string $method, ?string $status): string {
+            $m = strtolower(trim((string) $method));
+            if ($m === 'cash' || $status === 'pending_cash') {
+                return '💵 Cash on Drop-off Verification';
+            }
+            if ($m === 'momo' || str_contains($m, 'momo') || str_contains($m, 'mobile')) {
+                return '📱 MoMo Payment Verification';
+            }
+            if ($m === 'authorizenet') {
+                return '💳 Card Verification Pending';
+            }
+            return '💳 Card / Stripe Verification Pending';
+        };
+
+        $rejectedRideIds = $driverId
+            ? \App\Models\RideAssignment::where('driver_id', $driverId)->where('status', 'rejected')->whereNotNull('ride_id')->pluck('ride_id')->toArray()
+            : [];
+        $rejectedBookingIds = $driverId
+            ? \App\Models\RideAssignment::where('driver_id', $driverId)->where('status', 'rejected')->whereNotNull('driver_booking_id')->pluck('driver_booking_id')->toArray()
+            : [];
+        $rejectedDeliveryIds = $driverId
+            ? \App\Models\RideAssignment::where('driver_id', $driverId)->where('status', 'rejected')->whereNotNull('package_delivery_id')->pluck('package_delivery_id')->toArray()
+            : [];
+
+        $dp = $driverUser?->driverProfile;
+        $canReceiveChauffeurBookings = !$dp || !$dp->is_chauffeur || $dp->active_chauffeur_online || $dp->chauffeur_mode;
+
+        // Driver Bookings (only pending bookings, not rejected by this driver, and only when chauffeur is online)
+        $driverBookings = $canReceiveChauffeurBookings
+            ? DriverBooking::with(['client'])
+                ->where('verification_status', 'pending_verification')
+                ->where('booking_status', 'pending')
+                ->when(!empty($rejectedBookingIds), fn($q) => $q->whereNotIn('id', $rejectedBookingIds))
+                ->when($driverId, function ($q) use ($driverId) {
+                    $q->where(function ($sub) use ($driverId) {
+                        $sub->where('driver_id', $driverId)->orWhereNull('driver_id');
+                    });
+                })
+                ->latest()
+                ->take(20)
+                ->get()
+            : collect();
 
         foreach ($driverBookings as $db) {
             $bCountry = CountryService::detectCountryFromLocation(
@@ -1006,6 +1075,8 @@ class StripeVerificationController extends Controller
             }
 
             $fareInfo = $formatItemFare($db->total_price, $db->pickup_location, $db->dropoff_location, $db->country, $db->currency);
+            $pm = $db->payment_method ?: 'stripe';
+            $ps = $db->payment_status ?: 'pending';
             $items[] = [
                 'type' => 'driver_booking',
                 'type_label' => 'Chauffeur Booking',
@@ -1027,12 +1098,20 @@ class StripeVerificationController extends Controller
                 'currency_symbol' => $fareInfo['currency_symbol'],
                 'formatted_amount' => $fareInfo['formatted_amount'],
                 'country' => $fareInfo['country'],
+                'payment_method' => $pm,
+                'payment_status' => $ps,
+                'payment_label' => $resolvePaymentLabel($pm, $ps),
             ];
         }
 
-        // Rides
+        // Rides (only pending, non-expired, and not rejected by this driver)
         $rides = Ride::with(['rider', 'vehicle'])
             ->where('verification_status', 'pending_verification')
+            ->where('status', 'pending')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->when(!empty($rejectedRideIds), fn($q) => $q->whereNotIn('id', $rejectedRideIds))
             ->when($driverId, function ($q) use ($driverId) {
                 $q->where(function ($sub) use ($driverId) {
                     $sub->where('driver_id', $driverId)->orWhereNull('driver_id');
@@ -1074,6 +1153,8 @@ class StripeVerificationController extends Controller
                 ? 'Immediate (Now)' 
                 : (($r->pickup_date ? \Carbon\Carbon::parse($r->pickup_date)->format('M d, Y') : date('M d, Y')) . ' at ' . $r->pickup_time);
 
+            $pm = $r->payment_method ?: 'stripe';
+            $ps = $r->payment_status ?: 'pending';
             $items[] = [
                 'type' => 'ride',
                 'type_label' => 'Ride Service',
@@ -1095,12 +1176,20 @@ class StripeVerificationController extends Controller
                 'currency_symbol' => $fareInfo['currency_symbol'],
                 'formatted_amount' => $fareInfo['formatted_amount'],
                 'country' => $fareInfo['country'],
+                'payment_method' => $pm,
+                'payment_status' => $ps,
+                'payment_label' => $resolvePaymentLabel($pm, $ps),
             ];
         }
 
-        // Package Deliveries
+        // Package Deliveries (only pending/searching, non-expired, and not rejected by this driver)
         $deliveries = PackageDelivery::with(['customer'])
             ->where('verification_status', 'pending_verification')
+            ->whereIn('delivery_status', ['pending', 'created', 'searching'])
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->when(!empty($rejectedDeliveryIds), fn($q) => $q->whereNotIn('id', $rejectedDeliveryIds))
             ->when($driverId, function ($q) use ($driverId) {
                 $q->where(function ($sub) use ($driverId) {
                     $sub->where('courier_id', $driverId)->orWhereNull('courier_id');
@@ -1141,6 +1230,8 @@ class StripeVerificationController extends Controller
                 ? 'Immediate (Express)' 
                 : (($pd->pickup_date ? \Carbon\Carbon::parse($pd->pickup_date)->format('M d, Y') : date('M d, Y')) . ' at ' . $pd->pickup_time);
 
+            $pm = $pd->payment_method ?: 'stripe';
+            $ps = $pd->payment_status ?: 'pending';
             $items[] = [
                 'type' => 'package_delivery',
                 'type_label' => 'Parcel Dispatch',
@@ -1162,6 +1253,9 @@ class StripeVerificationController extends Controller
                 'currency_symbol' => $fareInfo['currency_symbol'],
                 'formatted_amount' => $fareInfo['formatted_amount'],
                 'country' => $fareInfo['country'],
+                'payment_method' => $pm,
+                'payment_status' => $ps,
+                'payment_label' => $resolvePaymentLabel($pm, $ps),
             ];
         }
 

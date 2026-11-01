@@ -282,7 +282,7 @@
 
                                 <div class="p-3.5 rounded-2xl {{ $isFeatured ? 'bg-amber-500 text-black shadow-xs' : 'bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30' }} text-center mb-6">
                                     <span class="text-xs {{ $isFeatured ? 'font-bold opacity-80' : 'text-slate-600 dark:text-slate-300' }}">Equity Allocation:</span>
-                                    <div class="text-xl font-black {{ $isFeatured ? '' : 'text-amber-600 dark:text-amber-400' }}">{{ number_format($plan->equity_percentage, 2) }}% Fixed Stake</div>
+                                    <div class="text-xl font-black {{ $isFeatured ? '' : 'text-amber-600 dark:text-amber-400' }}">{{ number_format($plan->equity_percentage, 0) }}% Fixed Stake</div>
                                 </div>
 
                                 <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">

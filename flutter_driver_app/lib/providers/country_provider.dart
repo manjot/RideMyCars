@@ -544,11 +544,11 @@ class CountryProvider extends ChangeNotifier {
     return null;
   }
 
-  String formatPrice(double amount, {int decimals = 2}) {
-    return '$_currencySymbol${amount.toStringAsFixed(decimals)}';
+  String formatPrice(double amount, {int decimals = 0}) {
+    return '$_currencySymbol${amount.round().toStringAsFixed(decimals)}';
   }
 
-  String formatAmount(double amount, {int decimals = 2}) {
+  String formatAmount(double amount, {int decimals = 0}) {
     return formatPrice(amount, decimals: decimals);
   }
 }

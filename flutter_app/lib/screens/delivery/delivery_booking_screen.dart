@@ -815,10 +815,10 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
       double tot = base + fee + tax;
 
       setState(() {
-        _baseFare = double.parse(base.toStringAsFixed(2));
-        _serviceFee = double.parse(fee.toStringAsFixed(2));
-        _taxes = double.parse(tax.toStringAsFixed(2));
-        _totalAmount = double.parse(tot.toStringAsFixed(2));
+        _baseFare = double.parse(base.toStringAsFixed(0));
+        _serviceFee = double.parse(fee.toStringAsFixed(0));
+        _taxes = double.parse(tax.toStringAsFixed(0));
+        _totalAmount = double.parse(tot.toStringAsFixed(0));
         _isCalculating = false;
       });
     }
@@ -1152,7 +1152,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                           style: const TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                         Text(
-                          '+${countryProv.currencySymbol}${_serviceFee.toStringAsFixed(2)}',
+                          '+${countryProv.currencySymbol}${_serviceFee.toStringAsFixed(0)}',
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ],
@@ -1163,7 +1163,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                       children: [
                         const Text('Total Paid', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         Text(
-                          '${countryProv.currencySymbol}${_totalAmount.toStringAsFixed(2)}',
+                          '${countryProv.currencySymbol}${_totalAmount.toStringAsFixed(0)}',
                           style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 14),
                         ),
                       ],
@@ -1534,35 +1534,35 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
         'title': 'Hyperlocal',
         'desc': 'City Local Bike Courier',
         'addon': 0.0,
-        'tag': '+$sym${(0.0 * mult).toStringAsFixed(2)}',
+        'tag': '+$sym${(0.0 * mult).toStringAsFixed(0)}',
       },
       {
         'id': 'Scheduled',
         'title': 'Scheduled',
         'desc': 'Pick your exact time window',
         'addon': 2.0,
-        'tag': '+$sym${(2.0 * mult).toStringAsFixed(2)}',
+        'tag': '+$sym${(2.0 * mult).toStringAsFixed(0)}',
       },
       {
         'id': 'Same Day',
         'title': 'Same Day',
         'desc': 'Delivered by end of today',
         'addon': 4.0,
-        'tag': '+$sym${(4.0 * mult).toStringAsFixed(2)}',
+        'tag': '+$sym${(4.0 * mult).toStringAsFixed(0)}',
       },
       {
         'id': 'Express',
         'title': 'Express',
         'desc': 'Priority Direct Route (< 2 hrs)',
         'addon': 8.0,
-        'tag': '+$sym${(8.0 * mult).toStringAsFixed(2)}',
+        'tag': '+$sym${(8.0 * mult).toStringAsFixed(0)}',
       },
       {
         'id': 'Instant',
         'title': 'Instant',
         'desc': 'Immediate Courier Pickup (~30 mins)',
         'addon': 10.0,
-        'tag': '+$sym${(10.0 * mult).toStringAsFixed(2)}',
+        'tag': '+$sym${(10.0 * mult).toStringAsFixed(0)}',
       },
     ];
 
@@ -2664,7 +2664,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Delivery Fee:', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
-              Text('$sym${_baseFare.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5)),
+              Text('$sym${_baseFare.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5)),
             ],
           ),
           const SizedBox(height: 6),
@@ -2675,7 +2675,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                 'Service Fee (${_selectedCategoryServiceFeePercent.toStringAsFixed(_selectedCategoryServiceFeePercent.truncateToDouble() == _selectedCategoryServiceFeePercent ? 0 : 1)}%):',
                 style: const TextStyle(color: Colors.white70, fontSize: 12.5),
               ),
-              Text('+$sym${_serviceFee.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5)),
+              Text('+$sym${_serviceFee.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5)),
             ],
           ),
           const SizedBox(height: 6),
@@ -2683,7 +2683,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Taxes (5%):', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
-              Text('+$sym${_taxes.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5)),
+              Text('+$sym${_taxes.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5)),
             ],
           ),
           const Divider(color: Colors.white12, height: 18),
@@ -2692,7 +2692,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
             children: [
               const Text('Total Amount:', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
               Text(
-                '$sym${_totalAmount.toStringAsFixed(2)}',
+                '$sym${_totalAmount.toStringAsFixed(0)}',
                 style: const TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.w900, fontSize: 18),
               ),
             ],
@@ -2772,7 +2772,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           _currentStep == 5
-                              ? '🚀 Dispatch & Pay ($sym${_totalAmount.toStringAsFixed(2)})'
+                              ? '🚀 Dispatch & Pay ($sym${_totalAmount.toStringAsFixed(0)})'
                               : 'Next: Step ${_currentStep + 1} →',
                           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13.5),
                         ),

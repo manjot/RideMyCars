@@ -21,6 +21,20 @@ class SettingResource extends Resource
     protected static ?string $navigationGroup = 'Financials & Audit';
     protected static ?string $navigationLabel = 'System Settings';
     protected static ?int $navigationSort = 3;
+    protected static ?string $recordTitleAttribute = 'label';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['label', 'key', 'group', 'value'];
+    }
+
+    public static function getGlobalSearchResultDetails(\Illuminate\Database\Eloquent\Model $record): array
+    {
+        return [
+            'Group' => $record->group ?? 'General',
+            'Key' => $record->key ?? '',
+        ];
+    }
 
     public static function form(Form $form): Form
     {

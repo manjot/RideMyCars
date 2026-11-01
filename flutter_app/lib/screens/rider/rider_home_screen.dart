@@ -2235,7 +2235,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Base & Distance Fare', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5)),
-                    Text('$sym ${baseFare.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                    Text('$sym ${baseFare.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 Padding(
@@ -2246,7 +2246,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Total Estimated Fare', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900)),
-                    Text('$sym ${totalFare.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFFFFDC00), fontSize: 16, fontWeight: FontWeight.w900)),
+                    Text('$sym ${totalFare.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFFFFDC00), fontSize: 16, fontWeight: FontWeight.w900)),
                   ],
                 ),
               ],
@@ -2329,7 +2329,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                         ),
                         // Price
                         Text(
-                          '$sym ${cat.fare.toStringAsFixed(2)}',
+                          '$sym ${cat.fare.toStringAsFixed(0)}',
                           style: TextStyle(
                             color: isSelected ? const Color(0xFFFFDC00) : Colors.white,
                             fontWeight: FontWeight.w900,
@@ -2612,7 +2612,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         const Text('TOTAL FARE', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 9.5, fontWeight: FontWeight.bold)),
-                        Text('$sym ${cat.fare.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFFFFDC00), fontWeight: FontWeight.w900, fontSize: 17)),
+                        Text('$sym ${cat.fare.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFFFFDC00), fontWeight: FontWeight.w900, fontSize: 17)),
                       ],
                     ),
                   ],

@@ -967,7 +967,7 @@
                         </button>
                         <button type="submit" :disabled="isSubmitting" class="px-8 py-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-sm rounded-2xl shadow-lg shadow-amber-500/25 uppercase tracking-wider flex items-center justify-center gap-2">
                             <svg x-show="isSubmitting" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span x-text="isSubmitting ? 'Dispatching Parcel...' : '🚀 Confirm & Dispatch Parcel (' + (priceBreakdown.currency_symbol || '$') + Number(priceBreakdown.total_price || 0).toFixed(2) + ')'"></span>
+                            <span x-text="isSubmitting ? 'Dispatching Parcel...' : '🚀 Confirm & Dispatch Parcel (' + (priceBreakdown.currency_symbol || '$') + Number(priceBreakdown.total_price || 0).toFixed(0) + ')'"></span>
                         </button>
                     </div>
                 </div>
@@ -988,20 +988,20 @@
                     <div class="space-y-3 text-xs border-t border-b border-gray-100 dark:border-white/10 py-4">
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
                             <span>Delivery Fee:</span>
-                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.subtotal || 0).toFixed(2)"></span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.subtotal || 0).toFixed(0)"></span>
                         </div>
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
                             <span x-text="'Service Fee (' + (priceBreakdown.service_fee_percent || selectedCategoryServiceFeePercent) + '%):'"></span>
-                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.service_fee || 0).toFixed(2)"></span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.service_fee || 0).toFixed(0)"></span>
                         </div>
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
                             <span>Taxes (5%):</span>
-                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.tax || 0).toFixed(2)"></span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.tax || 0).toFixed(0)"></span>
                         </div>
 
                         <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-sm font-black">
                             <span class="text-gray-900 dark:text-white">Total Amount:</span>
-                            <span class="text-2xl text-amber-500" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(2)"></span>
+                            <span class="text-2xl text-amber-500" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(0)"></span>
                         </div>
                     </div>
 
@@ -1772,7 +1772,7 @@
                         'Hyperlocal': 0.00
                     };
                     const val = addons[name] || 0.00;
-                    return `+${sym}${Number(val).toFixed(2)}`;
+                    return `+${sym}${Number(val).toFixed(0)}`;
                 },
 
                 init() {
@@ -1858,11 +1858,11 @@
                         const feePercent = catObj && catObj.service_fee_percent !== undefined ? Number(catObj.service_fee_percent) : (catName === 'Pharmeasy' ? 10 : 5);
                         const feeRate = feePercent / 100;
                         const sub = Number(this.priceBreakdown.subtotal);
-                        const fee = Number((sub * feeRate).toFixed(2));
-                        const tax = Number(this.priceBreakdown.tax || (sub * 0.05).toFixed(2));
+                        const fee = Number((sub * feeRate).toFixed(0));
+                        const tax = Number(this.priceBreakdown.tax || (sub * 0.05).toFixed(0));
                         this.priceBreakdown.service_fee = fee;
                         this.priceBreakdown.service_fee_percent = feePercent;
-                        this.priceBreakdown.total_price = Number((sub + fee + tax).toFixed(2));
+                        this.priceBreakdown.total_price = Number((sub + fee + tax).toFixed(0));
                     }
                     this.updatePrice();
                 },

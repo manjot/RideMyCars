@@ -691,7 +691,7 @@
                                 <div class="text-xs text-slate-500 dark:text-slate-400 mb-6">Approx. ${{ number_format($plan->capital_commitment_usd, 0) }} USD</div>
 
                                 <div class="p-3.5 rounded-2xl {{ $isFeatured ? 'bg-amber-500 text-black shadow-xs' : 'bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300' }} font-black text-sm mb-6 text-center">
-                                    {{ number_format($plan->equity_percentage, 2) }}% Fixed Equity Stake
+                                    {{ number_format($plan->equity_percentage, 0) }}% Fixed Equity Stake
                                 </div>
 
                                 <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-300 mb-8">

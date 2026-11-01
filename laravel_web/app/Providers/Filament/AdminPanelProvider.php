@@ -41,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->font('Plus Jakarta Sans')
             ->darkMode(true)
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('19.5rem')
             ->renderHook(

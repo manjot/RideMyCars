@@ -261,30 +261,30 @@ class CountryPricing extends Model
         $instance->is_default = false;
         $instance->is_active = true;
 
-        // Fares converted from USD base rates via exchange rate
-        $instance->ride_base_fare = round(5.00 * $rate, 2);
-        $instance->ride_per_km_rate = round(1.50 * $rate, 2);
-        $instance->ride_per_minute_rate = round(0.25 * $rate, 2);
-        $instance->ride_minimum_fare = round(10.00 * $rate, 2);
-        $instance->ride_additional_stop_fee = round(3.50 * $rate, 2);
+        // Fares converted from USD base rates via exchange rate (rounded to nearest whole number)
+        $instance->ride_base_fare = round(5.00 * $rate, 0);
+        $instance->ride_per_km_rate = round(1.50 * $rate, 0);
+        $instance->ride_per_minute_rate = round(0.25 * $rate, 0);
+        $instance->ride_minimum_fare = round(10.00 * $rate, 0);
+        $instance->ride_additional_stop_fee = round(3.50 * $rate, 0);
 
-        $instance->delivery_base_fare = round(15.00 * $rate, 2);
-        $instance->delivery_per_km_rate = round(1.50 * $rate, 2);
-        $instance->delivery_instant_addon = round(10.00 * $rate, 2);
-        $instance->delivery_express_addon = round(8.00 * $rate, 2);
-        $instance->delivery_same_day_addon = round(4.00 * $rate, 2);
-        $instance->delivery_scheduled_addon = round(2.00 * $rate, 2);
-        $instance->delivery_per_kg_rate = round(0.75 * $rate, 2);
+        $instance->delivery_base_fare = round(15.00 * $rate, 0);
+        $instance->delivery_per_km_rate = round(1.50 * $rate, 0);
+        $instance->delivery_instant_addon = round(10.00 * $rate, 0);
+        $instance->delivery_express_addon = round(8.00 * $rate, 0);
+        $instance->delivery_same_day_addon = round(4.00 * $rate, 0);
+        $instance->delivery_scheduled_addon = round(2.00 * $rate, 0);
+        $instance->delivery_per_kg_rate = round(0.75 * $rate, 0);
 
-        $instance->driver_hourly_rate = round(25.00 * $rate, 2);
-        $instance->driver_daily_rate = round(170.00 * $rate, 2);
-        $instance->driver_weekly_rate = round(1000.00 * $rate, 2);
+        $instance->driver_hourly_rate = round(25.00 * $rate, 0);
+        $instance->driver_daily_rate = round(170.00 * $rate, 0);
+        $instance->driver_weekly_rate = round(1000.00 * $rate, 0);
 
         $instance->rental_price_multiplier = $rate;
-        $instance->rental_protection_daily_rate = round(12.00 * $rate, 2);
-        $instance->rental_additional_driver_rate = round(10.00 * $rate, 2);
-        $instance->rental_child_seat_rate = round(8.00 * $rate, 2);
-        $instance->rental_gps_rate = round(5.00 * $rate, 2);
+        $instance->rental_protection_daily_rate = round(12.00 * $rate, 0);
+        $instance->rental_additional_driver_rate = round(10.00 * $rate, 0);
+        $instance->rental_child_seat_rate = round(8.00 * $rate, 0);
+        $instance->rental_gps_rate = round(5.00 * $rate, 0);
 
         $instance->setAttribute('pricing_source', 'automatically_converted');
         $instance->setAttribute('is_unsupported_region', false);
@@ -411,10 +411,10 @@ class CountryPricing extends Model
                         'slug' => $tier->category_key,
                         'category_key' => $tier->category_key,
                         'icon' => $tier->icon ?: '🚗',
-                        'minimum_fare' => (float) $tier->minimum_fare,
-                        'base_fare' => (float) $tier->base_fare,
-                        'per_km_rate' => (float) $tier->per_km_rate,
-                        'per_minute_rate' => (float) ($tier->per_minute_rate ?: 0.30),
+                        'minimum_fare' => round((float) $tier->minimum_fare, 0),
+                        'base_fare' => round((float) $tier->base_fare, 0),
+                        'per_km_rate' => round((float) $tier->per_km_rate, 0),
+                        'per_minute_rate' => round((float) ($tier->per_minute_rate ?: 0.30), 0),
                         'multiplier' => (float) ($tier->multiplier ?: 1.0),
                         'capacity' => $tier->capacity ?: '1–4 seats',
                         'luggage' => match ($tier->category_key) {
@@ -426,10 +426,10 @@ class CountryPricing extends Model
                             'group_bus' => '10 Bags',
                             default => '2 Bags',
                         },
-                        'base' => (float) $tier->base_fare,
-                        'perKm' => (float) $tier->per_km_rate,
-                        'perMin' => (float) ($tier->per_minute_rate ?: 0.30),
-                        'min' => (float) $tier->minimum_fare,
+                        'base' => round((float) $tier->base_fare, 0),
+                        'perKm' => round((float) $tier->per_km_rate, 0),
+                        'perMin' => round((float) ($tier->per_minute_rate ?: 0.30), 0),
+                        'min' => round((float) $tier->minimum_fare, 0),
                         'seats' => $tier->capacity ?: '1–4 seats',
                         'desc' => $tier->description ?: '',
                         'target' => $tier->target_vehicle ?: $tier->category_name,
@@ -605,10 +605,10 @@ class CountryPricing extends Model
                         'slug' => $tier->category_key,
                         'category_key' => $tier->category_key,
                         'icon' => $tier->icon ?: '🚗',
-                        'minimum_fare' => (float) $tier->minimum_fare,
-                        'base_fare' => (float) $tier->base_fare,
-                        'per_km_rate' => (float) $tier->per_km_rate,
-                        'per_minute_rate' => (float) ($tier->per_minute_rate ?: 0.30),
+                        'minimum_fare' => round((float) $tier->minimum_fare, 0),
+                        'base_fare' => round((float) $tier->base_fare, 0),
+                        'per_km_rate' => round((float) $tier->per_km_rate, 0),
+                        'per_minute_rate' => round((float) ($tier->per_minute_rate ?: 0.30), 0),
                         'multiplier' => (float) ($tier->multiplier ?: 1.0),
                         'capacity' => $tier->capacity ?: '1–4 seats',
                         'luggage' => match ($tier->category_key) {
@@ -622,10 +622,10 @@ class CountryPricing extends Model
                         },
                         'target' => $tier->target_vehicle ?: $tier->category_name,
                         'description' => $tier->description ?: '',
-                        'base' => (float) $tier->base_fare,
-                        'perKm' => (float) $tier->per_km_rate,
-                        'perMin' => (float) ($tier->per_minute_rate ?: 0.30),
-                        'min' => (float) $tier->minimum_fare,
+                        'base' => round((float) $tier->base_fare, 0),
+                        'perKm' => round((float) $tier->per_km_rate, 0),
+                        'perMin' => round((float) ($tier->per_minute_rate ?: 0.30), 0),
+                        'min' => round((float) $tier->minimum_fare, 0),
                         'seats' => $tier->capacity ?: '1–4 seats',
                         'desc' => $tier->description ?: '',
                     ];
@@ -715,10 +715,10 @@ class CountryPricing extends Model
 
             $matrix = [];
             foreach ($tierDefinitions as $slug => $cfg) {
-                $tierBase = round($baseF * $cfg['base_mult'], 2);
-                $tierPerKm = round($perKmF * $cfg['km_mult'], 2);
-                $tierPerMin = round($perMinF * $cfg['minute_mult'], 2);
-                $tierMin = round($minF * $cfg['min_mult'], 2);
+                $tierBase = round($baseF * $cfg['base_mult'], 0);
+                $tierPerKm = round($perKmF * $cfg['km_mult'], 0);
+                $tierPerMin = round($perMinF * $cfg['minute_mult'], 0);
+                $tierMin = round($minF * $cfg['min_mult'], 0);
 
                 $matrix[$slug] = [
                     'id' => $slug,

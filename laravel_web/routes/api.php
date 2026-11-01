@@ -141,6 +141,10 @@ Route::post('/drivers/calculate-price', [DriverApiController::class, 'calculateP
 Route::post('/drivers/book', [DriverApiController::class, 'bookDriver']);
 Route::post('/hire-driver/book', [DriverApiController::class, 'bookDriver']);
 
+// In-App Trip Chat API Routes (Issue 3.7: Rider & Driver In-App Chat alongside WhatsApp)
+Route::get('/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'index']);
+Route::post('/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'store']);
+
 // Public Package Delivery API Routes
 Route::get('/delivery/categories', [\App\Http\Controllers\PackageDeliveryController::class, 'getCategories']);
 Route::post('/delivery/calculate-price', [\App\Http\Controllers\PackageDeliveryController::class, 'calculatePrice']);
@@ -229,16 +233,19 @@ Route::middleware('auth:sanctum')->group(function () {
             ->toArray();
         $userIds = array_unique(array_merge($userIds, $matchingIds));
 
+        $activeCountry = $request->input('country') ?: (\App\Services\CountryService::getCurrentCountryCode($request) ?: 'GHA');
+        $fallbackCurrencyCode = \App\Models\CountryPricing::forCountry($activeCountry)->currency_code ?? 'GHS';
+
         $notifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
             ->orderBy('created_at', 'desc')
             ->take(30)
             ->get()
-            ->map(function ($n) {
+            ->map(function ($n) use ($fallbackCurrencyCode) {
                 return [
                     'id' => $n->id,
                     'type' => $n->type,
                     'title' => $n->title,
-                    'message' => $n->message,
+                    'message' => \App\Services\NotificationService::formatNotificationMessage($n, $fallbackCurrencyCode),
                     'link' => $n->link,
                     'data' => $n->data,
                     'is_read' => (bool)$n->is_read,

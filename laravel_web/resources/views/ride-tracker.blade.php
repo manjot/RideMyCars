@@ -524,6 +524,13 @@
                             </div>
 
                             <div class="space-y-2 pt-1">
+                                <button type="button"
+                                        @click="window.openTripChat('ride', ride.id, driver.name || 'Assigned Driver', 'rider')"
+                                        class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer">
+                                    <span>💬</span>
+                                    <span>In-App Chat with Driver</span>
+                                </button>
+
                                 <template x-if="driver.phone">
                                     <a :href="'tel:' + (driver.phone ? driver.phone.replace(/[^0-9+]/g, '') : '')" 
                                        class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer no-underline">
@@ -590,11 +597,14 @@
                         </div>
                     </div>
 
+                    @php
+                        $trackerCurrencySymbol = \App\Services\CountryService::resolveItemSymbol($ride, $currentCurrencySymbol ?? 'GH₵');
+                    @endphp
                     <!-- Fare & Payment -->
                     <div class="pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
                         <div>
                             <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Trip Fare</span>
-                            <span class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="'$' + parseFloat(ride.fare || {{ $ride->fare ?: 28.50 }}).toFixed(2)"></span>
+                            <span class="font-black text-2xl text-emerald-600 dark:text-emerald-400" x-text="'{{ $trackerCurrencySymbol }}' + Math.round(parseFloat(ride.fare || {{ round((float)($ride->fare ?: 29)) }}))"></span>
                         </div>
                         <div class="text-right">
                             <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Payment</span>

@@ -461,20 +461,20 @@
                     <div class="space-y-3 text-xs border-t border-b border-gray-100 dark:border-white/10 py-4">
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
                             <span>Driver Service Fee:</span>
-                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.subtotal || 0).toFixed(2)"></span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.subtotal || 0).toFixed(0)"></span>
                         </div>
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
                             <span>Service Fee (5%):</span>
-                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.service_fee || 0).toFixed(2)"></span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.service_fee || 0).toFixed(0)"></span>
                         </div>
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
                             <span>Taxes (5%):</span>
-                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.tax || 0).toFixed(2)"></span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.tax || 0).toFixed(0)"></span>
                         </div>
 
                         <div class="pt-2 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-sm font-black">
                             <span class="text-gray-900 dark:text-white">Estimated Total:</span>
-                            <span class="text-2xl text-brand-500" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(2)"></span>
+                            <span class="text-2xl text-brand-500" x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(0)"></span>
                         </div>
                     </div>
 
@@ -483,7 +483,7 @@
 
                     <!-- Primary Request CTA -->
                     <button type="submit" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-brand-500/25 cursor-pointer uppercase tracking-wider">
-                        🚀 Request Driver Now (<span x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(2)"></span>)
+                        🚀 Request Driver Now (<span x-text="priceBreakdown.currency_symbol + Number(priceBreakdown.total_price || 0).toFixed(0)"></span>)
                     </button>
 
                 </div>

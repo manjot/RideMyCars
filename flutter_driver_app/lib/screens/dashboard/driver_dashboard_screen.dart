@@ -100,6 +100,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     if (driver.isChauffeur && driver.activeChauffeurOnline && bookingId == null) {
       return;
     }
+    if (driver.isChauffeur && !driver.activeChauffeurOnline && bookingId != null) {
+      return;
+    }
 
     _dialogOpen = true;
 
@@ -701,11 +704,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildEarningTile('TODAY', '${countryProv.currencySymbol}${(driver.earnings['today'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.success),
+                    child: _buildEarningTile('TODAY', '${countryProv.currencySymbol}${(driver.earnings['today'] as num?)?.toStringAsFixed(0) ?? "0"}', AppColors.success),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildEarningTile('THIS WEEK', '${countryProv.currencySymbol}${(driver.earnings['week'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.info),
+                    child: _buildEarningTile('THIS WEEK', '${countryProv.currencySymbol}${(driver.earnings['week'] as num?)?.toStringAsFixed(0) ?? "0"}', AppColors.info),
                   ),
                 ],
               ),
@@ -713,7 +716,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildEarningTile('THIS MONTH', '${countryProv.currencySymbol}${(driver.earnings['month'] as num?)?.toStringAsFixed(2) ?? "0.00"}', AppColors.purple),
+                    child: _buildEarningTile('THIS MONTH', '${countryProv.currencySymbol}${(driver.earnings['month'] as num?)?.toStringAsFixed(0) ?? "0"}', AppColors.purple),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -775,9 +778,34 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                 fontSize: 16,
                               ),
                             ),
-                            const Text(
-                              'Verified Professional Chauffeur',
-                              style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            Row(
+                              children: [
+                                if (driver.isDriverDocsVerified) ...[
+                                  Icon(
+                                    Icons.verified_rounded,
+                                    size: 14,
+                                    color: (driver.isChauffeur && driver.isGuarantorVerified)
+                                        ? AppColors.purple
+                                        : AppColors.success,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Flexible(
+                                  child: Text(
+                                    driver.professionalBadgeLabel,
+                                    style: TextStyle(
+                                      color: driver.isDriverDocsVerified
+                                          ? ((driver.isChauffeur && driver.isGuarantorVerified)
+                                              ? const Color(0xFFD8B4FE)
+                                              : AppColors.success)
+                                          : AppColors.warning,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -874,7 +902,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
-                                '+$bannerCurrSym${fare.toStringAsFixed(2)}',
+                                '+$bannerCurrSym${fare.toStringAsFixed(0)}',
                                 style: const TextStyle(
                                   color: Color(0xFFFDE047),
                                   fontWeight: FontWeight.w900,
@@ -1167,10 +1195,10 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
     final dialogTitle = isDelivery ? 'Complete Delivery?' : (isBooking ? 'Complete Booking?' : 'End Ride?');
     final cashNotice = isCash ? ' (Collected directly in physical cash; no digital wallet credit).' : ' (Prepaid digitally; earnings will be credited to your in-app wallet).';
     final dialogContent = isDelivery
-        ? 'Are you sure you want to mark this package delivered and collect the fare of $currencySymbol${fare.toStringAsFixed(2)}?$cashNotice'
+        ? 'Are you sure you want to mark this package delivered and collect the fare of $currencySymbol${fare.toStringAsFixed(0)}?$cashNotice'
         : (isBooking
-            ? 'Are you sure you want to finish this chauffeur booking and collect $currencySymbol${fare.toStringAsFixed(2)}?$cashNotice'
-            : 'Are you sure you want to end this trip and collect the fare of $currencySymbol${fare.toStringAsFixed(2)}?$cashNotice');
+            ? 'Are you sure you want to finish this chauffeur booking and collect $currencySymbol${fare.toStringAsFixed(0)}?$cashNotice'
+            : 'Are you sure you want to end this trip and collect the fare of $currencySymbol${fare.toStringAsFixed(0)}?$cashNotice');
     final confirmBtnText = isDelivery ? '✓ Complete Delivery Now' : (isBooking ? '✓ End Booking Now' : '✓ End Trip Now');
 
     final confirmed = await showDialog<bool>(
@@ -1540,8 +1568,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                               SnackBar(
                                 content: Text(
                                   driver.activeChauffeurOnline
-                                      ? 'Active Chauffeur Switch turned ONLINE (Driver Hire requests only).'
-                                      : 'Active Chauffeur Switch turned OFFLINE (SMS alerts active).',
+                                      ? 'Active Chauffeur Switch turned ONLINE (Receiving Driver Hire requests & SMS alerts).'
+                                      : 'Active Chauffeur Switch turned OFFLINE (No Driver Hire requests or SMS alerts while offline).',
                                   style: const TextStyle(fontWeight: FontWeight.w600),
                                 ),
                                 backgroundColor: driver.activeChauffeurOnline ? const Color(0xFF7E22CE) : AppColors.warning,
@@ -1566,7 +1594,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             child: Row(
               children: [
                 Icon(
-                  isOnline ? Icons.check_circle_outline_rounded : Icons.sms_outlined,
+                  isOnline ? Icons.check_circle_outline_rounded : Icons.pause_circle_outline_rounded,
                   size: 16,
                   color: isOnline ? AppColors.success : const Color(0xFFFBBF24),
                 ),
@@ -1574,8 +1602,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                 Expanded(
                   child: Text(
                     isOnline
-                        ? 'Operating in Chauffeur mode: You receive Driver Hire requests only. Standard rides are suppressed.'
-                        : 'Offline mode: Whenever a customer requests a Driver Hire, you will receive an SMS prompt to switch Online.',
+                        ? 'Online mode: You will receive Chauffeur Hiring requests and SMS notifications.'
+                        : 'Offline mode: You will NOT receive Chauffeur Hiring requests or SMS notifications until you switch Online.',
                     style: TextStyle(
                       color: isOnline ? Colors.white70 : const Color(0xFFFDE68A),
                       fontSize: 11.5,
@@ -1931,7 +1959,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   ],
                 ),
                 Text(
-                  '$currSym${fare.toStringAsFixed(2)}',
+                  '$currSym${fare.toStringAsFixed(0)}',
                   style: const TextStyle(
                     color: AppColors.success,
                     fontWeight: FontWeight.w900,
@@ -2374,8 +2402,28 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           countryProv.priceMultiplier > 1.0) {
         displayAmount = amount * countryProv.priceMultiplier;
       }
-      priceDisplay = '$currSym${displayAmount.toStringAsFixed(2)}';
+      priceDisplay = '$currSym${displayAmount.toStringAsFixed(0)}';
     }
+
+    final rawPayMethod = (item['payment_method'] ?? 'cash').toString().toLowerCase();
+    final bool isCardPay = rawPayMethod.contains('stripe') || rawPayMethod.contains('card');
+    final bool isMomoPay = rawPayMethod.contains('momo') || rawPayMethod.contains('mobile');
+    final bool isWalletPay = rawPayMethod.contains('wallet');
+    final String payBadgeLabel = (item['payment_label'] != null && item['payment_label'].toString().trim().isNotEmpty)
+        ? item['payment_label'].toString()
+        : (isCardPay
+            ? 'Card Payment Verification'
+            : (isMomoPay
+                ? 'MoMo Payment • Verify Booking'
+                : (isWalletPay ? 'Wallet Payment • Verify Booking' : 'Cash Payment • Verify Booking')));
+    final IconData payBadgeIcon = isCardPay
+        ? Icons.credit_card_rounded
+        : (isMomoPay
+            ? Icons.phone_android_rounded
+            : (isWalletPay ? Icons.account_balance_wallet_rounded : Icons.payments_rounded));
+    final Color payBadgeColor = isCardPay
+        ? const Color(0xFF818CF8)
+        : (isMomoPay ? Colors.amber : const Color(0xFF34D399));
 
     Color typeColor = Colors.amber;
     if (type == 'driver_booking') {
@@ -2459,12 +2507,12 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     const SizedBox(height: 2),
                     Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.credit_card_rounded, color: Colors.amber, size: 12),
-                        SizedBox(width: 4),
+                      children: [
+                        Icon(payBadgeIcon, color: payBadgeColor, size: 12),
+                        const SizedBox(width: 4),
                         Text(
-                          'Stripe Verification Pending',
-                          style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
+                          payBadgeLabel,
+                          style: TextStyle(color: payBadgeColor, fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -2793,7 +2841,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   ),
                 ),
                 Text(
-                  '$currSym${fare.toStringAsFixed(2)}',
+                  '$currSym${fare.toStringAsFixed(0)}',
                   style: const TextStyle(
                     color: AppColors.success,
                     fontSize: 22,
@@ -3253,7 +3301,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     ),
                     icon: Icon(isBackup ? Icons.shield_rounded : Icons.check_circle_rounded, size: 18),
                     label: Text(
-                      isBackup ? 'Reserve as Backup ($currSym${fare.toStringAsFixed(2)})' : 'Accept & Earn $currSym${fare.toStringAsFixed(2)}',
+                      isBackup ? 'Reserve as Backup ($currSym${fare.toStringAsFixed(0)})' : 'Accept & Earn $currSym${fare.toStringAsFixed(0)}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),

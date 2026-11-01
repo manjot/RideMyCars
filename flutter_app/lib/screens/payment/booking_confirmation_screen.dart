@@ -455,10 +455,10 @@ class BookingConfirmationScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _buildReceiptRow('Payment Method', paymentMethod.toUpperCase(), isDark),
-                    _buildReceiptRow('Total Amount', '$effectiveSymbol${totalAmount.toStringAsFixed(2)}', isDark),
-                    _buildReceiptRow('Paid / Authorized Now', '$effectiveSymbol${paidAmount.toStringAsFixed(2)}', isDark, isHighlight: true),
+                    _buildReceiptRow('Total Amount', '$effectiveSymbol${totalAmount.toStringAsFixed(0)}', isDark),
+                    _buildReceiptRow('Paid / Authorized Now', '$effectiveSymbol${paidAmount.toStringAsFixed(0)}', isDark, isHighlight: true),
                     if (remainingBalance > 0)
-                      _buildReceiptRow('Remaining on Drop-off', '$effectiveSymbol${remainingBalance.toStringAsFixed(2)}', isDark),
+                      _buildReceiptRow('Remaining on Drop-off', '$effectiveSymbol${remainingBalance.toStringAsFixed(0)}', isDark),
                     _buildReceiptRow('Receipt Status', 'ISSUED & VERIFIED', isDark, isGreen: true),
                   ],
                 ),

@@ -976,7 +976,7 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
                       'Included',
                       isDark,
                     ),
-                    _buildInfoRow('Fare Total', '${widget.currencySymbol}${widget.totalPrice.toStringAsFixed(2)}', isDark, isBold: true),
+                    _buildInfoRow('Fare Total', '${widget.currencySymbol}${widget.totalPrice.toStringAsFixed(0)}', isDark, isBold: true),
                     _buildInfoRow('Payment Method', widget.paymentMethod.toUpperCase(), isDark),
                   ],
                 ),

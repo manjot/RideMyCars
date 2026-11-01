@@ -375,7 +375,7 @@
                                     <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">{{ number_format($plan->capital_commitment_ghc, 0) }} GHC</div>
                                     <div class="text-xs text-slate-500 dark:text-slate-400">Approx. ${{ number_format($plan->capital_commitment_usd, 0) }} USD</div>
                                     <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                                        {{ number_format($plan->equity_percentage, 2) }}% Fixed Equity Stake
+                                        {{ number_format($plan->equity_percentage, 0) }}% Fixed Equity Stake
                                     </div>
                                 </label>
                             @endforeach
@@ -597,7 +597,7 @@
                     if (this.plans && this.plans.length) {
                         const match = this.plans.find(p => p.tranche_code === this.form.selected_tranche);
                         if (match) {
-                            return Number(match.equity_percentage).toFixed(2) + '%';
+                            return Number(match.equity_percentage).toFixed(0) + '%';
                         }
                     }
                     const fallbackMap = { 'A': '7.00%', 'D': '1.20%', 'B': '14.00%', 'C': '22.00%' };

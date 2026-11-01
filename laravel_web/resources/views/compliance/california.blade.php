@@ -170,12 +170,9 @@
                 <!-- California App Integration Note -->
                 <div class="bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-500/30 p-6 rounded-3xl space-y-3">
                     <h4 class="text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
-                        <span>🛠</span>
-                        California App Integration Check
+                        <span>📞</span>
+                        CPUC PHONE NUMBER (1 800 894 444)
                     </h4>
-                    <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
-                        To pass your initial CPUC platform audit, ensure your Rider App contains a localized text string that automatically pushes the CPUC phone number (<strong>1-800-894-9444</strong>) and email into the viewable <strong>"Help" screen</strong> for any trip geofenced within California boundaries.
-                    </p>
                 </div>
 
             </aside>
@@ -194,17 +191,13 @@
                         📋 California Corporate & Platform Mandates
                     </h2>
 
-                    <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
-                        Before launching or dispatching trips within the State of California, the compliance team must secure and maintain a <strong>TNC Permit (Class A)</strong> from the California Public Utilities Commission (CPUC).
-                    </p>
-
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                         <!-- Fee -->
                         <div class="p-5 bg-gray-50 dark:bg-[#1a1a1c] border border-gray-200 dark:border-white/10 rounded-2xl space-y-1.5">
                             <span class="text-lg block">💵</span>
                             <h3 class="font-extrabold text-xs text-gray-900 dark:text-white uppercase tracking-wider">The CPUC Access Fee (PUCTRA)</h3>
                             <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                                California requires TNCs to collect and remit a Public Utilities Commission Transportation Reimbursement Account (PUCTRA) fee, calculated as a percentage of gross California passenger revenues, paid quarterly.
+                                We believe in upfront pricing with zero hidden surprises. While California requires a CPUC/PUCTRA regulatory fee for TNC rides, Ridemycars fully absorbs this cost. The price you see is the price you pay—no added regulatory fees or unexpected surcharges.
                             </p>
                         </div>
 
@@ -213,37 +206,43 @@
                             <span class="text-lg block">♿</span>
                             <h3 class="font-extrabold text-xs text-gray-900 dark:text-white uppercase tracking-wider">Access for All (AFA) Fund (SB 1376)</h3>
                             <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                                Under Senate Bill 1376, RideMyCars collects a mandatory per-trip fee (currently <strong>$0.10</strong>) to fund wheelchair-accessible vehicle (WAV) expansion across California counties, unless providing localized WAV services.
+                                <strong>Our Commitment to Honest Pricing:</strong> To keep our services simple and affordable, RideMyCars absorbs the California SB 1376 Access for All (AFA) per-trip fee on your behalf. While this $0.10 fee is mandated to expand wheelchair-accessible vehicle (WAV) options statewide, we ensure it is never added as an extra surcharge to your final receipt.
                             </p>
                         </div>
 
                         <!-- AB 5 & Background -->
                         <div class="p-5 bg-gray-50 dark:bg-[#1a1a1c] border border-gray-200 dark:border-white/10 rounded-2xl space-y-1.5">
                             <span class="text-lg block">🛡️</span>
-                            <h3 class="font-extrabold text-xs text-gray-900 dark:text-white uppercase tracking-wider">Driver Vetting (AB 5 & Background Checks)</h3>
+                            <h3 class="font-extrabold text-xs text-gray-900 dark:text-white uppercase tracking-wider">FINAL NOTICE: Mandated 7-Year Background Screening</h3>
                             <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                                Drivers must pass a strict national criminal background check with a <strong>7-year lookback</strong>. In California, the platform cannot use local "For-Hire" endorsements as an alternative; certified independent checks must be conducted.
+                                Failure or refusal to complete the mandatory national criminal background check will result in the immediate forfeiture of your platform access. Please be explicitly warned that under California regulatory frameworks, local "For-Hire" endorsements cannot and will not be accepted as an alternative. RideMyCars is legally required to verify independent, certified screenings covering a 7-year lookback period. Disregarding this notice will lead to permanent account termination.
                             </p>
                         </div>
 
                         <!-- Insurance Framework -->
                         <div class="p-5 bg-gray-50 dark:bg-[#1a1a1c] border border-gray-200 dark:border-white/10 rounded-2xl space-y-1.5">
                             <span class="text-lg block">📑</span>
-                            <h3 class="font-extrabold text-xs text-gray-900 dark:text-white uppercase tracking-wider">TNC Commercial Insurance ($1,000,000)</h3>
+                            <h3 class="font-extrabold text-xs text-gray-900 dark:text-white uppercase tracking-wider">Premium $1,000,000 Coverage for Total Peace of Mind</h3>
                             <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                                Compliance requires $1,000,000 in primary commercial liability coverage plus specific underinsured motorist limits while a driver is matched with or transporting passengers.
+                                Your safety is our absolute priority. From the moment a driver accepts a trip until the passenger is safely dropped off, RideMyCars provides $1,000,000 in primary commercial liability insurance. This comprehensive coverage protects both our drivers and passengers, and includes dedicated underinsured motorist protection so everyone on board can ride with complete confidence.
                             </p>
                         </div>
                     </div>
                 </section>
 
                 <!-- Verbatim Zero-Tolerance Policy Note -->
-                <div class="p-6 bg-blue-50/70 dark:bg-blue-950/20 border-l-4 border-blue-600 rounded-3xl space-y-2">
+                <div class="p-6 bg-blue-50/70 dark:bg-blue-950/20 border-l-4 border-blue-600 rounded-3xl space-y-3">
                     <div class="flex items-center gap-2 text-blue-900 dark:text-blue-300 text-xs font-black uppercase tracking-wider">
                         <span>📄 California Zero-Tolerance Policy Note</span>
                     </div>
+                    <h3 class="text-base font-black text-gray-900 dark:text-white">
+                        Zero-Tolerance Intoxicating Substance Policy
+                    </h3>
                     <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-relaxed">
-                        This exact note is published on a dedicated webpage (ridemycars.com) and explicitly displays the CPUC contact phone number and email address as required by California Public Utilities Code [1].
+                        RideMyCars maintains a strict zero-tolerance policy regarding the use of alcohol, drugs, or any intoxicating substances by drivers on our platform.
+                    </p>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-relaxed">
+                        Any driver found to be under the influence of drugs or alcohol while logged into the RideMyCars platform, matched with a passenger, or actively providing a TNC service will face immediate and permanent account suspension.
                     </p>
                 </div>
 
@@ -302,7 +301,7 @@
                                 </li>
                                 <li class="flex items-start gap-2">
                                     <span class="text-amber-500 font-bold">•</span>
-                                    <span><strong>Email Support:</strong> Dispatch a formal notification to <a href="mailto:support@ridemycars.com" class="text-amber-600 dark:text-amber-400 font-bold hover:underline">support@ridemycars.com</a> with the subject line <span class="font-mono font-bold text-xs">"CALIFORNIA SAFETY COMPLIANCE."</span> [1]</span>
+                                    <span><strong>Email Support:</strong> Dispatch a formal notification to <a href="mailto:support@ridemycars.com" class="text-amber-600 dark:text-amber-400 font-bold hover:underline">support@ridemycars.com</a> with the subject line <span class="font-mono font-bold text-xs">"CALIFORNIA SAFETY COMPLIANCE."</span></span>
                                 </li>
                             </ul>
                         </div>
@@ -319,11 +318,11 @@
                             <ul class="space-y-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200 font-medium">
                                 <li class="flex items-start gap-2">
                                     <span class="text-blue-500 font-bold">•</span>
-                                    <span><strong>CPUC Consumer Affairs Hotline:</strong> <a href="tel:18008949444" class="text-blue-600 dark:text-blue-400 font-extrabold hover:underline">1-800-894-9444</a> [1]</span>
+                                    <span><strong>CPUC Consumer Affairs Hotline:</strong> <a href="tel:18008949444" class="text-blue-600 dark:text-blue-400 font-extrabold hover:underline">1-800-894-9444</a></span>
                                 </li>
                                 <li class="flex items-start gap-2">
                                     <span class="text-blue-500 font-bold">•</span>
-                                    <span><strong>CPUC Compliance Email Address:</strong> <a href="mailto:CIU_intake@cpuc.ca.gov" class="text-blue-600 dark:text-blue-400 font-extrabold hover:underline font-mono">CIU_intake@cpuc.ca.gov</a> [1]</span>
+                                    <span><strong>CPUC Compliance Email Address:</strong> <a href="mailto:CIU_intake@cpuc.ca.gov" class="text-blue-600 dark:text-blue-400 font-extrabold hover:underline font-mono">CIU_intake@cpuc.ca.gov</a></span>
                                 </li>
                             </ul>
                         </div>
