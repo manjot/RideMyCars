@@ -164,15 +164,7 @@ Route::delete('/delivery/prescriptions/{id}', [\App\Http\Controllers\PackageDeli
 Route::get('/package-delivery/prescriptions/{id}/view', [\App\Http\Controllers\PackageDeliveryController::class, 'viewPrescription']);
 Route::get('/package-delivery/prescriptions/{id}/download', [\App\Http\Controllers\PackageDeliveryController::class, 'downloadPrescription']);
 
-Route::middleware([function (Request $request, \Closure $next) {
-    $user = $request->user() ?? auth('sanctum')->user() ?? DriverApiController::resolveUser($request);
-    if (!$user) {
-        return response()->json(['message' => 'Unauthenticated.', 'success' => false], 401);
-    }
-    \Illuminate\Support\Facades\Auth::setUser($user);
-    $request->setUserResolver(fn () => $user);
-    return $next($request);
-}])->group(function () {
+Route::middleware(\App\Http\Middleware\ResolveApiUser::class)->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
