@@ -1846,13 +1846,11 @@
                     this.packageCategory = catName;
                     const catObj = this.availableCategories.find(c => c.name.toLowerCase() === catName.toLowerCase());
                     if (catObj && catObj.default_description) {
-                        if (!this.packageDescription || this.packageDescription.includes('Legal Contracts') || this.packageDescription.includes('Prescription Medicines')) {
-                            this.packageDescription = catObj.default_description;
-                        }
+                        this.packageDescription = catObj.default_description;
                     } else if (catName === 'Pharmeasy') {
-                        if (!this.packageDescription || this.packageDescription.includes('Legal Contracts')) {
-                            this.packageDescription = 'Prescription Medicines & Healthcare Supplies';
-                        }
+                        this.packageDescription = 'Prescription Medicines & Healthcare Supplies';
+                    } else if (catName === 'Food') {
+                        this.packageDescription = 'Prepared Meals, Groceries & Restaurant Orders';
                     }
                     if (this.priceBreakdown && this.priceBreakdown.subtotal > 0) {
                         const feePercent = catObj && catObj.service_fee_percent !== undefined ? Number(catObj.service_fee_percent) : (catName === 'Pharmeasy' ? 10 : 5);

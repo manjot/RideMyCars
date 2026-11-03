@@ -20,6 +20,20 @@ class PackageCategoryResource extends Resource
     protected static ?string $navigationLabel = 'Package Categories';
     protected static ?int $navigationSort = 4;
 
+    public static function getNavigationBadge(): ?string
+    {
+        try {
+            return (string) static::getModel()::where('is_active', true)->count();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'success';
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -30,19 +44,20 @@ class PackageCategoryResource extends Resource
                         Forms\Components\Grid::make(2)->schema([
                             Forms\Components\TextInput::make('name')
                                 ->label('Category Name')
-                                ->placeholder('e.g. Pharmeasy, Electronics, Documents, Groceries')
+                                ->placeholder('e.g. Food, Pharmeasy, Electronics, Documents')
                                 ->required()
                                 ->maxLength(100)
+                                ->unique(PackageCategory::class, 'name', ignoreRecord: true)
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
-                                    if ($operation === 'create') {
+                                ->afterStateUpdated(function (string $operation, ?string $state, Forms\Set $set) {
+                                    if ($operation === 'create' && !empty($state)) {
                                         $set('slug', Str::slug($state));
                                     }
                                 }),
 
                             Forms\Components\TextInput::make('slug')
                                 ->label('URL / System Slug')
-                                ->placeholder('e.g. pharmeasy, electronics')
+                                ->placeholder('e.g. food, pharmeasy, electronics')
                                 ->required()
                                 ->maxLength(100)
                                 ->unique(PackageCategory::class, 'slug', ignoreRecord: true),
@@ -51,7 +66,7 @@ class PackageCategoryResource extends Resource
                         Forms\Components\Grid::make(3)->schema([
                             Forms\Components\TextInput::make('icon')
                                 ->label('Icon / Emoji')
-                                ->placeholder('e.g. 💊, 📄, 👕, 💻, 📦')
+                                ->placeholder('e.g. 🍔, 💊, 📄, 👕, 💻, 📦')
                                 ->default('📦')
                                 ->maxLength(50),
 
@@ -137,6 +152,12 @@ class PackageCategoryResource extends Resource
                     ->color('success')
                     ->placeholder('—'),
 
+                Tables\Columns\TextColumn::make('default_description')
+                    ->label('Default Description')
+                    ->limit(36)
+                    ->searchable()
+                    ->placeholder('—'),
+
                 Tables\Columns\TextColumn::make('service_fee_percent')
                     ->label('Service Fee (%)')
                     ->suffix('%')
@@ -161,6 +182,7 @@ class PackageCategoryResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc')
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
@@ -169,11 +191,30 @@ class PackageCategoryResource extends Resource
                     ->label('Prescription Required'),
             ])
             ->actions([
+                Tables\Actions\Action::make('toggle_status')
+                    ->label(fn (PackageCategory $record): string => $record->is_active ? 'Deactivate' : 'Activate')
+                    ->icon(fn (PackageCategory $record): string => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
+                    ->color(fn (PackageCategory $record): string => $record->is_active ? 'warning' : 'success')
+                    ->action(function (PackageCategory $record): void {
+                        $record->update(['is_active' => !$record->is_active]);
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('activate_selected')
+                        ->label('Activate Selected')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->update(['is_active' => true]))
+                        ->deselectRecordsAfterCompletion(),
+                    Tables\Actions\BulkAction::make('deactivate_selected')
+                        ->label('Deactivate Selected')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('warning')
+                        ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->update(['is_active' => false]))
+                        ->deselectRecordsAfterCompletion(),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

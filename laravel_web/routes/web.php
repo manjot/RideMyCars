@@ -4232,6 +4232,7 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             ]);
             $output['categories_explicit_migrate'] = \Illuminate\Support\Facades\Artisan::output();
         }
+        \App\Models\PackageCategory::ensureDefaultsSeeded();
         $output['package_categories_table'] = \Illuminate\Support\Facades\Schema::hasTable('package_categories') ? 'Exists' : 'Missing';
         $output['package_categories_count'] = \Illuminate\Support\Facades\Schema::hasTable('package_categories') ? \App\Models\PackageCategory::count() : 0;
     } catch (\Throwable $e) {

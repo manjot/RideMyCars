@@ -113,11 +113,66 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     'Office supplies',
     'Personal belongings',
     'Pharmeasy',
+    'Food',
     'Other',
   ];
 
+  String? _defaultIconForCategory(String cat) {
+    switch (cat.trim().toLowerCase()) {
+      case 'documents':
+        return '📄';
+      case 'clothing':
+        return '👕';
+      case 'electronics':
+        return '💻';
+      case 'household items':
+        return '🛋️';
+      case 'office supplies':
+        return '📎';
+      case 'personal belongings':
+        return '🎒';
+      case 'pharmeasy':
+        return '💊';
+      case 'food':
+        return '🍔';
+      case 'other':
+        return '📦';
+      default:
+        return '📦';
+    }
+  }
+
+  String _defaultDescriptionForCategory(String cat) {
+    switch (cat.trim().toLowerCase()) {
+      case 'documents':
+        return 'Important Legal Contracts & Office Supplies';
+      case 'clothing':
+        return 'Apparel, Footwear & Accessories';
+      case 'electronics':
+        return 'Laptops, Phones & Gadgets';
+      case 'household items':
+        return 'Home Décor, Kitchenware & Bedding';
+      case 'office supplies':
+        return 'Stationery, Files & Printing Material';
+      case 'personal belongings':
+        return 'Keys, Bags, Wallet & Personal Essentials';
+      case 'pharmeasy':
+        return 'Prescription Medicines & Healthcare Supplies';
+      case 'food':
+        return 'Prepared Meals, Groceries & Restaurant Orders';
+      case 'other':
+        return 'General Parcel & Packaged Goods';
+      default:
+        return '$cat Parcel Delivery';
+    }
+  }
+
   List<String> get _categories => _dynamicCategories.isNotEmpty
-      ? _dynamicCategories.map((c) => (c['name'] ?? '').toString()).where((s) => s.isNotEmpty).toList()
+      ? _dynamicCategories
+          .where((c) => c['is_active'] != false && c['is_active'] != 0 && c['is_active'] != '0')
+          .map((c) => (c['name'] ?? '').toString())
+          .where((s) => s.isNotEmpty)
+          .toList()
       : _defaultCategories;
 
   bool get _selectedCategoryRequiresRx {
@@ -588,6 +643,11 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     if (cats != null && cats.isNotEmpty && mounted) {
       setState(() {
         _dynamicCategories = cats;
+        final activeNames = _categories;
+        if (activeNames.isNotEmpty &&
+            !activeNames.any((n) => n.toLowerCase() == _selectedCategory.toLowerCase())) {
+          _selectedCategory = activeNames.first;
+        }
       });
     }
   }
@@ -946,6 +1006,9 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
 
     if (_currentStep < 5) {
       setState(() => _currentStep++);
+      if (_currentStep == 4) {
+        _loadCategories();
+      }
       _calculatePrice();
     } else {
       _submitBooking();
@@ -955,6 +1018,9 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
   void _prevStep() {
     if (_currentStep > 1) {
       setState(() => _currentStep--);
+      if (_currentStep == 4) {
+        _loadCategories();
+      }
       _calculatePrice();
     }
   }
@@ -1932,7 +1998,9 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
               (c) => (c['name'] ?? '').toString().toLowerCase() == cat.toLowerCase(),
               orElse: () => {},
             );
-            final icon = catObj['icon']?.toString() ?? (cat.toLowerCase() == 'pharmeasy' ? '💊' : null);
+            final icon = (catObj['icon']?.toString().isNotEmpty == true)
+                ? catObj['icon']!.toString()
+                : _defaultIconForCategory(cat);
             final badge = catObj['badge_text']?.toString() ?? (cat.toLowerCase() == 'pharmeasy' ? 'Rx' : null);
 
             return ChoiceChip(
@@ -1974,10 +2042,12 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
               onSelected: (_) {
                 setState(() {
                   _selectedCategory = cat;
-                  if (catObj.isNotEmpty && catObj['default_description'] != null && (catObj['default_description'] as String).isNotEmpty) {
-                    _packageDescController.text = catObj['default_description'];
-                  } else if (cat == 'Pharmeasy') {
-                    _packageDescController.text = 'Prescription Medicines & Healthcare Supplies';
+                  if (catObj.isNotEmpty &&
+                      catObj['default_description'] != null &&
+                      catObj['default_description'].toString().isNotEmpty) {
+                    _packageDescController.text = catObj['default_description'].toString();
+                  } else {
+                    _packageDescController.text = _defaultDescriptionForCategory(cat);
                   }
                 });
                 _calculatePrice();

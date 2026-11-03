@@ -43,18 +43,71 @@ class PackageCategory extends Model
     }
 
     /**
+     * Ensure default categories (including Food) exist in the database once.
+     */
+    public static function ensureDefaultsSeeded(): void
+    {
+        try {
+            if (!Schema::hasTable('package_categories')) {
+                return;
+            }
+
+            if (static::count() === 0) {
+                foreach (static::rawDefaultCategories() as $item) {
+                    $data = $item;
+                    unset($data['id']);
+                    static::firstOrCreate(
+                        ['slug' => $data['slug']],
+                        $data
+                    );
+                }
+                \App\Services\SettingService::set('package_categories.food_seeded_v1', '1', 'Delivery');
+                return;
+            }
+
+            // One-time seed of 'Food' category into existing tables while respecting subsequent Admin CRUD
+            $foodSeeded = \App\Services\SettingService::get('package_categories.food_seeded_v1');
+            if (!$foodSeeded) {
+                $exists = static::whereRaw('LOWER(name) = ?', ['food'])
+                    ->orWhereRaw('LOWER(slug) = ?', ['food'])
+                    ->exists();
+                if (!$exists) {
+                    static::where('slug', 'other')->where('sort_order', 8)->update(['sort_order' => 9]);
+                    static::create([
+                        'name' => 'Food',
+                        'slug' => 'food',
+                        'icon' => '🍔',
+                        'badge_text' => null,
+                        'service_fee_percent' => 5.00,
+                        'requires_prescription' => false,
+                        'prescription_note' => null,
+                        'default_description' => 'Prepared Meals, Groceries & Restaurant Orders',
+                        'is_active' => true,
+                        'sort_order' => 8,
+                    ]);
+                }
+                \App\Services\SettingService::set('package_categories.food_seeded_v1', '1', 'Delivery');
+            }
+        } catch (\Throwable $e) {
+            // Ignore during early boot / before settings table exists
+        }
+    }
+
+    /**
      * Get active package categories for web & API with fallback to built-in list.
      */
     public static function getActiveCategories()
     {
         try {
             if (Schema::hasTable('package_categories')) {
+                static::ensureDefaultsSeeded();
+
                 $categories = static::where('is_active', true)
                     ->orderBy('sort_order', 'asc')
                     ->orderBy('id', 'asc')
                     ->get();
 
-                if ($categories->isNotEmpty()) {
+                if ($categories->isNotEmpty() || static::count() > 0) {
                     return $categories;
                 }
             }
@@ -128,11 +181,11 @@ class PackageCategory extends Model
     }
 
     /**
-     * Fallback collection of categories when table hasn't been migrated yet.
+     * Raw default categories array.
      */
-    public static function fallbackCollection()
+    public static function rawDefaultCategories(): array
     {
-        $raw = [
+        return [
             [
                 'id' => 1,
                 'name' => 'Documents',
@@ -226,6 +279,19 @@ class PackageCategory extends Model
             ],
             [
                 'id' => 8,
+                'name' => 'Food',
+                'slug' => 'food',
+                'icon' => '🍔',
+                'badge_text' => null,
+                'service_fee_percent' => 5.00,
+                'requires_prescription' => false,
+                'prescription_note' => null,
+                'default_description' => 'Prepared Meals, Groceries & Restaurant Orders',
+                'is_active' => true,
+                'sort_order' => 8,
+            ],
+            [
+                'id' => 9,
                 'name' => 'Other',
                 'slug' => 'other',
                 'icon' => '📦',
@@ -235,9 +301,17 @@ class PackageCategory extends Model
                 'prescription_note' => null,
                 'default_description' => 'General Parcel & Packaged Goods',
                 'is_active' => true,
-                'sort_order' => 8,
+                'sort_order' => 9,
             ],
         ];
+    }
+
+    /**
+     * Fallback collection of categories when table hasn't been migrated yet.
+     */
+    public static function fallbackCollection()
+    {
+        $raw = static::rawDefaultCategories();
 
         return collect($raw)->map(function ($item) {
             $cat = new static();
