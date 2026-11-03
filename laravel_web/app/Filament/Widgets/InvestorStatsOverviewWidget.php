@@ -12,14 +12,26 @@ class InvestorStatsOverviewWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $totalInvestors = InvestorProfile::count();
-        $approvedInvestors = InvestorProfile::where('verification_status', 'APPROVED')->count();
-        $pendingInvestors = InvestorProfile::whereIn('verification_status', ['PENDING', 'UNDER_REVIEW'])->count();
-        $needDocsInvestors = InvestorProfile::where('verification_status', 'NEED_MORE_DOCS')->count();
+        $totalInvestors = 0;
+        $approvedInvestors = 0;
+        $pendingInvestors = 0;
+        $needDocsInvestors = 0;
+        $totalCommittedGhc = 0.0;
+        $totalCommittedUsd = 0.0;
+        $totalEquityAllocated = 0.0;
 
-        $totalCommittedGhc = InvestorProfile::where('verification_status', 'APPROVED')->sum('capital_commitment_ghc');
-        $totalCommittedUsd = InvestorProfile::where('verification_status', 'APPROVED')->sum('capital_commitment_usd');
-        $totalEquityAllocated = InvestorProfile::where('verification_status', 'APPROVED')->sum('equity_percentage');
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('investor_profiles')) {
+                $totalInvestors = InvestorProfile::count();
+                $approvedInvestors = InvestorProfile::where('verification_status', 'APPROVED')->count();
+                $pendingInvestors = InvestorProfile::whereIn('verification_status', ['PENDING', 'UNDER_REVIEW'])->count();
+                $needDocsInvestors = InvestorProfile::where('verification_status', 'NEED_MORE_DOCS')->count();
+
+                $totalCommittedGhc = (float) InvestorProfile::where('verification_status', 'APPROVED')->sum('capital_commitment_ghc');
+                $totalCommittedUsd = (float) InvestorProfile::where('verification_status', 'APPROVED')->sum('capital_commitment_usd');
+                $totalEquityAllocated = (float) InvestorProfile::where('verification_status', 'APPROVED')->sum('equity_percentage');
+            }
+        } catch (\Throwable $e) {}
 
         return [
             Stat::make('Investor Capital Committed', '$' . number_format($totalCommittedUsd, 0) . ' USD')

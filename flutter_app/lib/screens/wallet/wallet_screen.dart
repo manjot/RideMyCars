@@ -100,6 +100,21 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
     }
   }
 
+  void _openAddMoneyModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _RiderAddMoneyBottomSheet(
+        currency: _currency,
+        currentBalance: _balance,
+        onSuccess: () {
+          _loadWalletData();
+        },
+      ),
+    );
+  }
+
   void _openWithdrawModal() {
     if (!_withdrawalsEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -306,11 +321,7 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
                 // Add Money
                 Expanded(
                   child: InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Instant wallet top-up gateway ready.')),
-                      );
-                    },
+                    onTap: _openAddMoneyModal,
                     borderRadius: BorderRadius.circular(12),
                     child: const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
@@ -532,7 +543,7 @@ class _WalletScreenState extends State<WalletScreen> with SingleTickerProviderSt
             ),
           ),
           Text(
-            '${isPositive ? '+' : '-'} ${amount.toStringAsFixed(1)}',
+            '${isPositive ? '+' : '-'} ${amount.toStringAsFixed(0)}',
             style: TextStyle(
               color: isPositive ? AppColors.success : AppColors.danger,
               fontSize: 15,
@@ -858,31 +869,43 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
   @override
   void initState() {
     super.initState();
-    if (!widget.allowedMethods.contains('bank') && widget.allowedMethods.contains('momo')) {
+    final hasBank = widget.allowedMethods.isEmpty ||
+        widget.allowedMethods.contains('bank') ||
+        widget.allowedMethods.contains('bank_account');
+    final hasMomo = widget.allowedMethods.isEmpty ||
+        widget.allowedMethods.contains('momo');
+    if (!hasBank && hasMomo) {
       _payoutMethod = 'momo';
     }
 
     // Auto-fill from saved methods if available
-    if (widget.savedPayoutMethods.isNotEmpty) {
-      final defaultMethod = widget.savedPayoutMethods.firstWhere(
-        (m) => m['is_default'] == true,
-        orElse: () => widget.savedPayoutMethods.first,
-      );
-      if (defaultMethod != null) {
-        final type = defaultMethod['type']?.toString() ?? 'bank';
-        _payoutMethod = type;
-        if (type == 'bank') {
-          _bankNameController.text = defaultMethod['bank_name'] ?? '';
-          _accountNumberController.text = defaultMethod['account_number'] ?? '';
-          _routingCodeController.text = defaultMethod['routing_code'] ?? '';
-          _holderNameController.text = defaultMethod['holder_name'] ?? '';
-        } else {
-          _momoNetworkController.text = defaultMethod['network'] ?? 'MTN';
-          _momoPhoneController.text = defaultMethod['phone_number'] ?? '';
-          _momoNameController.text = defaultMethod['account_name'] ?? '';
+    try {
+      if (widget.savedPayoutMethods.isNotEmpty) {
+        dynamic defaultMethod;
+        for (final m in widget.savedPayoutMethods) {
+          if (m is Map && m['is_default'] == true) {
+            defaultMethod = m;
+            break;
+          }
+        }
+        defaultMethod ??= widget.savedPayoutMethods.first;
+        if (defaultMethod is Map) {
+          final rawType = defaultMethod['type']?.toString() ?? 'bank';
+          final type = (rawType == 'bank_account' || rawType == 'bank') ? 'bank' : 'momo';
+          _payoutMethod = type;
+          if (type == 'bank') {
+            _bankNameController.text = (defaultMethod['bank_name'] ?? '').toString();
+            _accountNumberController.text = (defaultMethod['account_number'] ?? '').toString();
+            _routingCodeController.text = (defaultMethod['routing_code'] ?? '').toString();
+            _holderNameController.text = (defaultMethod['holder_name'] ?? defaultMethod['account_holder_name'] ?? '').toString();
+          } else {
+            _momoNetworkController.text = (defaultMethod['momo_network'] ?? defaultMethod['network'] ?? 'MTN').toString();
+            _momoPhoneController.text = (defaultMethod['momo_phone'] ?? defaultMethod['phone_number'] ?? '').toString();
+            _momoNameController.text = (defaultMethod['momo_account_name'] ?? defaultMethod['account_name'] ?? '').toString();
+          }
         }
       }
-    }
+    } catch (_) {}
   }
 
   @override
@@ -892,6 +915,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
     _accountNumberController.dispose();
     _routingCodeController.dispose();
     _holderNameController.dispose();
+    _momoNetworkController.dispose();
     _momoPhoneController.dispose();
     _momoNameController.dispose();
     super.dispose();
@@ -901,27 +925,27 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
     if (val > widget.balance) {
       val = widget.balance;
     }
-    _amountController.text = val.toStringAsFixed(1);
+    _amountController.text = val.round().toString();
     setState(() => _errorMessage = null);
   }
 
   double get _enteredAmount {
-    return double.tryParse(_amountController.text.trim()) ?? 0.0;
+    return (double.tryParse(_amountController.text.trim()) ?? 0.0).roundToDouble();
   }
 
   double get _calculatedFee {
     final amt = _enteredAmount;
     if (amt <= 0) return 0.0;
     if (widget.withdrawalFeeType == 'percent') {
-      return (amt * widget.withdrawalFee) / 100.0;
+      return ((amt * widget.withdrawalFee) / 100.0).roundToDouble();
     }
-    return widget.withdrawalFee;
+    return widget.withdrawalFee.roundToDouble();
   }
 
   double get _netPayout {
     final amt = _enteredAmount;
     final fee = _calculatedFee;
-    return (amt - fee) > 0 ? (amt - fee) : 0.0;
+    return (amt - fee) > 0 ? (amt - fee).roundToDouble() : 0.0;
   }
 
   Future<void> _submit() async {
@@ -957,6 +981,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
         'account_number': _accountNumberController.text.trim(),
         'routing_code': _routingCodeController.text.trim(),
         'holder_name': _holderNameController.text.trim(),
+        'account_holder_name': _holderNameController.text.trim(),
       };
     } else {
       if (_momoPhoneController.text.trim().isEmpty || _momoNameController.text.trim().isEmpty) {
@@ -965,28 +990,32 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
       }
       payoutDetails = {
         'network': _momoNetworkController.text.trim(),
+        'momo_network': _momoNetworkController.text.trim(),
         'phone_number': _momoPhoneController.text.trim(),
+        'momo_phone': _momoPhoneController.text.trim(),
         'account_name': _momoNameController.text.trim(),
+        'momo_account_name': _momoNameController.text.trim(),
       };
     }
 
     setState(() => _isSubmitting = true);
     final res = await WalletService.submitWithdrawal(
       amount: amt,
-      payoutMethod: _payoutMethod,
+      payoutMethod: _payoutMethod == 'bank' ? 'bank_account' : 'momo',
       payoutDetails: payoutDetails,
       savePayoutMethod: _savePayoutMethod,
     );
+    if (!mounted) return;
     setState(() => _isSubmitting = false);
 
     if (res['success'] == true) {
-      if (!mounted) return;
+      final navContext = Navigator.of(context).context;
       Navigator.pop(context); // Close sheet
       widget.onSuccess();
 
       // Show confirmation dialog matching specification
       showDialog(
-        context: context,
+        context: navContext,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.surfaceDark,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -994,11 +1023,14 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
             children: [
               Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
               SizedBox(width: 10),
-              Text('Request Submitted', style: TextStyle(color: AppColors.textLight, fontSize: 18, fontWeight: FontWeight.bold)),
+              Expanded(
+                child: Text('Withdrawal Processed', style: TextStyle(color: AppColors.textLight, fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
             ],
           ),
           content: Text(
-            'Your withdrawal request of ${widget.currency}${amt.toStringAsFixed(0)} has been submitted for pending approval.\n\nNote: Your wallet balance remains intact and will only be deducted once approved by admin.',
+            res['message']?.toString() ??
+                'Your withdrawal of ${widget.currency}${amt.toStringAsFixed(0)} has been processed and deducted from your wallet.',
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
           ),
           actions: [
@@ -1009,20 +1041,26 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('View History', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       );
     } else {
       setState(() {
-        _errorMessage = res['message'] ?? 'Failed to submit withdrawal request.';
+        _errorMessage = res['message']?.toString() ?? 'Failed to submit withdrawal request.';
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final allowBank = widget.allowedMethods.isEmpty ||
+        widget.allowedMethods.contains('bank') ||
+        widget.allowedMethods.contains('bank_account');
+    final allowMomo = widget.allowedMethods.isEmpty ||
+        widget.allowedMethods.contains('momo');
+
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surfaceDark,
@@ -1075,7 +1113,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
             ),
             const SizedBox(height: 20),
 
-            // Amount Input (Reference Screenshot 3: ₹ Enter Amount Here)
+            // Amount Input
             Container(
               decoration: BoxDecoration(
                 color: AppColors.backgroundDark,
@@ -1093,7 +1131,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                   Expanded(
                     child: TextField(
                       controller: _amountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.number,
                       style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
                       decoration: const InputDecoration(
                         hintText: 'Enter Amount Here',
@@ -1109,7 +1147,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
 
             const SizedBox(height: 14),
 
-            // Preset Quick Amount Chips (Reference Screenshot 3: ₹ 50.0, ₹ 100.0, ₹ 150.0)
+            // Preset Quick Amount Chips
             Row(
               children: [
                 Expanded(child: _buildQuickChip(50.0)),
@@ -1143,7 +1181,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
             const SizedBox(height: 10),
             Row(
               children: [
-                if (widget.allowedMethods.contains('bank'))
+                if (allowBank)
                   Expanded(
                     child: _buildMethodRadio(
                       'bank',
@@ -1151,9 +1189,9 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
                       Icons.account_balance_rounded,
                     ),
                   ),
-                if (widget.allowedMethods.contains('bank') && widget.allowedMethods.contains('momo'))
+                if (allowBank && allowMomo)
                   const SizedBox(width: 10),
-                if (widget.allowedMethods.contains('momo'))
+                if (allowMomo)
                   Expanded(
                     child: _buildMethodRadio(
                       'momo',
@@ -1168,21 +1206,51 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
 
             // Method-specific input fields
             if (_payoutMethod == 'bank') ...[
-              _buildTextField('Bank Name', _bankNameController, 'e.g. HDFC Bank / Chase'),
+              _buildTextField('Bank Name', _bankNameController, 'e.g. GCB Bank / Ecobank / Chase'),
               const SizedBox(height: 10),
               _buildTextField('Account Number / IBAN', _accountNumberController, 'e.g. 501002348910', isNumber: true),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: _buildTextField('Routing / IFSC Code', _routingCodeController, 'e.g. HDFC0001234')),
+                  Expanded(child: _buildTextField('Routing / Branch Code', _routingCodeController, 'Optional')),
                   const SizedBox(width: 10),
                   Expanded(child: _buildTextField('Account Holder Name', _holderNameController, 'e.g. John Doe')),
                 ],
               ),
             ] else ...[
-              _buildTextField('Network Provider', _momoNetworkController, 'e.g. MTN / Airtel / Vodafone'),
+              Row(
+                children: ['MTN', 'Telecel', 'AirtelTigo'].map((net) {
+                  final sel = _momoNetworkController.text.toUpperCase() == net.toUpperCase();
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _momoNetworkController.text = net),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: sel ? const Color(0xFFF97316).withOpacity(0.15) : AppColors.backgroundDark,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: sel ? const Color(0xFFF97316) : Colors.white12,
+                            width: sel ? 1.5 : 1.0,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          net,
+                          style: TextStyle(
+                            color: sel ? Colors.white : AppColors.textMuted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
               const SizedBox(height: 10),
-              _buildTextField('MoMo Mobile Number', _momoPhoneController, 'e.g. +91 9876543210', isNumber: true),
+              _buildTextField('MoMo Mobile Number', _momoPhoneController, 'e.g. 024 123 4567', isNumber: true),
               const SizedBox(height: 10),
               _buildTextField('Registered Account Name', _momoNameController, 'e.g. John Doe'),
             ],
@@ -1249,7 +1317,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
 
             const SizedBox(height: 20),
 
-            // Action Buttons: Cancel and Withdraw (Matching Reference 3)
+            // Action Buttons: Cancel and Withdraw
             Row(
               children: [
                 Expanded(
@@ -1297,7 +1365,7 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
         padding: const EdgeInsets.symmetric(vertical: 10),
       ),
       child: Text(
-        '${widget.currency} ${val.toStringAsFixed(1)}',
+        '${widget.currency} ${val.toStringAsFixed(0)}',
         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
       ),
     );
@@ -1341,6 +1409,568 @@ class _WithdrawBottomSheetState extends State<_WithdrawBottomSheet> {
   }
 
   Widget _buildTextField(String label, TextEditingController controller, String hint, {bool isNumber = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.backgroundDark,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: TextField(
+            controller: controller,
+            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RiderAddMoneyBottomSheet extends StatefulWidget {
+  final String currency;
+  final double currentBalance;
+  final VoidCallback onSuccess;
+
+  const _RiderAddMoneyBottomSheet({
+    required this.currency,
+    required this.currentBalance,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_RiderAddMoneyBottomSheet> createState() => _RiderAddMoneyBottomSheetState();
+}
+
+class _RiderAddMoneyBottomSheetState extends State<_RiderAddMoneyBottomSheet> {
+  final _amountController = TextEditingController();
+  final _momoPhoneController = TextEditingController();
+  final _momoNameController = TextEditingController();
+  final _cardNumberController = TextEditingController();
+  final _cardExpiryController = TextEditingController();
+  final _cardCvvController = TextEditingController();
+
+  String _paymentMethod = 'momo'; // 'momo' or 'card'
+  String _momoNetwork = 'MTN';
+  bool _isSubmitting = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _momoPhoneController.dispose();
+    _momoNameController.dispose();
+    _cardNumberController.dispose();
+    _cardExpiryController.dispose();
+    _cardCvvController.dispose();
+    super.dispose();
+  }
+
+  void _setAmount(double val) {
+    _amountController.text = val.round().toString();
+    setState(() => _errorMessage = null);
+  }
+
+  double get _enteredAmount => (double.tryParse(_amountController.text.trim()) ?? 0.0).roundToDouble();
+
+  Future<bool> _showMomoAuthorizationPromptDialog({
+    required double amount,
+    required String network,
+    required String phone,
+  }) async {
+    final pinController = TextEditingController();
+    String? pinError;
+
+    final authorized = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFFF97316), width: 1.5),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF97316).withOpacity(0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.phonelink_lock_rounded, color: Color(0xFFF97316), size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '$network MoMo Prompt',
+                  style: const TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundDark,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Text(
+                  'Authorize payment of ${widget.currency}${amount.toStringAsFixed(0)} from your $network Mobile Money wallet ($phone) to RideMyCars.\n\nEnter your MoMo PIN below or approve the USSD prompt on your phone to complete the deposit:',
+                  style: const TextStyle(color: AppColors.textLight, fontSize: 12.5, height: 1.45),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: pinController,
+                obscureText: true,
+                maxLength: 6,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 8,
+                ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: '• • • •',
+                  hintStyle: const TextStyle(color: AppColors.textMuted, letterSpacing: 6),
+                  filled: true,
+                  fillColor: AppColors.backgroundDark,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                ),
+              ),
+              if (pinError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  pinError!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (pinController.text.trim().length < 4) {
+                  setDialogState(() => pinError = 'Please enter your 4-digit MoMo PIN to authorize.');
+                  return;
+                }
+                Navigator.pop(ctx, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Authorize & Pay', style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return authorized == true;
+  }
+
+  Future<void> _submit() async {
+    setState(() => _errorMessage = null);
+    final amt = _enteredAmount;
+    if (amt <= 0) {
+      setState(() => _errorMessage = 'Please enter a valid deposit amount.');
+      return;
+    }
+
+    Map<String, dynamic> details = {};
+    if (_paymentMethod == 'momo') {
+      if (_momoPhoneController.text.trim().isEmpty) {
+        setState(() => _errorMessage = 'Please enter your Mobile Money phone number.');
+        return;
+      }
+      details = {
+        'momo_network': _momoNetwork,
+        'momo_phone': _momoPhoneController.text.trim(),
+        'momo_account_name': _momoNameController.text.trim(),
+      };
+    } else {
+      if (_cardNumberController.text.trim().length < 12 || _cardExpiryController.text.trim().isEmpty || _cardCvvController.text.trim().length < 3) {
+        setState(() => _errorMessage = 'Please enter valid card details.');
+        return;
+      }
+      details = {
+        'card_last4': _cardNumberController.text.trim().substring(_cardNumberController.text.trim().length - 4),
+        'card_expiry': _cardExpiryController.text.trim(),
+      };
+    }
+
+    String? txRef;
+    if (_paymentMethod == 'momo') {
+      setState(() => _isSubmitting = true);
+      final initRes = await WalletService.topupWallet(
+        amount: amt,
+        paymentMethod: _paymentMethod,
+        paymentDetails: details,
+        initiatePrompt: true,
+        authorized: false,
+      );
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+
+      txRef = initRes['transaction_ref']?.toString();
+      final approved = await _showMomoAuthorizationPromptDialog(
+        amount: amt,
+        network: _momoNetwork,
+        phone: _momoPhoneController.text.trim(),
+      );
+      if (!approved) {
+        if (!mounted) return;
+        setState(() => _errorMessage = 'Mobile Money authorization was cancelled.');
+        return;
+      }
+    }
+
+    setState(() => _isSubmitting = true);
+    final res = await WalletService.topupWallet(
+      amount: amt,
+      paymentMethod: _paymentMethod,
+      paymentDetails: details,
+      authorized: true,
+      transactionRef: txRef,
+    );
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (res['success'] == true) {
+      final navContext = Navigator.of(context).context;
+      Navigator.pop(context);
+      widget.onSuccess();
+
+      showDialog(
+        context: navContext,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text('Top-Up Successful', style: TextStyle(color: AppColors.textLight, fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          content: Text(
+            res['message']?.toString() ??
+                '${widget.currency}${amt.toStringAsFixed(0)} has been credited to your wallet balance.',
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF97316),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      setState(() => _errorMessage = res['message']?.toString() ?? 'Failed to add money to wallet.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.only(
+        top: 14,
+        left: 20,
+        right: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Add Money to Wallet',
+                  style: TextStyle(color: AppColors.textLight, fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Balance: ${widget.currency}${widget.currentBalance.toStringAsFixed(0)}',
+                    style: const TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDark,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white24, width: 1.2),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Text(
+                    widget.currency,
+                    style: const TextStyle(color: AppColors.textLight, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _amountController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+                      decoration: const InputDecoration(
+                        hintText: 'Enter Top-Up Amount',
+                        hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 16, fontWeight: FontWeight.w500),
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (_) => setState(() => _errorMessage = null),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [20.0, 50.0, 100.0, 200.0].map((val) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: OutlinedButton(
+                      onPressed: () => _setAmount(val),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textLight,
+                        side: const BorderSide(color: Colors.white24),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      child: Text(
+                        '${widget.currency}${val.toStringAsFixed(0)}',
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Payment Method',
+              style: TextStyle(color: AppColors.textLight, fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMethodChoice('momo', 'Mobile Money (MoMo)', Icons.phone_android_rounded),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildMethodChoice('card', 'Credit / Debit Card', Icons.credit_card_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_paymentMethod == 'momo') ...[
+              Row(
+                children: ['MTN', 'Telecel', 'AirtelTigo'].map((net) {
+                  final sel = _momoNetwork == net;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _momoNetwork = net),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: sel ? const Color(0xFFF97316).withOpacity(0.15) : AppColors.backgroundDark,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: sel ? const Color(0xFFF97316) : Colors.white12,
+                            width: sel ? 1.5 : 1.0,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          net,
+                          style: TextStyle(
+                            color: sel ? Colors.white : AppColors.textMuted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              _buildInput('MoMo Phone Number', _momoPhoneController, 'e.g. 024 123 4567', isNumber: true),
+              const SizedBox(height: 10),
+              _buildInput('Account Holder Name (Optional)', _momoNameController, 'e.g. Kwame Mensah'),
+            ] else ...[
+              _buildInput('Card Number', _cardNumberController, '4000 1234 5678 9010', isNumber: true),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(child: _buildInput('Expiry (MM/YY)', _cardExpiryController, '08/28')),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildInput('CVV', _cardCvvController, '123', isNumber: true)),
+                ],
+              ),
+            ],
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.danger.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textLight,
+                      side: const BorderSide(color: Colors.white24),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Add Money', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMethodChoice(String value, String label, IconData icon) {
+    final isSelected = _paymentMethod == value;
+    return InkWell(
+      onTap: () => setState(() => _paymentMethod = value),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF97316).withOpacity(0.15) : AppColors.backgroundDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFF97316) : Colors.white12,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isSelected ? const Color(0xFFF97316) : AppColors.textMuted, size: 18),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.textMuted,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInput(String label, TextEditingController controller, String hint, {bool isNumber = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

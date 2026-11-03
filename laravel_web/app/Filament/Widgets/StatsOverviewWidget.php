@@ -20,30 +20,41 @@ class StatsOverviewWidget extends BaseWidget
     {
         $totalGhs = 0.0;
         $totalUsd = 0.0;
+        $activeRides = 0;
+        $activeBookings = 0;
+        $verifiedDrivers = 0;
+        $pendingVerifications = 0;
+        $totalVehicles = 0;
+        $totalUsers = 0;
 
-        foreach (Ride::where('status', 'completed')->get(['fare', 'currency']) as $r) {
-            $fare = (float) ($r->fare ?? 0);
-            $curr = strtoupper(trim($r->currency ?: 'GHS'));
-            $totalGhs += $curr === 'GHS' ? round($fare) : (float) CurrencyExchangeService::convert($fare, $curr, 'GHS');
-            $totalUsd += $curr === 'USD' ? round($fare) : (float) CurrencyExchangeService::convert($fare, $curr, 'USD');
+        try {
+            foreach (Ride::where('status', 'completed')->get() as $r) {
+                $fare = (float) ($r->fare ?: $r->total_amount ?: 0);
+                $countryCode = strtoupper(trim($r->driver_country ?: $r->country ?: 'GHA'));
+                $curr = strtoupper(trim($r->currency ?: ($countryCode === 'USA' ? 'USD' : ($countryCode === 'IND' ? 'INR' : 'GHS'))));
+                $totalGhs += $curr === 'GHS' ? round($fare) : (float) CurrencyExchangeService::convert($fare, $curr, 'GHS');
+                $totalUsd += $curr === 'USD' ? round($fare) : (float) CurrencyExchangeService::convert($fare, $curr, 'USD');
+            }
+
+            foreach (DriverBooking::where('booking_status', 'completed')->get() as $b) {
+                $price = (float) ($b->total_price ?? 0);
+                $curr = strtoupper(trim($b->currency ?: 'GHS'));
+                $totalGhs += $curr === 'GHS' ? round($price) : (float) CurrencyExchangeService::convert($price, $curr, 'GHS');
+                $totalUsd += $curr === 'USD' ? round($price) : (float) CurrencyExchangeService::convert($price, $curr, 'USD');
+            }
+
+            $totalGhs = round($totalGhs);
+            $totalUsd = round($totalUsd);
+
+            $activeRides = Ride::whereIn('status', ['pending', 'accepted', 'in_progress'])->count();
+            $activeBookings = DriverBooking::whereIn('booking_status', ['pending', 'accepted', 'in_progress'])->count();
+            $verifiedDrivers = DriverProfile::where('verification_status', 'verified')->count();
+            $pendingVerifications = DriverProfile::whereIn('verification_status', ['submitted', 'under_review'])->count();
+            $totalVehicles = Vehicle::count();
+            $totalUsers = User::count();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('StatsOverviewWidget error: ' . $e->getMessage());
         }
-
-        foreach (DriverBooking::where('booking_status', 'completed')->get(['total_price', 'currency']) as $b) {
-            $price = (float) ($b->total_price ?? 0);
-            $curr = strtoupper(trim($b->currency ?: 'GHS'));
-            $totalGhs += $curr === 'GHS' ? round($price) : (float) CurrencyExchangeService::convert($price, $curr, 'GHS');
-            $totalUsd += $curr === 'USD' ? round($price) : (float) CurrencyExchangeService::convert($price, $curr, 'USD');
-        }
-
-        $totalGhs = round($totalGhs);
-        $totalUsd = round($totalUsd);
-
-        $activeRides = Ride::whereIn('status', ['pending', 'accepted', 'in_progress'])->count();
-        $activeBookings = DriverBooking::whereIn('booking_status', ['pending', 'accepted', 'in_progress'])->count();
-        $verifiedDrivers = DriverProfile::where('verification_status', 'verified')->count();
-        $pendingVerifications = DriverProfile::whereIn('verification_status', ['submitted', 'under_review'])->count();
-        $totalVehicles = Vehicle::count();
-        $totalUsers = User::count();
 
         return [
             Stat::make('Total Platform Revenue', 'GH₵ ' . number_format($totalGhs, 0) . ' ($' . number_format($totalUsd, 0) . ')')

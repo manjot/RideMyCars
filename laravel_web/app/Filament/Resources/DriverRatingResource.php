@@ -263,3 +263,4 @@ class DriverRatingResource extends Resource
         ];
     }
 }
+

@@ -84,15 +84,18 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       if (_isOnline || _activeChauffeurOnline) {
         SoundService.instance.setOnlineKeepAlive(true);
+        _syncNativeOrderAlertService(true);
         pollPendingRequests();
         fetchActiveRides();
       }
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.hidden) {
-      // Keep audio session & background location stream alive when screen locks or app is backgrounded
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      // Keep audio session, native background service & location stream alive when screen locks or app is closed/backgrounded
       if (_isOnline || _activeChauffeurOnline) {
         SoundService.instance.setOnlineKeepAlive(true);
+        _syncNativeOrderAlertService(true);
         _startBackgroundLocationStream();
         pollPendingRequests();
       }
@@ -353,12 +356,6 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
           accuracy: LocationAccuracy.high,
           distanceFilter: 0,
           intervalDuration: const Duration(seconds: 4),
-          foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: 'RideMyCars Driver Online',
-            notificationText:
-                'Active in background — ready to receive ride & delivery orders',
-            enableWakeLock: true,
-          ),
         );
       } else if (Platform.isIOS) {
         locationSettings = AppleSettings(
@@ -382,6 +379,12 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
         (Position pos) {
           _currentLat = pos.latitude;
           _currentLng = pos.longitude;
+          if (Platform.isAndroid) {
+            _nativeAlertChannel.invokeMethod('updateLocation', {
+              'lat': _currentLat.toString(),
+              'lng': _currentLng.toString(),
+            }).catchError((_) {});
+          }
           final now = DateTime.now();
           if (_isOnline || _activeChauffeurOnline) {
             if (_lastStreamPollAt == null ||

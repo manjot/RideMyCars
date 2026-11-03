@@ -91,7 +91,7 @@ class FcmService
                 'title' => $title,
                 'body' => $body,
                 'sound' => $sound,
-                'android_channel_id' => 'ridemycars_alerts',
+                'android_channel_id' => 'ridemycars_incoming_orders_v2',
                 'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
             ],
             'data' => $stringData,

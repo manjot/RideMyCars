@@ -404,13 +404,14 @@ class BookingRefundService
             return ['credited' => false, 'commission_deducted' => false, 'amount' => 0.00, 'reason' => 'zero_fare'];
         }
 
-        // Calculate platform fee
-        $platformFee = round($grossAmount * 0.10, 2);
+        // Calculate platform fee (whole number)
+        $grossAmount = round($grossAmount);
+        $platformFee = round($grossAmount * 0.10);
         if (class_exists(CommissionBillingService::class)) {
             try {
                 $calc = CommissionBillingService::calculate($grossAmount, $vertical);
                 if (isset($calc['platform_fee'])) {
-                    $platformFee = (float)$calc['platform_fee'];
+                    $platformFee = round((float)$calc['platform_fee']);
                 }
             } catch (\Throwable $ce) {
                 Log::warning("CommissionBillingService error on cash trip: " . $ce->getMessage());
@@ -425,10 +426,16 @@ class BookingRefundService
                 return ['credited' => false, 'commission_deducted' => false, 'amount' => 0.00, 'reason' => 'user_not_found'];
             }
 
-            $balBefore = (float)($user->wallet_balance ?? 0.00);
-            $balAfter = round($balBefore - $platformFee, 2);
+            // Reconcile any existing wallet / cash commission wallet state first
+            WalletService::reconcileDriverCashCommissionWallet($user);
+            $user->refresh();
 
-            // Automatically deduct platform commission from driver's main wallet
+            $balBefore = max(0.0, round((float)($user->wallet_balance ?? 0.00)));
+            $deductedFromMain = min($balBefore, $platformFee);
+            $remainingUnpaid = max(0.0, round($platformFee - $deductedFromMain));
+            $balAfter = max(0.0, round($balBefore - $deductedFromMain));
+
+            // Deduct available portion from driver's main wallet (never negative)
             $user->wallet_balance = $balAfter;
             $user->save();
 
@@ -442,7 +449,18 @@ class BookingRefundService
                 default => 'Ride',
             };
 
-            // 1. Record transaction in WalletTransaction ledger
+            // 1. Update Driver Profile's cash_commission_wallet with remaining unpaid commission balance
+            $profile = $user->driverProfile;
+            $newCommissionWalletBalance = $remainingUnpaid;
+            if ($profile) {
+                $currentCommissionWallet = max(0.0, round((float)($profile->cash_commission_wallet ?? 0.00)));
+                $newCommissionWalletBalance = round($currentCommissionWallet + $remainingUnpaid);
+                $profile->update([
+                    'cash_commission_wallet' => $newCommissionWalletBalance,
+                ]);
+            }
+
+            // 2. Record transaction in WalletTransaction ledger
             WalletTransaction::create([
                 'user_id' => $user->id,
                 'transaction_ref' => $trxRef,
@@ -451,7 +469,7 @@ class BookingRefundService
                 'currency' => $currency,
                 'balance_before' => $balBefore,
                 'balance_after' => $balAfter,
-                'description' => "Platform Commission Deducted for Cash {$verticalLabel} #{$booking->id} (Cash collected by driver: {$currency}{$grossAmount})",
+                'description' => "Platform Commission Deducted for Cash {$verticalLabel} #{$booking->id} (Deducted: {$currency}{$deductedFromMain}, Outstanding Cash Commission: {$currency}{$newCommissionWalletBalance})",
                 'status' => 'completed',
                 'reference_id' => $booking->id,
                 'reference_type' => get_class($booking),
@@ -462,19 +480,13 @@ class BookingRefundService
                     'gross_fare' => $grossAmount,
                     'commission_rate' => $commissionRate,
                     'platform_commission' => $platformFee,
+                    'deducted_from_main_wallet_amount' => $deductedFromMain,
+                    'remaining_unpaid_commission' => $remainingUnpaid,
                     'deducted_from_main_wallet' => true,
+                    'reconciled_commission_wallet' => true,
                     'completed_at' => now()->toIso8601String(),
                 ],
             ]);
-
-            // 2. Increment Driver Profile's cash_commission_wallet (The additional wallet)
-            $profile = $user->driverProfile;
-            if ($profile) {
-                $currentCommissionWallet = (float)($profile->cash_commission_wallet ?? 0.00);
-                $profile->update([
-                    'cash_commission_wallet' => round($currentCommissionWallet + $platformFee, 2),
-                ]);
-            }
 
             // 3. Record in driver_cash_commissions table
             $tripRef = method_exists($booking, 'getTable') ? (strtoupper($booking->getTable()) . '-#' . $booking->id) : ('TRIP-#' . $booking->id);

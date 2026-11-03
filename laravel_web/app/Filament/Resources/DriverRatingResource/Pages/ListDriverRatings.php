@@ -29,3 +29,4 @@ class ListDriverRatings extends ListRecords
         ];
     }
 }
+

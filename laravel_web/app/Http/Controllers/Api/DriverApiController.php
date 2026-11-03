@@ -2021,6 +2021,8 @@ class DriverApiController extends Controller
                 $ride->update([
                     'driver_id' => $user->id,
                     'status' => 'accepted',
+                    'backup_status' => 'none',
+                    'backup_driver_id' => null,
                 ]);
 
                 // Expire competing assignments
@@ -2542,9 +2544,9 @@ class DriverApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'today' => floatval($today),
-            'week' => floatval($week),
-            'month' => floatval($month),
+            'today' => (int) round($today),
+            'week' => (int) round($week),
+            'month' => (int) round($month),
             'total_trips' => $totalTrips,
             'currency_symbol' => $driverPricing->currency_symbol,
             'currency_code' => $driverPricing->currency_code,

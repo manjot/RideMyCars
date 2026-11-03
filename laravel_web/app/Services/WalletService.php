@@ -56,20 +56,98 @@ class WalletService
     }
 
     /**
+     * Reconcile and settle a driver's Cash Commission Wallet and Main Wallet Balance.
+     * Ensures deductions take effect in Cash Commission Wallet and balances are whole numbers.
+     */
+    public static function reconcileDriverCashCommissionWallet(User $user): void
+    {
+        try {
+            $profile = $user->driverProfile;
+            $rawMain = (float) ($user->wallet_balance ?? 0.0);
+            $rawComm = (float) ($profile?->cash_commission_wallet ?? 0.0);
+
+            if (!$profile) {
+                $roundedMain = max(0.0, round($rawMain));
+                if (abs($rawMain - $roundedMain) > 0.001) {
+                    $user->wallet_balance = $roundedMain;
+                    $user->save();
+                }
+                return;
+            }
+
+            // 1. If main wallet went negative under legacy logic, convert negative balance into outstanding cash_commission_wallet
+            if ($rawMain < 0) {
+                $outstanding = round(abs($rawMain));
+                $user->wallet_balance = 0;
+                $user->save();
+                $profile->update(['cash_commission_wallet' => $outstanding]);
+                return;
+            }
+
+            // 2. Check if legacy commission_deduction transactions already subtracted the commission from main wallet
+            if ($rawComm > 0) {
+                $unreconciledTx = WalletTransaction::where('user_id', $user->id)
+                    ->where('type', 'commission_deduction')
+                    ->get()
+                    ->filter(function ($tx) {
+                        $meta = is_array($tx->metadata) ? $tx->metadata : [];
+                        return empty($meta['reconciled_commission_wallet']);
+                    });
+
+                if ($unreconciledTx->isNotEmpty()) {
+                    // In legacy code, every commission_deduction already subtracted `amount` from wallet_balance.
+                    // Since wallet_balance >= 0 now, those deductions have already been paid by the main wallet!
+                    foreach ($unreconciledTx as $tx) {
+                        $meta = is_array($tx->metadata) ? $tx->metadata : [];
+                        $meta['reconciled_commission_wallet'] = true;
+                        $tx->metadata = $meta;
+                        $tx->save();
+                    }
+                    $rawComm = 0.0;
+                    $profile->update(['cash_commission_wallet' => 0]);
+                }
+            }
+
+            // 3. If both main wallet > 0 and cash_commission_wallet > 0, apply main wallet balance to reduce outstanding cash_commission_wallet
+            $roundedMain = max(0.0, round($rawMain));
+            $roundedComm = max(0.0, round($rawComm));
+
+            if ($roundedMain > 0 && $roundedComm > 0) {
+                $settled = min($roundedMain, $roundedComm);
+                $roundedMain = max(0.0, round($roundedMain - $settled));
+                $roundedComm = max(0.0, round($roundedComm - $settled));
+            }
+
+            if (abs($rawMain - $roundedMain) > 0.001) {
+                $user->wallet_balance = $roundedMain;
+                $user->save();
+            }
+            if (abs((float) $profile->cash_commission_wallet - $roundedComm) > 0.001) {
+                $profile->update(['cash_commission_wallet' => $roundedComm]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('reconcileDriverCashCommissionWallet warning: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Get full wallet summary for a user.
      */
     public static function getWalletSummary(User $user): array
     {
+        self::reconcileDriverCashCommissionWallet($user);
+        $user->refresh();
+
         $settings = self::getSettings();
         $currency = self::getUserCurrency($user);
 
-        $pendingWithdrawalsSum = (float) WalletWithdrawal::where('user_id', $user->id)
+        $pendingWithdrawalsSum = (int) round((float) WalletWithdrawal::where('user_id', $user->id)
             ->where('status', 'pending')
-            ->sum('amount');
+            ->sum('amount'));
 
-        $approvedWithdrawalsSum = (float) WalletWithdrawal::where('user_id', $user->id)
+        $approvedWithdrawalsSum = (int) round((float) WalletWithdrawal::where('user_id', $user->id)
             ->where('status', 'approved')
-            ->sum('amount');
+            ->sum('amount'));
 
         $withdrawalsCount = [
             'pending' => WalletWithdrawal::where('user_id', $user->id)->where('status', 'pending')->count(),
@@ -78,21 +156,30 @@ class WalletService
             'total' => WalletWithdrawal::where('user_id', $user->id)->count(),
         ];
 
-        // Additional Cash Commission Wallet
-        $driverProfile = $user->driverProfile;
-        $commissionWalletBalance = (float) ($driverProfile?->cash_commission_wallet ?? 0.00);
+        // Additional Cash Commission Wallet (whole number)
+        $driverProfile = $user->driverProfile?->fresh() ?? $user->driverProfile;
+        $commissionWalletBalance = (int) round((float) ($driverProfile?->cash_commission_wallet ?? 0));
+        $mainWalletBalance = (int) round((float) ($user->wallet_balance ?? 0));
         $cashCommissionsCount = 0;
         $recentCashCommissions = [];
 
         if (class_exists(\App\Models\DriverCashCommission::class)) {
             \App\Models\DriverCashCommission::ensureTableExists();
             $cashCommissionsCount = \App\Models\DriverCashCommission::where('driver_id', $user->id)->count();
-            $recentCashCommissions = \App\Models\DriverCashCommission::where('driver_id', $user->id)->latest()->take(15)->get();
+            $recentCashCommissions = \App\Models\DriverCashCommission::where('driver_id', $user->id)
+                ->latest()
+                ->take(15)
+                ->get()
+                ->map(function ($item) {
+                    $item->gross_fare = (int) round((float) $item->gross_fare);
+                    $item->commission_amount = (int) round((float) $item->commission_amount);
+                    return $item;
+                });
         }
 
         return [
-            'balance' => (float) $user->wallet_balance,
-            'wallet_balance' => (float) $user->wallet_balance,
+            'balance' => $mainWalletBalance,
+            'wallet_balance' => $mainWalletBalance,
             'currency' => $currency,
             'pending_withdrawals_sum' => $pendingWithdrawalsSum,
             'approved_withdrawals_sum' => $approvedWithdrawalsSum,
@@ -437,13 +524,16 @@ class WalletService
 
     /**
      * Credit funds to a user's wallet (Add Money / Top-Up).
+     * Automatically deducts any outstanding Cash Commission Wallet balance first.
      */
     public static function creditWallet(User $user, float $amount, string $paymentMethod = 'momo', ?string $externalRef = null, array $metadata = []): array
     {
+        $amount = round($amount);
         if ($amount <= 0) {
             throw new \InvalidArgumentException('Top-up amount must be greater than zero.');
         }
 
+        self::reconcileDriverCashCommissionWallet($user);
         $currency = self::getUserCurrency($user);
 
         return DB::transaction(function () use ($user, $amount, $paymentMethod, $externalRef, $metadata, $currency) {
@@ -452,8 +542,20 @@ class WalletService
                 throw new \RuntimeException('User account not found.');
             }
 
-            $balanceBefore = (float) ($freshUser->wallet_balance ?? 0.00);
-            $balanceAfter = round($balanceBefore + $amount, 2);
+            $profile = $freshUser->driverProfile;
+            $outstandingComm = $profile ? max(0.0, round((float) ($profile->cash_commission_wallet ?? 0))) : 0.0;
+            $settledCommission = min($amount, $outstandingComm);
+            $newOutstandingComm = max(0.0, round($outstandingComm - $settledCommission));
+            $netWalletCredit = max(0.0, round($amount - $settledCommission));
+
+            if ($profile && $settledCommission > 0) {
+                $profile->update([
+                    'cash_commission_wallet' => $newOutstandingComm,
+                ]);
+            }
+
+            $balanceBefore = max(0.0, round((float) ($freshUser->wallet_balance ?? 0)));
+            $balanceAfter = round($balanceBefore + $netWalletCredit);
 
             $freshUser->wallet_balance = $balanceAfter;
             $freshUser->save();
@@ -465,6 +567,10 @@ class WalletService
             };
 
             $trxRef = 'WTX-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
+            $desc = "Wallet Top-Up via {$methodLabel}";
+            if ($settledCommission > 0) {
+                $desc .= " ({$currency}{$settledCommission} applied to Cash Commission Wallet; Remaining: {$currency}{$newOutstandingComm})";
+            }
 
             $transaction = WalletTransaction::create([
                 'user_id' => $freshUser->id,
@@ -474,41 +580,52 @@ class WalletService
                 'currency' => $currency,
                 'balance_before' => $balanceBefore,
                 'balance_after' => $balanceAfter,
-                'description' => "Wallet Top-Up via {$methodLabel}",
+                'description' => $desc,
                 'status' => 'completed',
                 'reference_id' => null,
                 'reference_type' => null,
                 'metadata' => array_merge([
                     'payment_method' => $paymentMethod,
                     'external_ref' => $externalRef,
+                    'settled_cash_commission' => $settledCommission,
+                    'remaining_cash_commission' => $newOutstandingComm,
                     'credited_at' => now()->toIso8601String(),
                 ], $metadata),
             ]);
 
             // Send notification
+            $notifBody = $settledCommission > 0
+                ? "Your deposit of {$currency}{$amount} via {$methodLabel} was received. {$currency}{$settledCommission} was deducted for your Cash Commission Wallet (Remaining: {$currency}{$newOutstandingComm}). Main Wallet Balance: {$currency}{$balanceAfter}"
+                : "Your wallet has been credited with {$currency}{$amount} via {$methodLabel}. Current balance: {$currency}{$balanceAfter}";
+
             NotificationService::send(
                 $freshUser->id,
                 'wallet_credited',
                 'Wallet Credited! 💳',
-                "Your wallet has been credited with {$currency}{$amount} via {$methodLabel}. Current balance: {$currency}{$balanceAfter}",
+                $notifBody,
                 null,
                 '/wallet',
                 [
                     'transaction_ref' => $trxRef,
-                    'amount' => $amount,
+                    'amount' => (int) $amount,
                     'currency' => $currency,
-                    'balance' => $balanceAfter,
+                    'balance' => (int) $balanceAfter,
+                    'commission_wallet_balance' => (int) $newOutstandingComm,
                 ]
             );
 
             return [
                 'success' => true,
-                'balance' => $balanceAfter,
-                'wallet_balance' => $balanceAfter,
-                'amount_added' => $amount,
+                'balance' => (int) $balanceAfter,
+                'wallet_balance' => (int) $balanceAfter,
+                'commission_wallet_balance' => (int) $newOutstandingComm,
+                'settled_commission' => (int) $settledCommission,
+                'amount_added' => (int) $amount,
                 'currency' => $currency,
                 'transaction' => $transaction,
-                'message' => "Successfully added {$currency}{$amount} to your wallet!",
+                'message' => $settledCommission > 0
+                    ? "Successfully added {$currency}{$amount}! {$currency}{$settledCommission} was deducted for your Cash Commission Wallet."
+                    : "Successfully added {$currency}{$amount} to your wallet!",
             ];
         });
     }

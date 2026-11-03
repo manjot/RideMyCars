@@ -189,7 +189,10 @@ class BackupChauffeurService
         }
 
         $chosenDriver = $candidates->first();
-        $driverTimeout = (int) self::getConfig('backup.driver_timeout_sec', 45);
+        $driverTimeout = max(120, (int) self::getConfig('backup.driver_timeout_sec', 120));
+        $offerExpiresAt = ($ride->expires_at && $ride->expires_at->gt(now()))
+            ? $ride->expires_at
+            : now()->addSeconds($driverTimeout);
 
         // Create assignment record with backup type
         $assignment = RideAssignment::create([
@@ -197,7 +200,7 @@ class BackupChauffeurService
             'driver_id' => $chosenDriver->user_id,
             'status' => 'pending',
             'assignment_type' => 'backup',
-            'expires_at' => now()->addSeconds($driverTimeout),
+            'expires_at' => $offerExpiresAt,
         ]);
 
         $ride->update([
@@ -205,8 +208,7 @@ class BackupChauffeurService
             'backup_attempt_count' => $ride->backup_attempt_count + 1,
         ]);
 
-        // Send notifications
-        NotificationService::notifyCustomerPrimaryUnavailableSearchingBackup($ride);
+        // Notify backup driver
         NotificationService::notifyDriverBackupRideAssigned($ride, $chosenDriver->user_id);
 
         Log::info("BackupChauffeurService: Dispatched backup offer for Ride #{$ride->id} to Driver #{$chosenDriver->user_id} (Attempt {$ride->backup_attempt_count})");
@@ -466,30 +468,53 @@ class BackupChauffeurService
 
     /**
      * Handles case when no backup drivers are available or attempts exhausted.
+     * IMPORTANT: Never cancel a pending ride before its 5-minute waiting timer ($ride->isExpired()) has elapsed.
      */
     public static function handleNoBackupAvailable(Ride $ride): ?RideAssignment
     {
+        if (!$ride->isExpired()) {
+            $waitMinutes = \App\Services\SettingService::getRideWaitingTimeMinutes();
+            $keepUntil = $ride->expires_at ?? now()->addMinutes($waitMinutes);
+
+            // Re-open expired offers (excluding explicitly rejected ones) so nearby drivers can still accept during the waiting window
+            RideAssignment::where('ride_id', $ride->id)
+                ->where('status', 'expired')
+                ->update([
+                    'status' => 'pending',
+                    'expires_at' => $keepUntil,
+                ]);
+
+            if ($ride->backup_status !== 'none') {
+                $ride->update(['backup_status' => 'none']);
+            }
+
+            return RideAssignment::where('ride_id', $ride->id)
+                ->where('status', 'pending')
+                ->first();
+        }
+
         $ride->update([
             'backup_status' => 'expired',
             'status' => 'cancelled',
-            'cancellation_reason' => 'No nearby chauffeur is currently available.',
+            'cancellation_reason' => 'No driver was available within the waiting period.',
         ]);
 
         NotificationService::notifyCustomerNoBackupDriverAvailable($ride);
 
         try {
-            \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, 'ride', 'No nearby chauffeur is currently available.');
+            \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, 'ride', 'No driver was available within the waiting period.');
         } catch (\Throwable $re) {
             Log::warning("BackupChauffeurService refund error: " . $re->getMessage());
         }
 
-        Log::info("BackupChauffeurService: No backup chauffeurs available for Ride #{$ride->id}. Ride cancelled.");
+        Log::info("BackupChauffeurService: Waiting time expired and no chauffeurs available for Ride #{$ride->id}. Ride cancelled.");
 
         return null;
     }
 
     /**
      * Checks if primary driver timed out or went offline, and triggers backup if enabled.
+     * IMPORTANT: Never cancel a pending ride while its waiting timer ($ride->isExpired()) still has time remaining.
      */
     public static function handlePrimaryDriverUnavailable(Ride $ride, string $reason = 'timeout'): void
     {
@@ -501,21 +526,39 @@ class BackupChauffeurService
 
         if ($ride->backup_chauffeur_enabled && self::isFeatureEnabled()) {
             self::dispatchBackupOffer($ride);
-        } else {
-            // Backup is disabled -> follow existing cancellation flow
-            $ride->update([
-                'status' => 'cancelled',
-                'cancellation_reason' => 'Primary chauffeur unavailable and backup chauffeur was disabled.',
-            ]);
-            RideAssignment::where('ride_id', $ride->id)->update(['status' => 'expired']);
-
-            try {
-                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, 'ride', 'Primary chauffeur unavailable and backup chauffeur was disabled.');
-            } catch (\Throwable $re) {
-                Log::warning("BackupChauffeurService refund error: " . $re->getMessage());
-            }
-
-            Log::info("BackupChauffeurService: Backup disabled for Ride #{$ride->id}. Ride cancelled.");
+            return;
         }
+
+        // If the ride waiting window has NOT expired yet, keep searching/broadcasting instead of cancelling early!
+        if (!$ride->isExpired()) {
+            $waitMinutes = \App\Services\SettingService::getRideWaitingTimeMinutes();
+            $keepUntil = $ride->expires_at ?? now()->addMinutes($waitMinutes);
+
+            $nextOffer = \App\Services\RideAssignmentService::assignNextDriver($ride);
+            if (!$nextOffer) {
+                RideAssignment::where('ride_id', $ride->id)
+                    ->where('status', 'expired')
+                    ->update([
+                        'status' => 'pending',
+                        'expires_at' => $keepUntil,
+                    ]);
+            }
+            return;
+        }
+
+        // Waiting window has truly expired -> cancel and refund if applicable
+        $ride->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => 'No driver was available within the waiting period.',
+        ]);
+        RideAssignment::where('ride_id', $ride->id)->update(['status' => 'expired']);
+
+        try {
+            \App\Services\BookingRefundService::refundCustomerForCancelledBooking($ride, 'ride', 'No driver was available within the waiting period.');
+        } catch (\Throwable $re) {
+            Log::warning("BackupChauffeurService refund error: " . $re->getMessage());
+        }
+
+        Log::info("BackupChauffeurService: Waiting window expired for Ride #{$ride->id}. Ride cancelled.");
     }
 }

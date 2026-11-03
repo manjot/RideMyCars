@@ -127,34 +127,142 @@ class WalletApiController extends Controller
         }
 
         try {
-            $amount = (float) $request->input('amount');
+            $amount = round((float) $request->input('amount'));
             $method = strtolower((string) $request->input('payment_method', 'momo'));
             $details = $request->input('payment_details', []);
             if (!is_array($details)) {
                 $details = [];
             }
 
-            if ($request->filled('phone_number')) {
-                $details['phone_number'] = $request->input('phone_number');
-                $details['momo_phone'] = $request->input('phone_number');
+            $phone = trim((string) ($request->input('phone_number') ?: ($details['phone_number'] ?? ($details['momo_phone'] ?? ($user->phone ?? '')))));
+            $network = strtoupper(trim((string) ($request->input('network') ?: ($details['network'] ?? ($details['momo_network'] ?? 'MTN')))));
+
+            if ($phone !== '') {
+                $details['phone_number'] = $phone;
+                $details['momo_phone'] = $phone;
             }
-            if ($request->filled('network')) {
-                $details['network'] = $request->input('network');
-                $details['momo_network'] = $request->input('network');
+            if ($network !== '') {
+                $details['network'] = $network;
+                $details['momo_network'] = $network;
+            }
+
+            $currency = WalletService::getUserCurrency($user);
+            $isMomo = in_array($method, ['momo', 'mobile_money', 'mtn_momo', 'momo_pay'], true);
+            $isAuthorized = $request->boolean('authorized', false) || $request->input('step') === 'confirm';
+            $isExplicitInitiate = $request->boolean('initiate_prompt', false) || $request->input('step') === 'initiate';
+
+            if ($isMomo && !$isAuthorized) {
+                if (empty($phone)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please enter your Mobile Money phone number to receive the payment prompt.',
+                    ], 422);
+                }
+
+                // Check if this is an older client tapping "Top-Up Now" a second time after receiving the prompt
+                $recentPendingPrompt = null;
+                if (!$isExplicitInitiate) {
+                    $recentPendingPrompt = WalletTransaction::where('user_id', $user->id)
+                        ->where('type', 'deposit')
+                        ->where('status', 'pending')
+                        ->where('amount', $amount)
+                        ->where('created_at', '>=', now()->subMinutes(5))
+                        ->latest()
+                        ->first();
+                }
+
+                if ($recentPendingPrompt) {
+                    // Older client confirmed on second tap -> mark pending prompt completed and credit wallet
+                    $recentPendingPrompt->delete();
+                } else {
+                    $promptRef = 'MOMO-PROMPT-' . date('YmdHis') . '-' . strtoupper(\Illuminate\Support\Str::random(5));
+
+                    // Record pending MoMo authorization prompt
+                    WalletTransaction::create([
+                        'user_id' => $user->id,
+                        'transaction_ref' => $promptRef,
+                        'type' => 'deposit',
+                        'amount' => $amount,
+                        'currency' => $currency,
+                        'balance_before' => round((float) ($user->wallet_balance ?? 0)),
+                        'balance_after' => round((float) ($user->wallet_balance ?? 0)),
+                        'description' => "Pending Mobile Money ({$network}) Authorization Prompt to {$phone}",
+                        'status' => 'pending',
+                        'metadata' => array_merge($details, [
+                            'payment_method' => 'momo',
+                            'prompt_sent_at' => now()->toIso8601String(),
+                        ]),
+                    ]);
+
+                    // Trigger push notification to driver/rider phone for MoMo prompt authorization
+                    try {
+                        \App\Services\NotificationService::send(
+                            $user->id,
+                            'momo_payment_prompt',
+                            "📲 Authorize {$network} MoMo Payment",
+                            "A Mobile Money payment prompt for {$currency}{$amount} has been sent to {$phone} ({$network}). Please enter your MoMo PIN to authorize the wallet top-up.",
+                            null,
+                            '/wallet',
+                            [
+                                'transaction_ref' => $promptRef,
+                                'amount' => (int) $amount,
+                                'currency' => $currency,
+                                'phone_number' => $phone,
+                                'network' => $network,
+                            ]
+                        );
+                    } catch (\Throwable $ne) {}
+
+                    $promptMsg = "📲 Mobile Money ({$network}) payment prompt for {$currency}{$amount} sent to {$phone}. Please authorize the transaction on your phone using your MoMo PIN.";
+
+                    if ($isExplicitInitiate) {
+                        return response()->json([
+                            'success' => true,
+                            'requires_authorization' => true,
+                            'status' => 'pending_prompt',
+                            'transaction_ref' => $promptRef,
+                            'amount' => (int) $amount,
+                            'currency' => $currency,
+                            'phone_number' => $phone,
+                            'network' => $network,
+                            'message' => $promptMsg,
+                        ]);
+                    }
+
+                    // For legacy app builds that don't handle requires_authorization, return success: false on first tap so it doesn't falsely show "Top-Up Successful" before authorization
+                    return response()->json([
+                        'success' => false,
+                        'requires_authorization' => true,
+                        'status' => 'pending_prompt',
+                        'transaction_ref' => $promptRef,
+                        'message' => $promptMsg . " Once authorized on your phone, tap 'Top-Up Now' again to complete.",
+                    ]);
+                }
             }
 
             $externalRef = $request->input('transaction_ref') ?: ('TOPUP-' . strtoupper(\Illuminate\Support\Str::random(8)));
+
+            // Clean up any pending prompt with this transaction_ref so we don't leave stale pending rows
+            if ($request->filled('transaction_ref')) {
+                WalletTransaction::where('user_id', $user->id)
+                    ->where('transaction_ref', $request->input('transaction_ref'))
+                    ->where('status', 'pending')
+                    ->delete();
+            }
 
             $res = WalletService::creditWallet($user, $amount, $method, $externalRef, $details);
 
             return response()->json([
                 'success' => true,
+                'requires_authorization' => false,
                 'message' => $res['message'],
                 'data' => [
-                    'balance' => $res['balance'],
-                    'wallet_balance' => $res['wallet_balance'],
+                    'balance' => (int) $res['balance'],
+                    'wallet_balance' => (int) $res['wallet_balance'],
+                    'commission_wallet_balance' => (int) ($res['commission_wallet_balance'] ?? 0),
+                    'settled_commission' => (int) ($res['settled_commission'] ?? 0),
                     'currency' => $res['currency'],
-                    'amount_added' => $res['amount_added'],
+                    'amount_added' => (int) $res['amount_added'],
                     'transaction_ref' => $res['transaction']->transaction_ref,
                 ],
             ]);

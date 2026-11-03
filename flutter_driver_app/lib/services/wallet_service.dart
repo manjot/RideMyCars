@@ -26,16 +26,22 @@ class WalletService {
     Map<String, dynamic>? paymentDetails,
     String? phoneNumber,
     String? network,
+    bool initiatePrompt = false,
+    bool authorized = false,
+    String? transactionRef,
   }) async {
     try {
       final res = await _dio.post(
         ApiConstants.walletTopup,
         data: {
-          'amount': amount,
+          'amount': amount.round(),
           'payment_method': paymentMethod,
           if (paymentDetails != null) 'payment_details': paymentDetails,
           if (phoneNumber != null && phoneNumber.isNotEmpty) 'phone_number': phoneNumber,
           if (network != null && network.isNotEmpty) 'network': network,
+          if (initiatePrompt) 'initiate_prompt': true,
+          if (authorized) 'authorized': true,
+          if (transactionRef != null && transactionRef.isNotEmpty) 'transaction_ref': transactionRef,
         },
       );
       if (res.data != null) {

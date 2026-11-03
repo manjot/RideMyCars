@@ -885,7 +885,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                       _buildSecurePinCard(currentRide, status),
 
                       // In-App Modal Card: Primary Chauffeur Unavailable
-                      if (currentRide['backup_status'] == 'waiting' && currentRide['backup_driver'] != null) ...[
+                      if (status == 'pending' && currentRide['backup_status'] == 'waiting' && currentRide['backup_driver'] != null) ...[
                         _buildBackupConfirmationCard(currentRide, currentRide['backup_driver']),
                         const SizedBox(height: 14),
                       ],
@@ -1331,11 +1331,13 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
     final backupStatus = currentRide?['backup_status'];
     final assignmentType = currentRide?['driver_assignment_type'];
 
-    if (backupStatus == 'searching') {
-      return 'Searching for another chauffeur...';
-    }
-    if (backupStatus == 'waiting') {
-      return 'Driver Found • Waiting for your confirmation';
+    if (status == 'pending') {
+      if (backupStatus == 'searching') {
+        return 'Searching for another chauffeur...';
+      }
+      if (backupStatus == 'waiting') {
+        return 'Driver Found • Waiting for your confirmation';
+      }
     }
     if (assignmentType == 'backup' && status == 'accepted') {
       return 'Driver Assigned • $d';
@@ -1360,10 +1362,11 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   }
 
   void _checkAndShowBackupModal(Map<String, dynamic> ride) {
+    final status = (ride['status'] ?? 'pending').toString();
     final backupStatus = ride['backup_status'];
     final backupDriver = ride['backup_driver'];
 
-    if (backupStatus == 'waiting' && backupDriver != null) {
+    if (status == 'pending' && backupStatus == 'waiting' && backupDriver != null) {
       final driverId = backupDriver['id'];
       if (_lastPromptedBackupDriverId != driverId) {
         _lastPromptedBackupDriverId = driverId;

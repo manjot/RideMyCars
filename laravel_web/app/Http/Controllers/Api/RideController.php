@@ -844,7 +844,7 @@ class RideController extends Controller
             ]);
         }
 
-        // Live check: If pending and primary driver timed out or went offline, trigger backup if enabled
+        // Live check: If pending, ensure driver assignment stays active throughout the waiting window
         if ($ride->status === 'pending') {
             $activeOffer = RideAssignment::where('ride_id', $ride->id)
                 ->where('status', 'pending')
@@ -852,18 +852,22 @@ class RideController extends Controller
 
             if ($activeOffer) {
                 $driverProfile = $activeOffer->driver?->driverProfile;
-                $isDriverOffline = $driverProfile && $driverProfile->last_location_update && $driverProfile->last_location_update->lt(now()->subMinutes(5));
-                $isExpired = $activeOffer->expires_at && $activeOffer->expires_at->lt(now());
+                $isDriverExplicitlyOffline = $driverProfile && (!$driverProfile->is_available || !$driverProfile->is_live);
+                $isOfferExpired = $activeOffer->expires_at && $activeOffer->expires_at->lt(now());
 
-                if ($isExpired || $isDriverOffline) {
+                if ($isOfferExpired || $isDriverExplicitlyOffline) {
                     $activeOffer->update(['status' => 'expired']);
                     if ($activeOffer->assignment_type === 'backup') {
                         BackupChauffeurService::dispatchBackupOffer($ride);
                     } else {
-                        BackupChauffeurService::handlePrimaryDriverUnavailable($ride, $isExpired ? 'timeout' : 'driver_offline');
+                        BackupChauffeurService::handlePrimaryDriverUnavailable($ride, $isOfferExpired ? 'timeout' : 'driver_offline');
                     }
                     $ride->refresh();
                 }
+            } elseif (!$ride->isExpired()) {
+                try {
+                    \App\Services\RideAssignmentService::assignNextDriver($ride);
+                } catch (\Throwable $e) {}
             }
 
             // Also check customer confirmation timeout for reserved backup driver
@@ -874,10 +878,16 @@ class RideController extends Controller
                         $dp = \App\Models\DriverProfile::where('user_id', $ride->backup_driver_id)->first();
                         if ($dp) $dp->update(['is_available' => true]);
                     }
-                    $ride->update(['backup_driver_id' => null, 'backup_status' => 'expired']);
+                    $ride->update(['backup_driver_id' => null, 'backup_status' => 'none']);
                     BackupChauffeurService::dispatchBackupOffer($ride);
                     $ride->refresh();
                 }
+            }
+        } else {
+            // Once a driver has accepted or arrived, clear any lingering 'searching' or 'waiting' backup_status
+            if (in_array($ride->backup_status, ['searching', 'waiting'], true)) {
+                $ride->update(['backup_status' => 'none']);
+                $ride->backup_status = 'none';
             }
         }
 
@@ -982,10 +992,10 @@ class RideController extends Controller
                 'is_moving_to_pickup' => $liveEta['is_moving_to_pickup'],
                 'is_trip_in_progress' => $liveEta['is_trip_in_progress'],
                 'backup_chauffeur_enabled' => (bool)$ride->backup_chauffeur_enabled,
-                'backup_status' => $ride->backup_status,
-                'backup_driver_id' => $ride->backup_driver_id,
+                'backup_status' => $ride->status === 'pending' ? ($ride->backup_status ?? 'none') : 'none',
+                'backup_driver_id' => $ride->status === 'pending' ? $ride->backup_driver_id : null,
                 'driver_assignment_type' => $ride->driver_assignment_type ?? 'primary',
-                'backup_driver' => $backupDriverData,
+                'backup_driver' => $ride->status === 'pending' ? $backupDriverData : null,
                 'backup_reserved_at' => $ride->backup_reserved_at?->toIso8601String(),
                 'rider' => [
                     'id' => $ride->rider?->id,

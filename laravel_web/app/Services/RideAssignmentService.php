@@ -196,12 +196,17 @@ class RideAssignmentService
             return null;
         }
 
-        // Create assignment for the closest eligible driver
+        // Create assignment for the closest eligible driver (valid for the full ride waiting window)
+        $waitMinutes = \App\Services\SettingService::getRideWaitingTimeMinutes();
+        $offerExpiresAt = ($ride->expires_at && $ride->expires_at->gt(now()))
+            ? $ride->expires_at
+            : now()->addMinutes($waitMinutes);
+
         $assignment = RideAssignment::create([
             'ride_id' => $ride->id,
             'driver_id' => $chosenDriver->user_id,
             'status' => 'pending',
-            'expires_at' => now()->addSeconds((int) config('ride.assignment_timeout_seconds', 120)),
+            'expires_at' => $offerExpiresAt,
         ]);
         \App\Services\NotificationService::notifyDriverRideAssigned($ride, $chosenDriver->user_id);
         return $assignment;

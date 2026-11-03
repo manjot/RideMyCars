@@ -2,8 +2,11 @@ package com.ridemycars.flutter_driver_app
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -20,6 +23,7 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableLockScreenWakeUp()
+        ensureBackgroundServiceIfOnline()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -35,12 +39,56 @@ class MainActivity : FlutterActivity() {
 
     override fun onPause() {
         isActivityForeground = false
+        ensureBackgroundServiceIfOnline()
         super.onPause()
+    }
+
+    override fun onStop() {
+        isActivityForeground = false
+        ensureBackgroundServiceIfOnline()
+        super.onStop()
     }
 
     override fun onDestroy() {
         isActivityForeground = false
+        ensureBackgroundServiceIfOnline()
         super.onDestroy()
+    }
+
+    private fun ensureBackgroundServiceIfOnline() {
+        try {
+            val prefs = getSharedPreferences(OrderAlertService.PREFS_NAME, Context.MODE_PRIVATE)
+            val isOnline = prefs.getBoolean("is_online", false)
+            val isChauffeurOnline = prefs.getBoolean("is_chauffeur_online", false)
+            if (isOnline || isChauffeurOnline) {
+                OrderAlertService.scheduleNextPollAlarm(this, 3000L)
+                val svcIntent = Intent(this, OrderAlertService::class.java).apply {
+                    action = OrderAlertService.ACTION_START
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(svcIntent)
+                } else {
+                    startService(svcIntent)
+                }
+            }
+        } catch (_: Throwable) {}
+    }
+
+    private fun requestBatteryOptimizationExemptionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                val prefs = getSharedPreferences(OrderAlertService.PREFS_NAME, Context.MODE_PRIVATE)
+                val alreadyPrompted = prefs.getBoolean("battery_opt_prompted", false)
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                if (!pm.isIgnoringBatteryOptimizations(packageName) && !alreadyPrompted) {
+                    prefs.edit().putBoolean("battery_opt_prompted", true).apply()
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                }
+            } catch (_: Throwable) {}
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -90,14 +138,25 @@ class MainActivity : FlutterActivity() {
                                 if (lat.isNotEmpty()) putString("lat", lat)
                                 if (lng.isNotEmpty()) putString("lng", lng)
                             }
-                            .apply()
+                            .commit()
+
+                        requestBatteryOptimizationExemptionIfNeeded()
+                        OrderAlertService.scheduleNextPollAlarm(this, 3000L)
 
                         val svcIntent = Intent(this, OrderAlertService::class.java).apply {
                             action = OrderAlertService.ACTION_START
                         }
                         try {
-                            startService(svcIntent)
-                        } catch (_: Exception) {}
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(svcIntent)
+                            } else {
+                                startService(svcIntent)
+                            }
+                        } catch (_: Throwable) {
+                            try {
+                                startService(svcIntent)
+                            } catch (_: Throwable) {}
+                        }
                         result.success(true)
                     }
                     "updateLocation" -> {
@@ -110,23 +169,28 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
                     "stopRingtone" -> {
-                        val orderKey = call.argument<String>("orderKey")
-                        val svcIntent = Intent(this, OrderAlertService::class.java).apply {
-                            action = OrderAlertService.ACTION_STOP_RINGTONE
-                            if (orderKey != null) putExtra("order_key", orderKey)
-                        }
-                        startService(svcIntent)
+                        val orderKey = call.argument<String>("orderKey") ?: OrderAlertService.currentRingingOrderKey
+                        OrderAlertService.markOrderAcknowledged(orderKey)
+                        OrderAlertService.stopNativeRingtoneAndVibrationStatic(this)
                         result.success(true)
                     }
                     "stopService" -> {
                         prefs.edit()
                             .putBoolean("is_online", false)
                             .putBoolean("is_chauffeur_online", false)
-                            .apply()
+                            .commit()
+                        OrderAlertService.scheduleNextPollAlarm(this, 5000L)
+                        OrderAlertService.stopNativeRingtoneAndVibrationStatic(this)
                         val svcIntent = Intent(this, OrderAlertService::class.java).apply {
                             action = OrderAlertService.ACTION_STOP
                         }
-                        startService(svcIntent)
+                        try {
+                            startService(svcIntent)
+                        } catch (_: Throwable) {
+                            try {
+                                stopService(Intent(this, OrderAlertService::class.java))
+                            } catch (_: Throwable) {}
+                        }
                         result.success(true)
                     }
                     else -> result.notImplemented()

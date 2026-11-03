@@ -19,8 +19,9 @@ class RecentRidesWidget extends BaseWidget
     {
         return $table
             ->query(
-                Ride::query()->latest()->limit(6)
+                Ride::query()->latest()
             )
+            ->defaultPaginationPageOption(5)
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
@@ -42,18 +43,23 @@ class RecentRidesWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('fare')
                     ->label('Fare (GHS & USD)')
                     ->formatStateUsing(function ($state, $record) {
-                        $amt = (float) ($state ?? 0);
-                        $curr = strtoupper(trim($record->currency ?? 'GHS'));
-                        $ghs = $curr === 'GHS' ? round($amt) : round(\App\Services\CurrencyExchangeService::convert($amt, $curr, 'GHS'));
-                        $usd = $curr === 'USD' ? round($amt) : round(\App\Services\CurrencyExchangeService::convert($amt, $curr, 'USD'));
-                        return 'GH₵ ' . number_format($ghs, 0) . ' ($' . number_format($usd, 0) . ')';
+                        try {
+                            $amt = (float) ($state ?: ($record->total_amount ?? 0));
+                            $countryCode = strtoupper(trim($record->driver_country ?: $record->country ?: 'GHA'));
+                            $curr = strtoupper(trim($record->currency ?? ($countryCode === 'USA' ? 'USD' : ($countryCode === 'IND' ? 'INR' : 'GHS'))));
+                            $ghs = $curr === 'GHS' ? round($amt) : round(\App\Services\CurrencyExchangeService::convert($amt, $curr, 'GHS'));
+                            $usd = $curr === 'USD' ? round($amt) : round(\App\Services\CurrencyExchangeService::convert($amt, $curr, 'USD'));
+                            return 'GH₵ ' . number_format($ghs, 0) . ' ($' . number_format($usd, 0) . ')';
+                        } catch (\Throwable $e) {
+                            return 'GH₵ ' . number_format((float) ($state ?? 0), 0);
+                        }
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ((string) $state) {
                         'pending' => 'warning',
-                        'accepted' => 'info',
+                        'accepted', 'en_route', 'arrived' => 'info',
                         'in_progress' => 'purple',
                         'completed', 'confirmed' => 'success',
                         'cancelled' => 'danger',

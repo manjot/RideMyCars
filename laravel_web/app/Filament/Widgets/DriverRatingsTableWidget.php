@@ -34,13 +34,11 @@ class DriverRatingsTableWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Driver Name')
                     ->searchable()
-                    ->sortable()
                     ->weight('bold')
                     ->description(fn (DriverProfile $record): string => $record->user?->email ?? ''),
                 Tables\Columns\TextColumn::make('country')
                     ->label('Country / City')
                     ->searchable()
-                    ->sortable()
                     ->formatStateUsing(fn ($state, DriverProfile $record): string => trim(($state ?? 'Ghana') . ($record->service_area ? ' • ' . $record->service_area : ''))),
                 Tables\Columns\TextColumn::make('rating')
                     ->label('Rating')
@@ -69,7 +67,9 @@ class DriverRatingsTableWidget extends BaseWidget
                         } catch (\Throwable $e) {}
                         $chauffeurCount = 0;
                         try {
-                            $chauffeurCount = DriverReview::where('driver_profile_id', $record->id)->count();
+                            if (\Illuminate\Support\Facades\Schema::hasTable('driver_reviews')) {
+                                $chauffeurCount = DriverReview::where('driver_profile_id', $record->id)->count();
+                            }
                         } catch (\Throwable $e) {}
                         return (string) ($rideCount + $chauffeurCount);
                     })
@@ -77,8 +77,7 @@ class DriverRatingsTableWidget extends BaseWidget
                     ->color('primary'),
                 Tables\Columns\IconColumn::make('is_live')
                     ->label('Live')
-                    ->boolean()
-                    ->sortable(),
+                    ->boolean(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('rating_filter')
@@ -103,11 +102,21 @@ class DriverRatingsTableWidget extends BaseWidget
                     }),
                 Tables\Filters\SelectFilter::make('country')
                     ->label('Country')
-                    ->options(fn () => DriverProfile::query()
-                        ->whereNotNull('country')
-                        ->distinct()
-                        ->pluck('country', 'country')
-                        ->toArray()),
+                    ->options(function () {
+                        try {
+                            if (!\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'country')) {
+                                return [];
+                            }
+                            return DriverProfile::query()
+                                ->whereNotNull('country')
+                                ->where('country', '!=', '')
+                                ->distinct()
+                                ->pluck('country', 'country')
+                                ->toArray();
+                        } catch (\Throwable $e) {
+                            return [];
+                        }
+                    }),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('openFullDriverRatings')
@@ -118,3 +127,4 @@ class DriverRatingsTableWidget extends BaseWidget
             ]);
     }
 }
+

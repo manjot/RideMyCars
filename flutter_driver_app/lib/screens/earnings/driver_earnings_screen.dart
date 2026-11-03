@@ -965,30 +965,36 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
   @override
   void initState() {
     super.initState();
-    if (!widget.allowedMethods.contains('bank') && widget.allowedMethods.contains('momo')) {
-      _payoutMethod = 'momo';
-    }
+    try {
+      final hasBank = widget.allowedMethods.isEmpty ||
+          widget.allowedMethods.contains('bank') ||
+          widget.allowedMethods.contains('bank_account');
+      if (!hasBank && widget.allowedMethods.contains('momo')) {
+        _payoutMethod = 'momo';
+      }
 
-    if (widget.savedPayoutMethods.isNotEmpty) {
-      final defaultMethod = widget.savedPayoutMethods.firstWhere(
-        (m) => m['is_default'] == true,
-        orElse: () => widget.savedPayoutMethods.first,
-      );
-      if (defaultMethod != null) {
-        final type = defaultMethod['type']?.toString() ?? 'bank';
-        _payoutMethod = type;
-        if (type == 'bank') {
-          _bankNameController.text = defaultMethod['bank_name'] ?? '';
-          _accountNumberController.text = defaultMethod['account_number'] ?? '';
-          _routingCodeController.text = defaultMethod['routing_code'] ?? '';
-          _holderNameController.text = defaultMethod['holder_name'] ?? '';
-        } else {
-          _momoNetworkController.text = defaultMethod['network'] ?? 'MTN';
-          _momoPhoneController.text = defaultMethod['phone_number'] ?? '';
-          _momoNameController.text = defaultMethod['account_name'] ?? '';
+      if (widget.savedPayoutMethods.isNotEmpty) {
+        final defaultMethod = widget.savedPayoutMethods.firstWhere(
+          (m) => m is Map && m['is_default'] == true,
+          orElse: () => widget.savedPayoutMethods.first,
+        );
+        if (defaultMethod is Map) {
+          final rawType = (defaultMethod['type'] ?? 'bank').toString().toLowerCase();
+          final isBank = rawType == 'bank' || rawType == 'bank_account';
+          _payoutMethod = isBank ? 'bank' : 'momo';
+          if (isBank) {
+            _bankNameController.text = (defaultMethod['bank_name'] ?? '').toString();
+            _accountNumberController.text = (defaultMethod['account_number'] ?? '').toString();
+            _routingCodeController.text = (defaultMethod['routing_code'] ?? '').toString();
+            _holderNameController.text = (defaultMethod['account_holder_name'] ?? defaultMethod['holder_name'] ?? '').toString();
+          } else {
+            _momoNetworkController.text = (defaultMethod['momo_network'] ?? defaultMethod['network'] ?? 'MTN').toString();
+            _momoPhoneController.text = (defaultMethod['momo_phone'] ?? defaultMethod['phone_number'] ?? '').toString();
+            _momoNameController.text = (defaultMethod['momo_account_name'] ?? defaultMethod['account_name'] ?? '').toString();
+          }
         }
       }
-    }
+    } catch (_) {}
   }
 
   @override
@@ -1005,7 +1011,7 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
 
   void _setAmount(double val) {
     if (val > widget.balance) val = widget.balance;
-    _amountController.text = val.toStringAsFixed(1);
+    _amountController.text = val.toStringAsFixed(0);
     setState(() => _errorMessage = null);
   }
 
@@ -1215,13 +1221,14 @@ class _DriverWithdrawModalState extends State<_DriverWithdrawModal> {
             // Payout Method Selector
             Row(
               children: [
-                if (widget.allowedMethods.contains('bank'))
+                if (widget.allowedMethods.isEmpty || widget.allowedMethods.contains('bank') || widget.allowedMethods.contains('bank_account'))
                   Expanded(
                     child: _buildMethodRadio('bank', 'Bank Account', Icons.account_balance_rounded),
                   ),
-                if (widget.allowedMethods.contains('bank') && widget.allowedMethods.contains('momo'))
+                if ((widget.allowedMethods.isEmpty || widget.allowedMethods.contains('bank') || widget.allowedMethods.contains('bank_account')) &&
+                    (widget.allowedMethods.isEmpty || widget.allowedMethods.contains('momo')))
                   const SizedBox(width: 10),
-                if (widget.allowedMethods.contains('momo'))
+                if (widget.allowedMethods.isEmpty || widget.allowedMethods.contains('momo'))
                   Expanded(
                     child: _buildMethodRadio('momo', 'MoMo Pay', Icons.phone_android_rounded),
                   ),
@@ -1492,7 +1499,7 @@ class _DriverAddMoneyModal extends StatefulWidget {
 }
 
 class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
-  final _amountController = TextEditingController(text: '50.0');
+  final _amountController = TextEditingController(text: '50');
   final _momoPhoneController = TextEditingController();
   final _momoNetworkController = TextEditingController(text: 'MTN');
 
@@ -1509,45 +1516,269 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
   }
 
   void _setAmount(double val) {
-    _amountController.text = val.toStringAsFixed(1);
+    _amountController.text = val.toStringAsFixed(0);
     setState(() => _errorMessage = null);
   }
 
   double get _enteredAmount => double.tryParse(_amountController.text.trim()) ?? 0.0;
 
+  Future<bool?> _showMomoAuthorizationPromptDialog({
+    required double amount,
+    required String phone,
+    required String network,
+    required String transactionRef,
+  }) async {
+    final pinController = TextEditingController();
+    String? pinError;
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surfaceDark,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+                side: BorderSide(color: const Color(0xFFF59E0B).withOpacity(0.5), width: 1.5),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.phonelink_ring_rounded, color: Color(0xFFF59E0B), size: 24),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Authorize MoMo Payment',
+                      style: TextStyle(color: AppColors.textLight, fontSize: 17, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundDark,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '${widget.currency}${amount.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              color: Color(0xFFF97316),
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$network Mobile Money • $phone',
+                            style: const TextStyle(color: AppColors.textLight, fontSize: 13, fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Ref: $transactionRef',
+                            style: const TextStyle(color: AppColors.textMuted, fontSize: 10.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'A Mobile Money payment prompt has been triggered for your phone. Approve the USSD prompt or enter your 4-digit MoMo PIN below to authorize this wallet deposit:',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 12.5, height: 1.4),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: pinController,
+                      obscureText: true,
+                      maxLength: 4,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.textLight,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 10,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        hintText: '••••',
+                        hintStyle: const TextStyle(color: Colors.white24, fontSize: 22, letterSpacing: 10),
+                        labelText: 'Enter 4-Digit MoMo PIN',
+                        labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                        filled: true,
+                        fillColor: AppColors.backgroundDark,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(color: Colors.white24),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(color: Color(0xFFF97316), width: 1.5),
+                        ),
+                      ),
+                    ),
+                    if (pinError != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        pinError!,
+                        style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx, false),
+                  child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.bold)),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (pinController.text.trim().length < 4) {
+                      setDialogState(() {
+                        pinError = 'Please enter your 4-digit MoMo PIN to authorize.';
+                      });
+                      return;
+                    }
+                    Navigator.pop(dialogCtx, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  icon: const Icon(Icons.verified_user_rounded, size: 18),
+                  label: const Text('Authorize & Pay', style: TextStyle(fontWeight: FontWeight.w900)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _submit() async {
     setState(() => _errorMessage = null);
-    final amt = _enteredAmount;
+    final amt = _enteredAmount.roundToDouble();
 
     if (amt <= 0) {
       setState(() => _errorMessage = 'Please enter a valid top-up amount.');
       return;
     }
 
+    final phone = _momoPhoneController.text.trim();
+    final network = _momoNetworkController.text.trim().isEmpty ? 'MTN' : _momoNetworkController.text.trim();
+
     if (_paymentMethod == 'momo') {
-      if (_momoPhoneController.text.trim().isEmpty) {
+      if (phone.isEmpty) {
         setState(() => _errorMessage = 'Please enter your Mobile Money phone number.');
         return;
       }
     }
 
     setState(() => _isSubmitting = true);
-    final res = await WalletService.topupWallet(
-      amount: amt,
-      paymentMethod: _paymentMethod,
-      phoneNumber: _momoPhoneController.text.trim(),
-      network: _momoNetworkController.text.trim(),
-      paymentDetails: {
-        'phone_number': _momoPhoneController.text.trim(),
-        'momo_phone': _momoPhoneController.text.trim(),
-        'network': _momoNetworkController.text.trim(),
-        'momo_network': _momoNetworkController.text.trim(),
-      },
-    );
-    setState(() => _isSubmitting = false);
 
-    if (res['success'] == true) {
+    Map<String, dynamic> res;
+    if (_paymentMethod == 'momo') {
+      // Step 1: Initiate Mobile Money payment prompt on the driver's phone
+      final initRes = await WalletService.topupWallet(
+        amount: amt,
+        paymentMethod: _paymentMethod,
+        phoneNumber: phone,
+        network: network,
+        initiatePrompt: true,
+        paymentDetails: {
+          'phone_number': phone,
+          'momo_phone': phone,
+          'network': network,
+          'momo_network': network,
+        },
+      );
+
       if (!mounted) return;
+      setState(() => _isSubmitting = false);
+
+      if (initRes['requires_authorization'] == true || initRes['status'] == 'pending_prompt') {
+        final txRef = (initRes['transaction_ref'] ?? 'MOMO-${DateTime.now().millisecondsSinceEpoch}').toString();
+        final confirmed = await _showMomoAuthorizationPromptDialog(
+          amount: amt,
+          phone: phone,
+          network: network,
+          transactionRef: txRef,
+        );
+
+        if (confirmed != true) {
+          setState(() => _errorMessage = 'Mobile Money authorization was cancelled.');
+          return;
+        }
+
+        if (!mounted) return;
+        setState(() => _isSubmitting = true);
+
+        // Step 2: Complete top-up after driver authorizes the MoMo prompt
+        res = await WalletService.topupWallet(
+          amount: amt,
+          paymentMethod: _paymentMethod,
+          phoneNumber: phone,
+          network: network,
+          authorized: true,
+          transactionRef: txRef,
+          paymentDetails: {
+            'phone_number': phone,
+            'momo_phone': phone,
+            'network': network,
+            'momo_network': network,
+            'authorized': true,
+          },
+        );
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+        }
+      } else {
+        res = initRes;
+      }
+    } else {
+      res = await WalletService.topupWallet(
+        amount: amt,
+        paymentMethod: _paymentMethod,
+        phoneNumber: phone,
+        network: network,
+        authorized: true,
+        paymentDetails: {
+          'phone_number': phone,
+          'momo_phone': phone,
+          'network': network,
+          'momo_network': network,
+        },
+      );
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+
+    if (res['success'] == true && res['requires_authorization'] != true) {
+      if (!mounted) return;
+      final data = res['data'] is Map ? Map<String, dynamic>.from(res['data']) : <String, dynamic>{};
+      final settledComm = (data['settled_commission'] as num?)?.toInt() ?? 0;
       Navigator.pop(context);
       widget.onSuccess();
 
@@ -1564,7 +1795,9 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
             ],
           ),
           content: Text(
-            '${widget.currency}${amt.toStringAsFixed(0)} has been credited to your driver wallet.\n\nYou can now accept rides or cashouts immediately.',
+            settledComm > 0
+                ? '${widget.currency}${amt.toStringAsFixed(0)} was authorized and credited (${widget.currency}$settledComm applied to your Cash Commission Wallet).\n\nYou can now accept rides or cashouts immediately.'
+                : '${widget.currency}${amt.toStringAsFixed(0)} has been credited to your driver wallet.\n\nYou can now accept rides or cashouts immediately.',
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
           ),
           actions: [

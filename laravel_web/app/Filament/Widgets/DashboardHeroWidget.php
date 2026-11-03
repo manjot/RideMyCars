@@ -18,11 +18,20 @@ class DashboardHeroWidget extends Widget
 
     public function getViewData(): array
     {
-        return [
-            'activeCategoriesCount' => RideCategory::where('is_active', true)->count(),
-            'verifiedDriversCount' => DriverProfile::where('verification_status', 'verified')->count(),
-            'totalVehiclesCount' => Vehicle::count(),
-            'activeRidesCount' => Ride::whereIn('status', ['pending', 'accepted', 'in_progress'])->count(),
-        ];
+        try {
+            return [
+                'activeCategoriesCount' => RideCategory::where('is_active', true)->count(),
+                'verifiedDriversCount' => DriverProfile::where('verification_status', 'verified')->count(),
+                'totalVehiclesCount' => Vehicle::count(),
+                'activeRidesCount' => Ride::whereIn('status', ['pending', 'accepted', 'in_progress'])->count(),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'activeCategoriesCount' => 0,
+                'verifiedDriversCount' => 0,
+                'totalVehiclesCount' => 0,
+                'activeRidesCount' => 0,
+            ];
+        }
     }
 }
