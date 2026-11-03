@@ -1315,9 +1315,8 @@ class DriverApiController extends Controller
             return true;
         });
 
-        $isChauffeurProfile = (bool) ($user->driverProfile && ($user->driverProfile->is_chauffeur || $user->driverProfile->driver_type === 'chauffeur'));
-        $canReceiveChauffeurBookings = !$isChauffeurProfile || $user->driverProfile->active_chauffeur_online || $user->driverProfile->chauffeur_mode;
-        $canReceiveRegularRides = !$isChauffeurProfile || (bool) $user->driverProfile->is_available;
+        $canReceiveChauffeurBookings = (bool) ($user->driverProfile && $user->driverProfile->active_chauffeur_online);
+        $canReceiveRegularRides = (bool) ($user->driverProfile && $user->driverProfile->is_available);
 
         foreach ($assignments as $a) {
             if ($canReceiveRegularRides && $a->ride && $a->ride->status === 'pending' && !$a->ride->isExpired()) {
@@ -1694,7 +1693,7 @@ class DriverApiController extends Controller
             ->take(20)
             ->get();
 
-        if (!$driverLat || !$driverLng) {
+        if (!$canReceiveRegularRides || !$driverLat || !$driverLng) {
             $openPendingDeliveries = collect();
         } else {
             $openPendingDeliveries = $openPendingDeliveries->filter(function($pd) use ($driverLat, $driverLng, $driverCountry, $maxRadiusKm, $isPrivilegedUser) {

@@ -50,7 +50,18 @@ class NotificationProvider extends ChangeNotifier {
       final res = await _dio.get(ApiConstants.notifications);
       if (res.statusCode == 200 && res.data['success'] == true) {
         final List list = res.data['notifications'] ?? [];
-        final newNotifications = list.map((e) => Map<String, dynamic>.from(e)).toList();
+        final newNotifications = list
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((n) {
+              if (_isIncomingOrderNotification(n)) {
+                return LocalNotificationService.instance.isOrderTypeAllowed(
+                  n['type']?.toString(),
+                  title: n['title']?.toString(),
+                );
+              }
+              return true;
+            })
+            .toList();
         
         // Detect new unread notification arriving
         if (newNotifications.isNotEmpty) {
@@ -63,6 +74,12 @@ class NotificationProvider extends ChangeNotifier {
                 final title = (n['title'] ?? 'Driver Partner Alert').toString();
                 final body = (n['message'] ?? '').toString();
                 if (_isIncomingOrderNotification(n)) {
+                  if (!LocalNotificationService.instance.isOrderTypeAllowed(
+                    n['type']?.toString(),
+                    title: title,
+                  )) {
+                    continue;
+                  }
                   triggeredOrderRingtone = true;
                   final orderId = n['ride_id'] ?? n['data']?['ride_id'] ?? n['data']?['booking_id'] ?? n['data']?['delivery_id'] ?? nId;
                   await SoundService.instance.startIncomingOrderRingtone(

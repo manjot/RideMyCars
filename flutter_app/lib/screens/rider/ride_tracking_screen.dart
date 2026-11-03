@@ -10,6 +10,7 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/country_provider.dart';
 import '../../providers/ride_provider.dart';
 import '../../widgets/trip_chat_sheet.dart';
+import '../rides/my_rides_screen.dart';
 import '../safety/widgets/sos_floating_button.dart';
 
 class RideTrackingScreen extends StatefulWidget {
@@ -1256,7 +1257,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                       const SizedBox(height: 16),
 
                       // Cancel Button
-                      if (status == 'pending' || status == 'accepted' || status == 'en_route')
+                      if (status == 'pending' || status == 'accepted' || status == 'en_route' || status == 'arrived')
                         ElevatedButton.icon(
                           onPressed: () => _confirmAndCancelRide(context, currentRide['id']),
                           style: ElevatedButton.styleFrom(
@@ -1267,7 +1268,40 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                             elevation: 4,
                           ),
                           icon: const Icon(Icons.cancel_rounded, size: 18),
-                          label: const Text('✕ Cancel Ride Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          label: Text(
+                            status == 'arrived' ? '✕ Cancel Ride' : '✕ Cancel Ride Request',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                        ),
+
+                      // Rate Driver Button on Completed
+                      if (status == 'completed')
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            final rId = int.tryParse((currentRide['id'] ?? 0).toString()) ?? 0;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MyRidesScreen(
+                                  initialCategoryFilter: 'ride',
+                                  initialTabIndex: 2,
+                                  autoRateRideId: rId,
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF59E0B),
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 4,
+                          ),
+                          icon: const Icon(Icons.star_rounded, size: 20),
+                          label: const Text(
+                            '★ Rate Your Driver',
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                          ),
                         ),
                     ],
                   ),
@@ -1283,6 +1317,9 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
   bool _isUnpaidElectronic(Map<String, dynamic>? currentRide) {
     if (currentRide == null) return false;
     final method = (currentRide['payment_method'] ?? '').toString().toLowerCase();
+    if (method == 'wallet' || method == 'rmc_account' || method == 'rmc_wallet' || method.contains('cash')) {
+      return false;
+    }
     final status = (currentRide['payment_status'] ?? '').toString().toLowerCase();
     final isElectronic = method.contains('authorizenet') || method.contains('anet') || method.contains('stripe') || method.contains('momo') || method.contains('card') || method.contains('mobile_money') || method.contains('pay');
     final isPaid = ['hold', 'authorized', 'authorized_hold', 'paid', 'completed'].contains(status);
@@ -1832,6 +1869,27 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                     ],
                   ],
                 ),
+                if (isArrived) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _confirmAndCancelRide(context, currentRide['id']),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.danger,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 3,
+                      ),
+                      icon: const Icon(Icons.cancel_rounded, size: 18),
+                      label: const Text(
+                        'Cancel Ride',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

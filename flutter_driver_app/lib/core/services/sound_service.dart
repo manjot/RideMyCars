@@ -103,6 +103,10 @@ class SoundService {
     String? title,
     String? body,
   }) async {
+    if (!LocalNotificationService.instance.isOrderTypeAllowed(orderType, title: title)) {
+      debugPrint('SoundService: suppressed order alert ($orderType) because corresponding switch is OFF');
+      return;
+    }
     final newKey = '${orderType ?? "order"}_${orderId ?? "new"}';
 
     // If already ringing (or user intentionally muted) for this exact order, keep state

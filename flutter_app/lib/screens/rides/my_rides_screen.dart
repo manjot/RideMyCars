@@ -10,8 +10,15 @@ import '../rider/ride_tracking_screen.dart';
 
 class MyRidesScreen extends StatefulWidget {
   final String? initialCategoryFilter;
+  final int initialTabIndex;
+  final int? autoRateRideId;
 
-  const MyRidesScreen({super.key, this.initialCategoryFilter});
+  const MyRidesScreen({
+    super.key,
+    this.initialCategoryFilter,
+    this.initialTabIndex = 0,
+    this.autoRateRideId,
+  });
 
   @override
   State<MyRidesScreen> createState() => _MyRidesScreenState();
@@ -21,6 +28,7 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
   final Dio _dio = ApiClient().dio;
   late TabController _tabController;
   bool _isLoading = true;
+  bool _hasPromptedAutoRate = false;
   List<Map<String, dynamic>> _rides = [];
   String _selectedCategory = 'all'; // all, rental, ride, chauffeur, delivery
 
@@ -30,7 +38,11 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
     if (widget.initialCategoryFilter != null) {
       _selectedCategory = widget.initialCategoryFilter!;
     }
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: widget.initialTabIndex.clamp(0, 3),
+    );
     _fetchRides();
   }
 
@@ -55,6 +67,36 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
         setState(() {
           _rides = rawList.map((e) => Map<String, dynamic>.from(e)).toList();
         });
+
+        if (widget.autoRateRideId != null && !_hasPromptedAutoRate && _rides.isNotEmpty) {
+          _hasPromptedAutoRate = true;
+          Map<String, dynamic>? targetRide;
+          if (widget.autoRateRideId! > 0) {
+            for (final r in _rides) {
+              final rId = int.tryParse((r['id'] ?? 0).toString()) ?? 0;
+              if (rId == widget.autoRateRideId) {
+                targetRide = r;
+                break;
+              }
+            }
+          }
+          targetRide ??= _rides.firstWhere(
+            (r) {
+              final s = (r['status'] ?? '').toString().toLowerCase();
+              final t = _getItemType(r);
+              return (t == 'ride' || t == 'chauffeur') &&
+                  (s == 'completed' || s == 'finished' || s == 'paid');
+            },
+            orElse: () => _rides.first,
+          );
+          if (mounted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _showRateDriverModal(targetRide!);
+              }
+            });
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error fetching activity/rides: $e');
@@ -774,25 +816,51 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
             ),
             if (status == 'completed' || status == 'confirmed' || status == 'paid') ...[
               const SizedBox(height: 10),
-              SizedBox(
-                height: 36,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.receipt_long_rounded, size: 15, color: Colors.white),
-                  label: const Text(
-                    'View Digital Receipt',
-                    style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w900),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 36,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showRateDriverModal(r),
+                        icon: const Icon(Icons.star_rounded, size: 16, color: Colors.black),
+                        label: Text(
+                          r['has_review'] == true
+                              ? 'Rated ${r['user_rating'] ?? 5}★ (Edit)'
+                              : 'Rate Chauffeur',
+                          style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF59E0B),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 36,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.receipt_long_rounded, size: 15, color: Colors.white),
+                        label: const Text(
+                          'Digital Receipt',
+                          style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w900),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ],
@@ -1197,29 +1265,350 @@ class _MyRidesScreenState extends State<MyRidesScreen> with SingleTickerProvider
             ],
             if (status == 'completed' || status == 'finished' || status == 'paid') ...[
               const SizedBox(height: 10),
-              SizedBox(
-                height: 36,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.receipt_long_rounded, size: 15, color: Colors.black),
-                  label: const Text(
-                    'View Digital Receipt',
-                    style: TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 36,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showRateDriverModal(r),
+                        icon: const Icon(Icons.star_rounded, size: 16, color: Colors.black),
+                        label: Text(
+                          r['has_review'] == true
+                              ? 'Rated ${r['user_rating'] ?? 5}★ (Edit)'
+                              : 'Rate Driver',
+                          style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF59E0B),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SizedBox(
+                      height: 36,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ReceiptsScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.receipt_long_rounded, size: 15, color: AppColors.primary),
+                        label: const Text(
+                          'Digital Receipt',
+                          style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  // --- DRIVER RATING MODAL ---
+  void _showRateDriverModal(Map<String, dynamic> r) {
+    final driverName = r['driver'] is Map
+        ? (r['driver']['name'] ?? 'Your Driver')
+        : (r['driver_name'] ?? 'Your Driver');
+    final rideId = r['id'];
+    int selectedStars = int.tryParse((r['user_rating'] ?? 5).toString()) ?? 5;
+    if (selectedStars < 1 || selectedStars > 5) selectedStars = 5;
+    final TextEditingController commentCtrl = TextEditingController(
+      text: (r['user_review_comment'] ?? '').toString(),
+    );
+    final Set<String> selectedTags = <String>{};
+    bool isSubmitting = false;
+
+    const List<String> quickTags = [
+      'Clean Car',
+      'Polite Driver',
+      'Safe Driving',
+      'On Time',
+      'Great Route',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return SafeArea(
+            top: false,
+            bottom: true,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+              child: Container(
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + MediaQuery.of(ctx).padding.bottom),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0F172A),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF59E0B).withOpacity(0.16),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.5)),
+                        ),
+                        child: const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 36),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Rate Your Driver',
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'How was your trip with $driverName?',
+                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 18),
+
+                      // 1-5 Star Selector
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (idx) {
+                          final starNum = idx + 1;
+                          final isSelected = starNum <= selectedStars;
+                          return GestureDetector(
+                            onTap: () {
+                              setModalState(() => selectedStars = starNum);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Icon(
+                                isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                                color: isSelected ? const Color(0xFFF59E0B) : Colors.white24,
+                                size: 42,
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        selectedStars == 5
+                            ? 'Excellent! ★★★★★'
+                            : selectedStars == 4
+                                ? 'Great Trip! ★★★★'
+                                : selectedStars == 3
+                                    ? 'Good / Average ★★★'
+                                    : selectedStars == 2
+                                        ? 'Below Average ★★'
+                                        : 'Poor Experience ★',
+                        style: const TextStyle(
+                          color: Color(0xFFFBBF24),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Quick Feedback Tags
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: quickTags.map((tag) {
+                          final active = selectedTags.contains(tag);
+                          return GestureDetector(
+                            onTap: () {
+                              setModalState(() {
+                                if (active) {
+                                  selectedTags.remove(tag);
+                                } else {
+                                  selectedTags.add(tag);
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: active
+                                    ? const Color(0xFFF59E0B).withOpacity(0.2)
+                                    : const Color(0xFF1E293B),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: active ? const Color(0xFFF59E0B) : Colors.white12,
+                                ),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  color: active ? const Color(0xFFFBBF24) : const Color(0xFFCBD5E1),
+                                  fontSize: 11.5,
+                                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Optional Comment Box
+                      TextField(
+                        controller: commentCtrl,
+                        maxLines: 3,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: 'Share more details about your trip (optional)...',
+                          hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12.5),
+                          filled: true,
+                          fillColor: const Color(0xFF1E293B),
+                          contentPadding: const EdgeInsets.all(14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Colors.white12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Colors.white12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Color(0xFFF59E0B)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.white24),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              child: const Text(
+                                'Later',
+                                style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () async {
+                                      setModalState(() => isSubmitting = true);
+                                      try {
+                                        final List<String> parts = [];
+                                        if (selectedTags.isNotEmpty) {
+                                          parts.add(selectedTags.join(', '));
+                                        }
+                                        if (commentCtrl.text.trim().isNotEmpty) {
+                                          parts.add(commentCtrl.text.trim());
+                                        }
+                                        final fullComment = parts.join(' — ');
+
+                                        final res = await _dio.post(
+                                          '/rides/$rideId/review',
+                                          data: {
+                                            'rating': selectedStars,
+                                            'comment': fullComment,
+                                          },
+                                        );
+                                        if (res.statusCode == 200 && res.data['success'] == true) {
+                                          if (mounted) {
+                                            setState(() {
+                                              r['has_review'] = true;
+                                              r['user_rating'] = selectedStars;
+                                              r['user_review_comment'] = fullComment;
+                                            });
+                                          }
+                                          if (ctx.mounted) Navigator.pop(ctx);
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  res.data['message']?.toString() ??
+                                                      'Thank you! Your $selectedStars★ rating has been submitted.',
+                                                ),
+                                                backgroundColor: const Color(0xFF10B981),
+                                              ),
+                                            );
+                                          }
+                                        } else {
+                                          throw Exception(res.data['message'] ?? 'Could not submit rating');
+                                        }
+                                      } catch (e) {
+                                        setModalState(() => isSubmitting = false);
+                                        if (ctx.mounted) {
+                                          ScaffoldMessenger.of(ctx).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Failed to submit rating: $e'),
+                                              backgroundColor: AppColors.danger,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                              icon: isSubmitting
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                    )
+                                  : const Icon(Icons.check_circle_rounded, color: Colors.black, size: 18),
+                              label: Text(
+                                isSubmitting ? 'Submitting...' : 'Submit Rating',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF59E0B),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

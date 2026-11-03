@@ -60,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Resources\RideResource::class,
                 \App\Filament\Resources\VehicleResource::class,
                 \App\Filament\Resources\DriverProfileResource::class,
+                \App\Filament\Resources\DriverRatingResource::class,
                 \App\Filament\Resources\DriverBookingResource::class,
                 \App\Filament\Resources\PaymentTransactionResource::class,
                 \App\Filament\Resources\OwnerWalletResource::class,
@@ -86,6 +87,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\DashboardHeroWidget::class,
                 \App\Filament\Widgets\CommissionsOverviewWidget::class,
                 \App\Filament\Widgets\StatsOverviewWidget::class,
+                \App\Filament\Widgets\DriverRatingsTableWidget::class,
                 \App\Filament\Widgets\InvestorStatsOverviewWidget::class,
                 \App\Filament\Widgets\RecentRidesWidget::class,
             ])

@@ -45,10 +45,29 @@ class NotificationProvider extends ChangeNotifier {
             for (final n in newNotifications) {
               final nId = (n['id'] as num?)?.toInt() ?? 0;
               if (nId > _lastSeenId && n['is_read'] != true) {
+                final nType = (n['type'] ?? '').toString().toLowerCase();
+                final nTitle = (n['title'] ?? 'RideMyCars Alert').toString();
+                final nBody = (n['message'] ?? '').toString();
+                String? payload;
+                if (nType == 'completed' ||
+                    nTitle.toLowerCase().contains('trip completed') ||
+                    nTitle.toLowerCase().contains('rate your driver') ||
+                    nBody.toLowerCase().contains('rate your driver')) {
+                  final dynamic rawData = n['data'];
+                  final rideId = int.tryParse(
+                        (n['ride_id'] ??
+                                (rawData is Map ? rawData['ride_id'] : null) ??
+                                0)
+                            .toString(),
+                      ) ??
+                      0;
+                  payload = 'rate_ride:$rideId';
+                }
                 LocalNotificationService.instance.showNotification(
                   id: nId,
-                  title: n['title'] ?? 'RideMyCars Alert',
-                  body: n['message'] ?? '',
+                  title: nTitle,
+                  body: nBody,
+                  payload: payload,
                 );
               }
             }

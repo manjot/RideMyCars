@@ -15,6 +15,35 @@ class NotificationService
      */
     public static function send(int $userId, string $type, string $title, string $message, ?int $rideId = null, ?string $link = null, array $data = []): UserNotification
     {
+        $isRideOrDeliveryRequest = in_array($type, [
+            'ride_assignment',
+            'package_delivery_assigned',
+            'backup_ride_assigned',
+            'backup_ride_request',
+            'new_ride_request',
+            'delivery_request',
+        ], true);
+
+        $isChauffeurHireRequest = in_array($type, [
+            'driver_hiring_assigned',
+            'driver_booking',
+        ], true);
+
+        $suppressDriverAlert = false;
+        if ($isRideOrDeliveryRequest || $isChauffeurHireRequest) {
+            try {
+                $dp = \App\Models\DriverProfile::where('user_id', $userId)->first();
+                if ($dp) {
+                    if ($isRideOrDeliveryRequest && !$dp->is_available) {
+                        $suppressDriverAlert = true;
+                    }
+                    if ($isChauffeurHireRequest && !$dp->active_chauffeur_online) {
+                        $suppressDriverAlert = true;
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
         $notification = UserNotification::create([
             'user_id' => $userId,
             'type' => $type,
@@ -23,8 +52,12 @@ class NotificationService
             'ride_id' => $rideId,
             'link' => $link,
             'data' => $data,
-            'is_read' => false,
+            'is_read' => $suppressDriverAlert ? true : false,
         ]);
+
+        if ($suppressDriverAlert) {
+            return $notification;
+        }
 
         try {
             $isDriverAlert = in_array($type, [

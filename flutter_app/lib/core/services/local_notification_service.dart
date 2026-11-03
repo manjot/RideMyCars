@@ -89,8 +89,19 @@ class LocalNotificationService {
             message.data['message'] ??
             message.data['body'] ??
             '';
+        final type = (message.data['type'] ?? '').toString().toLowerCase();
+        final lowerTitle = title.toString().toLowerCase();
+        final lowerBody = body.toString().toLowerCase();
+        String? payload;
+        if (type == 'completed' ||
+            lowerTitle.contains('trip completed') ||
+            lowerTitle.contains('rate your driver') ||
+            lowerBody.contains('rate your driver')) {
+          final rideId = int.tryParse((message.data['ride_id'] ?? 0).toString()) ?? 0;
+          payload = 'rate_ride:$rideId';
+        }
         final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        showNotification(id: id, title: title, body: body);
+        showNotification(id: id, title: title, body: body, payload: payload);
       });
     } catch (e) {
       debugPrint('[FCM] listener init skipped/failed: $e');

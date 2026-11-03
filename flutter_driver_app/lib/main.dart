@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
 import 'core/services/local_notification_service.dart';
 import 'core/services/sound_service.dart';
+import 'core/storage/token_storage.dart';
 import 'providers/auth_provider.dart';
 import 'providers/country_provider.dart';
 import 'providers/driver_provider.dart';
@@ -20,6 +21,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('[Driver FCM Background] Handling background message: ${message.messageId}');
   try {
     await LocalNotificationService.instance.initialize();
+    final switchStates = await TokenStorage.getDriverSwitchStates();
+    LocalNotificationService.instance.isDriverSwitchOnline = switchStates['isDriverOnline'] ?? false;
+    LocalNotificationService.instance.isActiveChauffeurSwitchOnline = switchStates['isChauffeurOnline'] ?? false;
+
     final title = message.notification?.title ??
         message.data['title'] ??
         '🚨 New Ride Order Request!';
@@ -28,6 +33,12 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         message.data['body'] ??
         'Incoming order request. Tap to open and accept.';
     final type = (message.data['type'] ?? 'ride').toString();
+
+    if (!LocalNotificationService.instance.isOrderTypeAllowed(type, title: title)) {
+      debugPrint('[Driver FCM Background] Suppressed order notification ($type) because corresponding switch is OFF');
+      return;
+    }
+
     final orderId = message.data['ride_id'] ??
         message.data['booking_id'] ??
         message.data['delivery_id'] ??

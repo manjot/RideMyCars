@@ -269,6 +269,31 @@ class TokenStorage {
     } catch (_) {}
   }
 
+  static Future<void> saveDriverSwitchStates({
+    required bool isDriverOnline,
+    required bool isChauffeurOnline,
+  }) async {
+    try {
+      await _storage.write(key: 'driver_switch_online', value: isDriverOnline ? 'true' : 'false').timeout(const Duration(seconds: 2));
+      await _storage.write(key: 'chauffeur_switch_online', value: isChauffeurOnline ? 'true' : 'false').timeout(const Duration(seconds: 2));
+    } catch (_) {}
+  }
+
+  static Future<Map<String, bool>> getDriverSwitchStates() async {
+    bool isDriverOnline = false;
+    bool isChauffeurOnline = false;
+    try {
+      final d = await _storage.read(key: 'driver_switch_online').timeout(const Duration(seconds: 2));
+      final c = await _storage.read(key: 'chauffeur_switch_online').timeout(const Duration(seconds: 2));
+      isDriverOnline = d == 'true';
+      isChauffeurOnline = c == 'true';
+    } catch (_) {}
+    return {
+      'isDriverOnline': isDriverOnline,
+      'isChauffeurOnline': isChauffeurOnline,
+    };
+  }
+
   static Future<void> fullReset() async {
     _cachedToken = null;
     _cachedRole = null;

@@ -1734,54 +1734,8 @@ Route::post('/api/ride/{id}/update-status', function (\Illuminate\Http\Request $
 })->middleware('auth');
 
 // Submit a review for a ride
-Route::post('/api/ride/{id}/review', function (\Illuminate\Http\Request $request, $id) {
-    $request->validate([
-        'rating' => 'required|integer|min:1|max:5',
-        'comment' => 'nullable|string|max:500',
-    ]);
-
-    $ride = \App\Models\Ride::find($id);
-    if (!$ride || $ride->status !== 'completed') {
-        return response()->json(['error' => 'Ride not found or not completed'], 404);
-    }
-
-    $userId = auth()->id();
-    if ($userId === $ride->rider_id) {
-        $type = 'rider_to_driver';
-        $revieweeId = $ride->driver_id;
-    } elseif ($userId === $ride->driver_id) {
-        $type = 'driver_to_rider';
-        $revieweeId = $ride->rider_id;
-    } else {
-        return response()->json(['error' => 'You are not part of this ride'], 403);
-    }
-
-    // Check if already reviewed
-    $existing = \App\Models\RideReview::where('ride_id', $id)->where('type', $type)->first();
-    if ($existing) {
-        return response()->json(['error' => 'Already reviewed'], 409);
-    }
-
-    \App\Models\RideReview::create([
-        'ride_id' => $id,
-        'reviewer_id' => $userId,
-        'reviewee_id' => $revieweeId,
-        'type' => $type,
-        'rating' => $request->rating,
-        'comment' => $request->comment,
-    ]);
-
-    // Send notification to the person who was reviewed
-    \App\Services\NotificationService::notifyReviewReceived(
-        $revieweeId,
-        auth()->user()->name,
-        (int)$request->rating,
-        $request->comment,
-        $ride->id
-    );
-
-    return response()->json(['success' => true]);
-})->middleware('auth');
+Route::post('/api/ride/{id}/review', [\App\Http\Controllers\Api\RideController::class, 'submitReview']);
+Route::post('/api/rides/{id}/review', [\App\Http\Controllers\Api\RideController::class, 'submitReview']);
 
 // In-App Trip Chat Web & API Routes (Issue 3.7: Rider & Driver In-App Chat alongside WhatsApp)
 Route::get('/api/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::class, 'index']);
@@ -1791,7 +1745,7 @@ Route::post('/chat/{type}/{id}', [\App\Http\Controllers\TripChatController::clas
 
 // Get Notifications for Current User
 Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
-    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
+    $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user() ?? \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
     if (!$user) return response()->json(['success' => true, 'notifications' => [], 'unread_count' => 0]);
 
     $userIds = [$user->id];
@@ -1804,16 +1758,43 @@ Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
     $activeCountry = $request->input('country') ?: (\App\Services\CountryService::getCurrentCountryCode($request) ?: 'GHA');
     $fallbackCurrencyCode = \App\Models\CountryPricing::forCountry($activeCountry)->currency_code ?? 'GHS';
 
-    $notifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
+    $isDriverRequest = strtolower((string) $request->header('X-User-Role', '')) === 'driver' || $user->role === 'driver';
+    $dp = $user->driverProfile;
+    $driverOnline = (bool) ($dp && $dp->is_available);
+    $chauffeurOnline = (bool) ($dp && $dp->active_chauffeur_online);
+
+    $rawNotifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
         ->orderBy('created_at', 'desc')
         ->take(40)
-        ->get()
+        ->get();
+
+    if ($isDriverRequest && $dp) {
+        $rawNotifications = $rawNotifications->filter(function ($n) use ($driverOnline, $chauffeurOnline) {
+            $t = strtolower((string) ($n->type ?? ''));
+            $title = strtolower((string) ($n->title ?? ''));
+            $isHire = in_array($t, ['driver_hiring_assigned', 'driver_booking'], true) || str_contains($title, 'chauffeur request') || str_contains($title, 'driver hire');
+            $isRideOrDel = in_array($t, ['ride_assignment', 'new_ride_request', 'backup_ride_assigned', 'backup_ride_request', 'package_delivery_assigned', 'delivery_request'], true)
+                || str_contains($title, 'new ride request')
+                || str_contains($title, 'new parcel delivery');
+            if ($isHire && !$chauffeurOnline) {
+                return false;
+            }
+            if ($isRideOrDel && !$driverOnline) {
+                return false;
+            }
+            return true;
+        })->values();
+    }
+
+    $notifications = $rawNotifications
         ->map(function ($n) use ($fallbackCurrencyCode) {
+            $dataArr = is_array($n->data) ? $n->data : [];
             return [
                 'id' => $n->id,
                 'type' => $n->type,
                 'title' => $n->title,
                 'message' => \App\Services\NotificationService::formatNotificationMessage($n, $fallbackCurrencyCode),
+                'ride_id' => $n->ride_id ?? ($dataArr['ride_id'] ?? null),
                 'link' => $n->link,
                 'data' => $n->data,
                 'is_read' => (bool)$n->is_read,
@@ -1823,7 +1804,7 @@ Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
         })
         ->values();
 
-    $unreadCount = \App\Models\UserNotification::whereIn('user_id', $userIds)
+    $unreadCount = $rawNotifications
         ->where('is_read', false)
         ->count();
 

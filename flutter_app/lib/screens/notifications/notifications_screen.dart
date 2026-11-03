@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/country_provider.dart';
+import '../rides/my_rides_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -227,6 +228,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: InkWell(
                       onTap: () {
                         if (!isRead) notifs.markAsRead(notifId);
+                        final lowerTitle = title.toString().toLowerCase();
+                        final lowerMsg = rawMessage.toLowerCase();
+                        final isCompletedRating = type == 'completed' ||
+                            lowerTitle.contains('trip completed') ||
+                            lowerTitle.contains('rate your driver') ||
+                            lowerMsg.contains('rate your driver');
+                        if (isCompletedRating) {
+                          final dynamic rawData = n['data'];
+                          final int rideId = int.tryParse(
+                                (n['ride_id'] ??
+                                        (rawData is Map ? rawData['ride_id'] : null) ??
+                                        0)
+                                    .toString(),
+                              ) ??
+                              0;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MyRidesScreen(
+                                initialCategoryFilter: 'ride',
+                                initialTabIndex: 2,
+                                autoRateRideId: rideId,
+                              ),
+                            ),
+                          );
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),

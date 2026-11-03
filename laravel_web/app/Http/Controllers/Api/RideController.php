@@ -115,10 +115,16 @@ class RideController extends Controller
 
             $rCountry = $r->driver_country ?? $r->country ?? 'IND';
             $rPricing = $getPricing($rCountry);
+            $existingReview = \App\Models\RideReview::where('ride_id', $r->id)
+                ->where('type', 'rider_to_driver')
+                ->first();
 
             $items[] = [
                 'id' => $r->id,
                 'type' => $type,
+                'has_review' => (bool) $existingReview,
+                'user_rating' => $existingReview ? (int) $existingReview->rating : null,
+                'user_review_comment' => $existingReview ? $existingReview->comment : null,
                 'booking_code' => $isRental 
                     ? ($r->digital_receipt_code ?: ('RNT-' . $r->id)) 
                     : ($isDelivery ? ('DEL-' . $r->id) : ('RIDE-' . $r->id)),
@@ -558,6 +564,20 @@ class RideController extends Controller
         $breakdown = PricingService::calculateTripFareWithBreakdown($distanceKm, $durationMin, $vehicleType, $stopsCount, $country, $context);
         $amount = $breakdown['total_fare'];
 
+        $rawMethod = strtolower($request->input('payment_method', 'cash'));
+        $isRmcAccount = in_array($rawMethod, ['wallet', 'rmc_account', 'rmc_wallet'], true);
+        if ($isRmcAccount) {
+            $freshUser = \App\Models\User::find($user->id) ?? $user;
+            $availBalance = (float) ($freshUser->wallet_balance ?? 0.0);
+            if ($availBalance < (float) $amount) {
+                $sym = \App\Models\CountryPricing::forCountry($country)->currency_symbol ?? '$';
+                return response()->json([
+                    'success' => false,
+                    'message' => "Insufficient RMC Account balance ({$sym}" . number_format($availBalance, 2) . "). Trip fare is {$sym}" . number_format((float) $amount, 2) . ". Please top up your RMC Account or select another payment method.",
+                ], 422);
+            }
+        }
+
         $digitalReceipt = 'REC-' . strtoupper(Str::random(8));
         $startPin = str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
         $waitingMinutes = \App\Services\SettingService::getRideWaitingTimeMinutes();
@@ -609,12 +629,56 @@ class RideController extends Controller
             }
         }
 
-        // Initialize payment authorization hold / cash handling
-        $rawMethod = strtolower($request->input('payment_method', 'cash'));
+        // Initialize payment authorization hold / cash / RMC Account handling
         $isCash = in_array($rawMethod, ['cash', 'cash_direct', 'cash_on_trip', 'cash_payment'], true) || str_contains($rawMethod, 'cash');
         $paymentData = [];
 
-        if ($isCash) {
+        if ($isRmcAccount) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $ride, $amount, $country) {
+                $lockedUser = \App\Models\User::where('id', $user->id)->lockForUpdate()->first();
+                if ($lockedUser) {
+                    $before = (float) ($lockedUser->wallet_balance ?? 0.0);
+                    $after = max(0.0, round($before - (float) $amount, 2));
+                    $lockedUser->wallet_balance = $after;
+                    $lockedUser->save();
+
+                    $sym = \App\Models\CountryPricing::forCountry($country)->currency_symbol ?? '$';
+                    try {
+                        \App\Models\WalletTransaction::create([
+                            'user_id' => $lockedUser->id,
+                            'transaction_ref' => 'WTX-RIDE-' . date('Ymd') . '-' . strtoupper(Str::random(6)),
+                            'type' => 'payment',
+                            'amount' => $amount,
+                            'currency' => $sym,
+                            'balance_before' => $before,
+                            'balance_after' => $after,
+                            'description' => "Paid from RMC Account for Ride #{$ride->id}",
+                            'status' => 'completed',
+                            'reference_id' => $ride->id,
+                            'reference_type' => Ride::class,
+                        ]);
+                    } catch (\Throwable $we) {
+                        \Illuminate\Support\Facades\Log::warning("WalletTransaction log warning: " . $we->getMessage());
+                    }
+                }
+            });
+
+            $ride->update([
+                'payment_method' => 'wallet',
+                'payment_status' => 'paid',
+            ]);
+            $paymentData = [
+                'requires_payment_hold' => false,
+                'payment_method' => 'wallet',
+                'is_payment_confirmed' => true,
+                'message' => 'Paid from RMC Account balance. Dispatched to nearby drivers.',
+            ];
+            try {
+                \App\Services\RideAssignmentService::assignNextDriver($ride);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Ride wallet assignNextDriver error: " . $e->getMessage());
+            }
+        } elseif ($isCash) {
             $ride->update([
                 'payment_method' => 'cash',
                 'payment_status' => 'pending_cash',
@@ -658,7 +722,7 @@ class RideController extends Controller
         $rideData['waiting_time_seconds'] = $waitingMinutes * 60;
         $rideData['remaining_seconds'] = $freshRide->remainingSeconds();
 
-        $bookingMessage = $isCash
+        $bookingMessage = ($isCash || $isRmcAccount)
             ? 'Ride booking created. Searching for nearby drivers.'
             : 'Ride booking created. Complete payment to find nearby drivers.';
 
@@ -1779,5 +1843,133 @@ class RideController extends Controller
             'status' => 'cancelled',
             'ride_id' => $ride->id,
         ], 200);
+    }
+
+    /**
+     * Submit or update a rating & review for a completed ride (or chauffeur booking).
+     */
+    public function submitReview(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:500',
+            'review_text' => 'nullable|string|max:500',
+        ]);
+
+        $user = $request->user()
+            ?? auth('sanctum')->user()
+            ?? auth()->user()
+            ?? \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
+
+        $rating = (int) $request->input('rating');
+        $comment = trim((string) ($request->input('comment') ?? $request->input('review_text') ?? ''));
+
+        $ride = Ride::find($id);
+        if (!$ride) {
+            // Fallback: check if it's a DriverBooking
+            $booking = \App\Models\DriverBooking::find($id);
+            if ($booking) {
+                $clientId = $user?->id ?? $booking->client_id ?? 1;
+                $review = \App\Models\DriverReview::updateOrCreate(
+                    [
+                        'driver_booking_id' => $booking->id,
+                        'client_id' => $clientId,
+                    ],
+                    [
+                        'driver_profile_id' => $booking->driver_profile_id,
+                        'rating' => $rating,
+                        'review_text' => $comment !== '' ? $comment : 'Great chauffeur service!',
+                    ]
+                );
+                if ($booking->driver_id) {
+                    self::recalculateDriverRating($booking->driver_id, $booking->driver_profile_id);
+                }
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Thank you! Your driver rating has been submitted.',
+                    'review' => $review,
+                ]);
+            }
+            return response()->json(['success' => false, 'error' => 'Ride not found'], 404);
+        }
+
+        $userId = $user?->id ?? $ride->rider_id;
+        if ($userId && $userId == $ride->driver_id && $ride->driver_id != $ride->rider_id) {
+            $type = 'driver_to_rider';
+            $revieweeId = $ride->rider_id;
+        } else {
+            $type = 'rider_to_driver';
+            $revieweeId = $ride->driver_id;
+            $userId = $ride->rider_id ?? $userId;
+        }
+
+        $review = \App\Models\RideReview::updateOrCreate(
+            [
+                'ride_id' => $ride->id,
+                'type' => $type,
+            ],
+            [
+                'reviewer_id' => $userId,
+                'reviewee_id' => $revieweeId,
+                'rating' => $rating,
+                'comment' => $comment,
+            ]
+        );
+
+        if ($type === 'rider_to_driver' && $revieweeId) {
+            self::recalculateDriverRating($revieweeId);
+            try {
+                \App\Services\NotificationService::notifyReviewReceived(
+                    $revieweeId,
+                    $user?->name ?? $ride->passenger_name ?? 'Rider',
+                    $rating,
+                    $comment,
+                    $ride->id
+                );
+            } catch (\Throwable $e) {}
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thank you! Your driver rating has been submitted.',
+            'rating' => $rating,
+            'review' => $review,
+        ]);
+    }
+
+    /**
+     * Recalculate and persist a driver's average rating across RideReview and DriverReview.
+     */
+    public static function recalculateDriverRating(?int $driverUserId = null, ?int $driverProfileId = null): void
+    {
+        try {
+            $dp = null;
+            if ($driverProfileId) {
+                $dp = \App\Models\DriverProfile::find($driverProfileId);
+            }
+            if (!$dp && $driverUserId) {
+                $dp = \App\Models\DriverProfile::where('user_id', $driverUserId)->first();
+            }
+            if (!$dp) return;
+
+            $uid = $driverUserId ?? $dp->user_id;
+            $rideRatings = $uid
+                ? \App\Models\RideReview::where('reviewee_id', $uid)
+                    ->where('type', 'rider_to_driver')
+                    ->pluck('rating')
+                    ->toArray()
+                : [];
+            $chauffeurRatings = \App\Models\DriverReview::where('driver_profile_id', $dp->id)
+                ->pluck('rating')
+                ->toArray();
+
+            $all = array_merge($rideRatings, $chauffeurRatings);
+            if (count($all) > 0) {
+                $avg = round(array_sum($all) / count($all), 2);
+                $dp->update(['rating' => $avg]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("recalculateDriverRating warning: " . $e->getMessage());
+        }
     }
 }

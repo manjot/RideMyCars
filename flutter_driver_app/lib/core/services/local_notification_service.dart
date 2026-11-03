@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../api/api_client.dart';
 import '../constants/api_constants.dart';
+import '../storage/token_storage.dart';
 import 'sound_service.dart';
 
 class LocalNotificationService {
@@ -29,6 +30,38 @@ class LocalNotificationService {
   String? _lastAlertedOrderKey;
   bool _initialized = false;
   VoidCallback? onOrderPushReceived;
+
+  bool isDriverSwitchOnline = false;
+  bool isActiveChauffeurSwitchOnline = false;
+
+  void updateSwitchStates({
+    required bool isDriverOnline,
+    required bool isChauffeurOnline,
+  }) {
+    isDriverSwitchOnline = isDriverOnline;
+    isActiveChauffeurSwitchOnline = isChauffeurOnline;
+    TokenStorage.saveDriverSwitchStates(
+      isDriverOnline: isDriverOnline,
+      isChauffeurOnline: isChauffeurOnline,
+    );
+  }
+
+  /// Checks whether an order request notification (Ride/Delivery vs Driver Hire/Chauffeur)
+  /// is allowed based on the current Driver Switch and Active Chauffeur Switch states.
+  bool isOrderTypeAllowed(String? orderType, {String? title}) {
+    final t = (orderType ?? '').toLowerCase();
+    final lowerTitle = (title ?? '').toLowerCase();
+    final isDriverHire = t.contains('hire') ||
+        t.contains('chauffeur') ||
+        t.contains('booking') ||
+        t.contains('hiring') ||
+        lowerTitle.contains('chauffeur') ||
+        lowerTitle.contains('driver hire');
+    if (isDriverHire) {
+      return isActiveChauffeurSwitchOnline;
+    }
+    return isDriverSwitchOnline;
+  }
 
   Future<void> initialize({Function(String?)? onSelectNotification}) async {
     if (_initialized) return;
@@ -170,6 +203,10 @@ class LocalNotificationService {
             title.toLowerCase().contains('order');
 
         if (isOrderAlert) {
+          if (!isOrderTypeAllowed(type, title: title)) {
+            debugPrint('[Driver FCM Foreground] Ignored order alert ($type) because corresponding switch is OFF');
+            return;
+          }
           final orderId = message.data['ride_id'] ??
               message.data['booking_id'] ??
               message.data['delivery_id'] ??

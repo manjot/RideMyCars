@@ -28,6 +28,9 @@ class _HireDriverCatalogScreenState extends State<HireDriverCatalogScreen> {
 
   String _selectedFilter = 'All'; // 'All', 'Top Rated', 'City Duty', 'Executive'
   String _sortOption = 'rating_desc'; // 'rating_desc', 'price_asc', 'price_desc'
+  String _selectedCountryFilter = 'All Countries';
+  String _selectedAvailabilityFilter = 'All Available'; // 'All Available', 'Available Now'
+  String _selectedRatingFilter = 'All Ratings'; // 'All Ratings', '4.8+ ★', '4.5+ ★', '4.0+ ★'
 
   final List<String> _filters = ['All', 'Top Rated', 'City Duty', 'Executive'];
 
@@ -43,9 +46,12 @@ class _HireDriverCatalogScreenState extends State<HireDriverCatalogScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchDrivers() async {
+  Future<void> _fetchDrivers({String? countryOverride}) async {
     setState(() => _isLoading = true);
-    final country = Provider.of<CountryProvider>(context, listen: false).selectedCountryCode;
+    final country = countryOverride ??
+        (_selectedCountryFilter == 'All Countries'
+            ? 'All'
+            : _selectedCountryFilter);
     try {
       final drivers = await DriverService.getDrivers(country: country);
       if (mounted) {
@@ -65,10 +71,38 @@ class _HireDriverCatalogScreenState extends State<HireDriverCatalogScreen> {
     var list = _allDrivers.where((d) {
       if (query.isNotEmpty) {
         final matches = d.name.toLowerCase().contains(query) ||
+            d.serviceArea.toLowerCase().contains(query) ||
+            d.country.toLowerCase().contains(query) ||
             d.bio.toLowerCase().contains(query) ||
             d.licenseNumber.toLowerCase().contains(query);
         if (!matches) return false;
       }
+
+      if (_selectedCountryFilter != 'All Countries') {
+        final target = _selectedCountryFilter.toLowerCase();
+        final dc = d.country.toLowerCase();
+        final isMatch = dc == target ||
+            (target == 'ghana' && (dc == 'gha' || dc.contains('ghana'))) ||
+            (target == 'nigeria' && (dc == 'nga' || dc.contains('nigeria'))) ||
+            (target == 'united states' && (dc == 'usa' || dc == 'us' || dc.contains('united states'))) ||
+            (target == 'united kingdom' && (dc == 'gbr' || dc == 'uk' || dc.contains('united kingdom'))) ||
+            (target == 'south africa' && (dc == 'zaf' || dc.contains('south africa'))) ||
+            (target == 'india' && (dc == 'ind' || dc.contains('india'))) ||
+            (target == 'kenya' && (dc == 'ken' || dc.contains('kenya'))) ||
+            (target == 'canada' && (dc == 'can' || dc.contains('canada'))) ||
+            (target == 'uae' && (dc == 'are' || dc.contains('emirates') || dc.contains('uae')));
+        if (!isMatch) return false;
+      }
+
+      if (_selectedAvailabilityFilter == 'Available Now') {
+        if (!d.isAvailable && !d.activeChauffeurOnline) {
+          return false;
+        }
+      }
+
+      if (_selectedRatingFilter == '4.8+ ★' && d.rating < 4.8) return false;
+      if (_selectedRatingFilter == '4.5+ ★' && d.rating < 4.5) return false;
+      if (_selectedRatingFilter == '4.0+ ★' && d.rating < 4.0) return false;
 
       if (_selectedFilter == 'Top Rated' && d.rating < 4.8) {
         return false;
@@ -153,7 +187,7 @@ class _HireDriverCatalogScreenState extends State<HireDriverCatalogScreen> {
                         controller: _searchController,
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
-                          hintText: 'Search by chauffeur name, duty...',
+                          hintText: 'Search Chauffeurs by name or city...',
                           prefixIcon: const Icon(Icons.search, size: 20),
                           isDense: true,
                           filled: true,
@@ -185,6 +219,112 @@ class _HireDriverCatalogScreenState extends State<HireDriverCatalogScreen> {
                           onChanged: (val) {
                             if (val != null) setState(() => _sortOption = val);
                           },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Dropdown Filters Row: Country, Availability (All Available / Available Now), Driver Ratings
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.black26 : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedCountryFilter,
+                            isExpanded: true,
+                            isDense: true,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            items: const [
+                              'All Countries',
+                              'Ghana',
+                              'Nigeria',
+                              'United States',
+                              'United Kingdom',
+                              'South Africa',
+                              'India',
+                              'Kenya',
+                              'Canada',
+                              'UAE',
+                            ].map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _selectedCountryFilter = val);
+                                _fetchDrivers(countryOverride: val == 'All Countries' ? 'All' : val);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.black26 : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedAvailabilityFilter,
+                            isExpanded: true,
+                            isDense: true,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            items: const [
+                              'All Available',
+                              'Available Now',
+                            ].map((a) => DropdownMenuItem(value: a, child: Text(a, overflow: TextOverflow.ellipsis))).toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => _selectedAvailabilityFilter = val);
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.black26 : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedRatingFilter,
+                            isExpanded: true,
+                            isDense: true,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            items: const [
+                              'All Ratings',
+                              '4.8+ ★',
+                              '4.5+ ★',
+                              '4.0+ ★',
+                            ].map((r) => DropdownMenuItem(value: r, child: Text(r, overflow: TextOverflow.ellipsis))).toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => _selectedRatingFilter = val);
+                            },
+                          ),
                         ),
                       ),
                     ),

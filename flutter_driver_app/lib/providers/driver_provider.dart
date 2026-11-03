@@ -119,6 +119,10 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
           }
           final available = profile['is_available'] == true || profile['is_available'] == 1 || profile['is_available'] == '1';
           _isOnline = _isLive && available;
+          LocalNotificationService.instance.updateSwitchStates(
+            isDriverOnline: _isOnline,
+            isChauffeurOnline: _activeChauffeurOnline,
+          );
           if (_isOnline || _activeChauffeurOnline) {
             _startDispatchLoop();
             notifyListeners();
@@ -158,6 +162,23 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
         _isChauffeur = res.data['is_chauffeur'] == true || _isChauffeur;
         if (_activeChauffeurOnline) {
           _isLive = true;
+        }
+        LocalNotificationService.instance.updateSwitchStates(
+          isDriverOnline: _isOnline,
+          isChauffeurOnline: _activeChauffeurOnline,
+        );
+        if (!_activeChauffeurOnline) {
+          _pendingRequests.removeWhere((j) {
+            final type = j['type']?.toString().toLowerCase() ?? '';
+            return type.contains('hire') || type.contains('chauffeur') || type.contains('booking') || j['driver_booking_id'] != null;
+          });
+          _pendingVerifications.removeWhere((j) {
+            final type = j['type']?.toString().toLowerCase() ?? '';
+            return type.contains('hire') || type.contains('chauffeur') || type.contains('booking');
+          });
+          if (_pendingRequests.isEmpty && _pendingVerifications.isEmpty) {
+            SoundService.instance.stopRingtone();
+          }
         }
         if (_activeChauffeurOnline || _isOnline) {
           _startDispatchLoop();
@@ -200,6 +221,26 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
           _isLive = liveVal == true || liveVal == 1 || liveVal == '1';
         } else {
           _isLive = true;
+        }
+
+        LocalNotificationService.instance.updateSwitchStates(
+          isDriverOnline: _isOnline,
+          isChauffeurOnline: _activeChauffeurOnline,
+        );
+        if (!_isOnline) {
+          _pendingRequests.removeWhere((j) {
+            final type = j['type']?.toString().toLowerCase() ?? '';
+            final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking') || j['driver_booking_id'] != null;
+            return !isDriverHire;
+          });
+          _pendingVerifications.removeWhere((j) {
+            final type = j['type']?.toString().toLowerCase() ?? '';
+            final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking');
+            return !isDriverHire;
+          });
+          if (_pendingRequests.isEmpty && _pendingVerifications.isEmpty) {
+            SoundService.instance.stopRingtone();
+          }
         }
 
         if (_isOnline || _activeChauffeurOnline) {
@@ -266,6 +307,10 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _syncNativeOrderAlertService(bool active) async {
+    LocalNotificationService.instance.updateSwitchStates(
+      isDriverOnline: _isOnline,
+      isChauffeurOnline: _activeChauffeurOnline,
+    );
     if (!Platform.isAndroid) return;
     try {
       if (active) {
@@ -482,8 +527,7 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
                 final type = j['type']?.toString().toLowerCase() ?? '';
                 final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking') || j['driver_booking_id'] != null;
                 if (isDriverHire) {
-                  if (_isChauffeur && !_activeChauffeurOnline) return false;
-                  if (!_isChauffeur && !_isOnline) return false;
+                  if (!_activeChauffeurOnline) return false;
                 } else {
                   if (!_isOnline) return false;
                 }
@@ -543,7 +587,7 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
             final type = item['type']?.toString().toLowerCase() ?? '';
             final isDriverHire = type.contains('hire') || type.contains('chauffeur') || type.contains('booking');
             if (isDriverHire) {
-              return _isChauffeur ? !_activeChauffeurOnline : !_isOnline;
+              return !_activeChauffeurOnline;
             }
             return !_isOnline;
           });

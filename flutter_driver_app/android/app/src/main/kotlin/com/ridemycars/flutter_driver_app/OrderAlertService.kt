@@ -218,6 +218,13 @@ class OrderAlertService : Service() {
                     if (rem <= 0) continue
 
                     val orderType = item.optString("type", "ride")
+                    val isDriverHire = orderType.contains("booking", true) ||
+                        orderType.contains("hire", true) ||
+                        orderType.contains("chauffeur", true) ||
+                        item.optString("driver_booking_id").isNotEmpty()
+                    if (isDriverHire && !isChauffeurOnline) continue
+                    if (!isDriverHire && !isOnline) continue
+
                     val orderId = item.optString("ride_id").ifEmpty {
                         item.optString("delivery_id").ifEmpty {
                             item.optString("driver_booking_id").ifEmpty {
@@ -235,7 +242,7 @@ class OrderAlertService : Service() {
                     val fare = item.optString("fare", item.optString("total_price", ""))
 
                     val title = when {
-                        orderType.contains("booking", true) || orderType.contains("hire", true) ->
+                        isDriverHire ->
                             "🚨 New VIP Chauffeur Request! ($sym$fare)"
                         orderType.contains("delivery", true) ->
                             "🚨 New Parcel Delivery Order! ($sym$fare)"
@@ -258,6 +265,12 @@ class OrderAlertService : Service() {
                 for (i in 0 until itemsArr.length()) {
                     val item = itemsArr.optJSONObject(i) ?: continue
                     val orderType = item.optString("type", "verification")
+                    val isDriverHire = orderType.contains("booking", true) ||
+                        orderType.contains("hire", true) ||
+                        orderType.contains("chauffeur", true)
+                    if (isDriverHire && !isChauffeurOnline) continue
+                    if (!isDriverHire && !isOnline) continue
+
                     val orderId = item.optString("id", "new")
                     val orderKey = "${orderType}_$orderId"
                     val isAck = synchronized(acknowledgedOrderKeys) { acknowledgedOrderKeys.contains(orderKey) }

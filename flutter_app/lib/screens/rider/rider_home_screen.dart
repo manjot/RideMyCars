@@ -114,6 +114,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   final TextEditingController _driverCarMakeModelController = TextEditingController(text: 'Toyota Camry');
   final TextEditingController _driverCarRegNumberController = TextEditingController(text: 'REG-8899');
   String _driverTransmission = 'automatic';
+  final TextEditingController _chauffeurSearchController = TextEditingController();
+  String _chauffeurCountryFilter = 'All Countries';
+  String _chauffeurAvailabilityFilter = 'All Available';
+  String _chauffeurRatingFilter = 'All Ratings';
 
   // Delivery Flow State
   String _deliverySpeed = 'express';
@@ -342,9 +346,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
     double? minRating;
     if (filter == 'Top Rated') minRating = 4.8;
+    final String? reqCountry = (country == 'All Countries' || country == 'All')
+        ? 'All'
+        : (country ?? countryProv.selectedCountryCode);
     final list = await DriverService.getDrivers(
       minRating: minRating,
-      country: country ?? countryProv.selectedCountryCode,
+      country: reqCountry,
     );
     if (mounted) {
       setState(() {
@@ -355,6 +362,45 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         _isLoadingDrivers = false;
       });
     }
+  }
+
+  List<DriverModel> get _filteredChauffeurs {
+    final q = _chauffeurSearchController.text.trim().toLowerCase();
+    return _drivers.where((d) {
+      if (q.isNotEmpty) {
+        final matchName = d.name.toLowerCase().contains(q);
+        final matchCity = d.serviceArea.toLowerCase().contains(q);
+        final matchCountry = d.country.toLowerCase().contains(q);
+        final matchBio = d.bio.toLowerCase().contains(q);
+        if (!matchName && !matchCity && !matchCountry && !matchBio) {
+          return false;
+        }
+      }
+      if (_chauffeurCountryFilter != 'All Countries') {
+        final target = _chauffeurCountryFilter.toLowerCase();
+        final dc = d.country.toLowerCase();
+        final isMatch = dc == target ||
+            (target == 'ghana' && (dc == 'gha' || dc.contains('ghana'))) ||
+            (target == 'nigeria' && (dc == 'nga' || dc.contains('nigeria'))) ||
+            (target == 'united states' && (dc == 'usa' || dc == 'us' || dc.contains('united states'))) ||
+            (target == 'united kingdom' && (dc == 'gbr' || dc == 'uk' || dc.contains('united kingdom'))) ||
+            (target == 'south africa' && (dc == 'zaf' || dc.contains('south africa'))) ||
+            (target == 'india' && (dc == 'ind' || dc.contains('india'))) ||
+            (target == 'kenya' && (dc == 'ken' || dc.contains('kenya'))) ||
+            (target == 'canada' && (dc == 'can' || dc.contains('canada'))) ||
+            (target == 'uae' && (dc == 'are' || dc.contains('emirates') || dc.contains('uae')));
+        if (!isMatch) return false;
+      }
+      if (_chauffeurAvailabilityFilter == 'Available Now') {
+        if (!d.isAvailable && !d.activeChauffeurOnline) {
+          return false;
+        }
+      }
+      if (_chauffeurRatingFilter == '4.8+ ★' && d.rating < 4.8) return false;
+      if (_chauffeurRatingFilter == '4.5+ ★' && d.rating < 4.5) return false;
+      if (_chauffeurRatingFilter == '4.0+ ★' && d.rating < 4.0) return false;
+      return true;
+    }).toList();
   }
 
   Color get _serviceColor {
@@ -2367,7 +2413,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                               ? const Color(0xFF6366F1)
                               : _paymentMethod == 'momo'
                                   ? const Color(0xFFFFCC00)
-                                  : const Color(0xFF10B981),
+                                  : (_paymentMethod == 'wallet' || _paymentMethod == 'rmc_account')
+                                      ? const Color(0xFFF59E0B)
+                                      : const Color(0xFF10B981),
                       borderRadius: BorderRadius.circular(8),
                       border: _paymentMethod == 'authorizenet'
                           ? Border.all(color: const Color(0xFF00A4E4).withOpacity(0.5))
@@ -2380,7 +2428,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                             ? const Text('S', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))
                             : _paymentMethod == 'momo'
                                 ? const Text('M', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 16))
-                                : const Icon(Icons.payments_rounded, color: Colors.white, size: 16),
+                                : (_paymentMethod == 'wallet' || _paymentMethod == 'rmc_account')
+                                    ? const Icon(Icons.account_balance_wallet_rounded, color: Colors.black, size: 16)
+                                    : const Icon(Icons.payments_rounded, color: Colors.white, size: 16),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -2394,7 +2444,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                   ? 'Stripe (Cards & Apple Pay)'
                                   : _paymentMethod == 'momo'
                                       ? 'MoMo Pay ($_momoNetwork)'
-                                      : 'Cash Direct Pay',
+                                      : (_paymentMethod == 'wallet' || _paymentMethod == 'rmc_account')
+                                          ? 'Pay from RMC Account'
+                                          : 'Cash Direct Pay',
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
                         ),
                         Text(
@@ -2404,7 +2456,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                   ? 'Pre-authorization hold secured by Stripe'
                                   : _paymentMethod == 'momo'
                                       ? 'Prompt to ${_momoPhone ?? 'registered number'}'
-                                      : 'Pay driver physical cash upon drop-off',
+                                      : (_paymentMethod == 'wallet' || _paymentMethod == 'rmc_account')
+                                          ? 'Pay directly from your RideMyCars (RMC) account balance'
+                                          : 'Pay driver physical cash upon drop-off',
                           style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
                         ),
                       ],
@@ -2633,7 +2687,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                 ? const Color(0xFF6366F1).withOpacity(0.2)
                                 : _paymentMethod == 'momo'
                                     ? const Color(0xFFFFDC00).withOpacity(0.2)
-                                    : const Color(0xFF10B981).withOpacity(0.2),
+                                    : (_paymentMethod == 'wallet' || _paymentMethod == 'rmc_account')
+                                        ? const Color(0xFFF59E0B).withOpacity(0.2)
+                                        : const Color(0xFF10B981).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(6),
                         border: _paymentMethod == 'authorizenet'
                             ? Border.all(color: const Color(0xFF00A4E4).withOpacity(0.5))
@@ -2646,7 +2702,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                               ? const Text('S', style: TextStyle(color: Color(0xFF818CF8), fontWeight: FontWeight.w900, fontSize: 13))
                               : _paymentMethod == 'momo'
                                   ? const Text('M', style: TextStyle(color: Color(0xFFFFDC00), fontWeight: FontWeight.w900, fontSize: 13))
-                                  : const Icon(Icons.payments_rounded, color: Color(0xFF34D399), size: 15),
+                                  : (_paymentMethod == 'wallet' || _paymentMethod == 'rmc_account')
+                                      ? const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFFBBF24), size: 15)
+                                      : const Icon(Icons.payments_rounded, color: Color(0xFF34D399), size: 15),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -2661,7 +2719,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                     ? 'Stripe (Cards & Apple Pay)'
                                     : _paymentMethod == 'momo'
                                         ? 'MoMo Pay ($_momoNetwork)'
-                                        : 'Cash Direct Pay',
+                                        : (_paymentMethod == 'wallet' || _paymentMethod == 'rmc_account')
+                                            ? 'Pay from RMC Account'
+                                            : 'Cash Direct Pay',
                             style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -3590,12 +3650,174 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
               ),
             ),
           ] else ...[
+            // Search Bar & Dropdown Filters for Chauffeurs (Name/City, Country, Availability, Rating)
+            Container(
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF161C28),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Search Bar by Name or City
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search_rounded, color: Color(0xFF10B981), size: 17),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _chauffeurSearchController,
+                            onChanged: (_) => setState(() {}),
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                            decoration: const InputDecoration(
+                              hintText: 'Search Chauffeurs by name or city...',
+                              hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
+                            ),
+                          ),
+                        ),
+                        if (_chauffeurSearchController.text.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              _chauffeurSearchController.clear();
+                              setState(() {});
+                            },
+                            child: const Icon(Icons.close_rounded, color: Colors.white54, size: 16),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // 3 Dropdown Filters Row: Country, Availability (All Available / Available Now), Driver Ratings
+                  Row(
+                    children: [
+                      // Country Dropdown
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _chauffeurCountryFilter,
+                              isExpanded: true,
+                              isDense: true,
+                              dropdownColor: const Color(0xFF1E293B),
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8), size: 15),
+                              style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
+                              items: const [
+                                'All Countries',
+                                'Ghana',
+                                'Nigeria',
+                                'United States',
+                                'United Kingdom',
+                                'South Africa',
+                                'India',
+                                'Kenya',
+                                'Canada',
+                                'UAE',
+                              ].map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _chauffeurCountryFilter = val);
+                                  _fetchDrivers(country: val == 'All Countries' ? 'All' : val);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Driver Availability Dropdown (All Available or Available Now)
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _chauffeurAvailabilityFilter,
+                              isExpanded: true,
+                              isDense: true,
+                              dropdownColor: const Color(0xFF1E293B),
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8), size: 15),
+                              style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
+                              items: const [
+                                'All Available',
+                                'Available Now',
+                              ].map((a) => DropdownMenuItem(value: a, child: Text(a, overflow: TextOverflow.ellipsis))).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _chauffeurAvailabilityFilter = val);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Driver Ratings Dropdown
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _chauffeurRatingFilter,
+                              isExpanded: true,
+                              isDense: true,
+                              dropdownColor: const Color(0xFF1E293B),
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8), size: 15),
+                              style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
+                              items: const [
+                                'All Ratings',
+                                '4.8+ ★',
+                                '4.5+ ★',
+                                '4.0+ ★',
+                              ].map((r) => DropdownMenuItem(value: r, child: Text(r, overflow: TextOverflow.ellipsis))).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _chauffeurRatingFilter = val);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
             // Compact Selection Boxes (Drivers List)
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 180),
               child: _isLoadingDrivers
                   ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
-                  : _drivers.isEmpty
+                  : _filteredChauffeurs.isEmpty
                       ? Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -3610,8 +3832,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: const [
-                                    Text('Hire Verified Chauffeur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                    Text('Licensed, vetted personal drivers for your car.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                                    Text('No Matching Chauffeurs Found', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                    Text('Try adjusting your search or dropdown filters above.', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                                   ],
                                 ),
                               ),
@@ -3620,10 +3842,11 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                         )
                       : ListView.builder(
                           shrinkWrap: true,
-                          itemCount: _drivers.length.clamp(0, 4),
+                          itemCount: _filteredChauffeurs.length,
                           itemBuilder: (context, idx) {
-                            final d = _drivers[idx];
+                            final d = _filteredChauffeurs[idx];
                             final isSelected = _selectedDriver?.id == d.id;
+                            final cityOrCountry = d.serviceArea.isNotEmpty ? '${d.serviceArea}, ${d.country}' : d.country;
                             return GestureDetector(
                               onTap: () => setState(() => _selectedDriver = d),
                               child: Container(
@@ -3654,8 +3877,43 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(d.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                          Text('⭐ ${d.rating.toStringAsFixed(1)} • ${d.totalTrips} trips • Professional', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5)),
+                                          Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  d.name,
+                                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                                decoration: BoxDecoration(
+                                                  color: (d.activeChauffeurOnline || d.isAvailable)
+                                                      ? const Color(0xFF10B981).withOpacity(0.2)
+                                                      : Colors.white10,
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  (d.activeChauffeurOnline || d.isAvailable) ? 'Available Now' : 'Available',
+                                                  style: TextStyle(
+                                                    color: (d.activeChauffeurOnline || d.isAvailable)
+                                                        ? const Color(0xFF34D399)
+                                                        : Colors.white60,
+                                                    fontSize: 8.5,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                            '⭐ ${d.rating.toStringAsFixed(1)} • $cityOrCountry • ${d.totalTrips} trips',
+                                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ],
                                       ),
                                     ),

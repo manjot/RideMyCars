@@ -146,7 +146,7 @@
 
         .rmc-actions-grid {
             display: grid !important;
-            grid-template-columns: repeat(4, 1fr) !important;
+            grid-template-columns: repeat(5, 1fr) !important;
             gap: 14px !important;
             padding-top: 18px !important;
             position: relative !important;
@@ -345,6 +345,18 @@
                         <span class="rmc-card-arrow">→</span>
                     </div>
                     <div class="rmc-card-sub">Vehicles & inspection checks</div>
+                </div>
+            </a>
+
+            <!-- 5. Driver Ratings -->
+            <a href="{{ url('/admin/driver-ratings') }}" class="rmc-action-card rmc-card-amber">
+                <div class="rmc-icon-box rmc-ib-amber">⭐</div>
+                <div class="rmc-card-info">
+                    <div class="rmc-card-title-row">
+                        <span class="rmc-card-title">Driver Ratings</span>
+                        <span class="rmc-card-arrow">→</span>
+                    </div>
+                    <div class="rmc-card-sub">Sort & filter by star rating</div>
                 </div>
             </a>
         </div>

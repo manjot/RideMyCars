@@ -466,7 +466,7 @@ class StripeVerificationController extends Controller
         $request->validate([
             'service_type' => 'required|string|in:ride,rental,driver_booking,hire-driver,package_delivery,delivery',
             'service_id' => 'required|integer',
-            'payment_method' => 'required|string|in:stripe,apple_pay,momo,card,cash,authorizenet',
+            'payment_method' => 'required|string|in:stripe,apple_pay,momo,card,cash,authorizenet,wallet,rmc_account,rmc_wallet',
             'momo_phone' => 'nullable|string',
             'momo_network' => 'nullable|string',
             'card_number' => 'nullable|string',
@@ -482,11 +482,12 @@ class StripeVerificationController extends Controller
         $paymentMethod = $request->input('payment_method');
         $momoPhone = $request->input('momo_phone');
         $momoNetwork = $request->input('momo_network', 'MTN');
+        $isWalletPayment = in_array(strtolower($paymentMethod), ['wallet', 'rmc_account', 'rmc_wallet'], true);
 
         // Check gateway active status
         $activeGateways = \App\Services\SettingService::getActivePaymentGateways();
         $normalizedMethod = in_array($paymentMethod, ['card', 'apple_pay', 'stripe']) ? 'stripe' : $paymentMethod;
-        if (!array_key_exists($normalizedMethod, $activeGateways)) {
+        if (!$isWalletPayment && !array_key_exists($normalizedMethod, $activeGateways)) {
             return response()->json([
                 'success' => false,
                 'message' => "The selected payment method ({$paymentMethod}) is currently disabled. Please select an active gateway.",
@@ -519,6 +520,111 @@ class StripeVerificationController extends Controller
         $amount = (float) ($booking->total_price ?? $booking->fare ?? $booking->total_amount ?? 0.00);
         $currency = $booking->currency ?? 'USD';
         $userId = $booking->client_id ?? $booking->customer_id ?? $booking->rider_id ?? Auth::id() ?? 1;
+
+        if ($isWalletPayment) {
+            $payer = User::find($userId) ?? Auth::user() ?? \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
+            $availBalance = (float) ($payer?->wallet_balance ?? 0.00);
+            if ($availBalance < $amount) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Insufficient RMC Account balance ({$currency} " . number_format($availBalance, 2) . "). Required: {$currency} " . number_format($amount, 2) . ". Please top up your RMC Account or select another payment method.",
+                ], 422);
+            }
+
+            $waitingMinutes = in_array($serviceType, ['package_delivery', 'delivery'], true)
+                ? \App\Services\SettingService::deliveryWaitingTimeMinutes()
+                : \App\Services\SettingService::rideWaitingTimeMinutes();
+            $freshExpiresAt = now()->addMinutes($waitingMinutes);
+
+            \Illuminate\Support\Facades\DB::transaction(function () use ($payer, $amount, $currency, $serviceType, $serviceId, $booking) {
+                if ($payer) {
+                    $locked = User::where('id', $payer->id)->lockForUpdate()->first();
+                    if ($locked) {
+                        $before = (float) ($locked->wallet_balance ?? 0.0);
+                        $after = max(0.0, round($before - $amount, 2));
+                        $locked->wallet_balance = $after;
+                        $locked->save();
+
+                        try {
+                            \App\Models\WalletTransaction::create([
+                                'user_id' => $locked->id,
+                                'transaction_ref' => 'WTX-RMC-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6)),
+                                'type' => 'payment',
+                                'amount' => $amount,
+                                'currency' => $currency,
+                                'balance_before' => $before,
+                                'balance_after' => $after,
+                                'description' => "Paid from RMC Account for {$serviceType} #{$serviceId}",
+                                'status' => 'completed',
+                                'reference_id' => $serviceId,
+                                'reference_type' => get_class($booking),
+                            ]);
+                        } catch (\Throwable $we) {}
+                    }
+                }
+            });
+
+            $booking->update([
+                'payment_status' => 'paid',
+                'payment_method' => 'wallet',
+                'expires_at' => $freshExpiresAt,
+                'booking_status' => ($booking->booking_status === 'accepted') ? 'accepted' : 'pending',
+            ]);
+
+            $foreignKey = match ($serviceType) {
+                'ride', 'rental' => 'ride_id',
+                'driver_booking', 'hire-driver' => 'driver_booking_id',
+                'package_delivery', 'delivery' => 'package_delivery_id',
+                default => 'ride_id',
+            };
+
+            $transaction = PaymentTransaction::updateOrCreate(
+                [$foreignKey => $serviceId],
+                [
+                    'transaction_ref' => 'TXN-RMC-' . strtoupper(\Illuminate\Support\Str::random(10)),
+                    'user_id' => $userId,
+                    'country' => $booking->country ?? 'Ghana',
+                    'currency' => $currency,
+                    'amount' => $amount,
+                    'payment_method' => 'wallet',
+                    'provider' => 'RMCAccount',
+                    'status' => 'paid',
+                    'service_vertical' => $serviceType,
+                    'gateway_response' => [
+                        'paid_at' => now()->toIso8601String(),
+                        'method' => 'wallet',
+                        'status' => 'paid_from_rmc_account',
+                    ],
+                ]
+            );
+
+            if ($serviceType === 'rental') {
+                try {
+                    \App\Services\NotificationService::notifyVehicleOwnerRentalRequested($booking);
+                } catch (\Throwable $e) {}
+            } elseif ($serviceType === 'ride') {
+                try {
+                    \App\Services\RideAssignmentService::assignNextDriver($booking);
+                } catch (\Throwable $e) {}
+            } elseif (in_array($serviceType, ['package_delivery', 'delivery'], true)) {
+                try {
+                    \App\Services\PackageDeliveryAssignmentService::assignNextCourier($booking);
+                } catch (\Throwable $e) {}
+            }
+
+            return response()->json([
+                'success' => true,
+                'payment_status' => 'paid',
+                'payment_method' => 'wallet',
+                'transaction_ref' => $transaction->transaction_ref,
+                'booking_status' => $booking->booking_status,
+                'is_payment_confirmed' => true,
+                'remaining_seconds' => $waitingMinutes * 60,
+                'waiting_time_minutes' => $waitingMinutes,
+                'expires_at' => $freshExpiresAt->toIso8601String(),
+                'message' => 'Paid directly from your RideMyCars (RMC) Account balance!',
+            ]);
+        }
 
         // Handle Cash on Drop-off (Exclusively for Ride & Delivery)
         if ($paymentMethod === 'cash') {
@@ -1033,7 +1139,8 @@ class StripeVerificationController extends Controller
             : [];
 
         $dp = $driverProfile;
-        $canReceiveChauffeurBookings = !$dp || !$dp->is_chauffeur || $dp->active_chauffeur_online || $dp->chauffeur_mode;
+        $canReceiveChauffeurBookings = (bool) ($dp && $dp->active_chauffeur_online);
+        $canReceiveRegularRides = (bool) ($dp && $dp->is_available);
 
         // Driver Bookings (only pending bookings, not rejected by this driver, and only when chauffeur is online)
         $driverBookings = $canReceiveChauffeurBookings
@@ -1104,22 +1211,24 @@ class StripeVerificationController extends Controller
             ];
         }
 
-        // Rides (only pending, non-expired, and not rejected by this driver)
-        $rides = Ride::with(['rider', 'vehicle'])
-            ->where('verification_status', 'pending_verification')
-            ->where('status', 'pending')
-            ->where(function ($q) {
-                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->when(!empty($rejectedRideIds), fn($q) => $q->whereNotIn('id', $rejectedRideIds))
-            ->when($driverId, function ($q) use ($driverId) {
-                $q->where(function ($sub) use ($driverId) {
-                    $sub->where('driver_id', $driverId)->orWhereNull('driver_id');
-                });
-            })
-            ->latest()
-            ->take(20)
-            ->get();
+        // Rides (only pending, non-expired, not rejected by this driver, and only when Driver Switch is online)
+        $rides = $canReceiveRegularRides
+            ? Ride::with(['rider', 'vehicle'])
+                ->where('verification_status', 'pending_verification')
+                ->where('status', 'pending')
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
+                ->when(!empty($rejectedRideIds), fn($q) => $q->whereNotIn('id', $rejectedRideIds))
+                ->when($driverId, function ($q) use ($driverId) {
+                    $q->where(function ($sub) use ($driverId) {
+                        $sub->where('driver_id', $driverId)->orWhereNull('driver_id');
+                    });
+                })
+                ->latest()
+                ->take(20)
+                ->get()
+            : collect();
 
         foreach ($rides as $r) {
             $rCountry = CountryService::detectCountryFromLocation(
@@ -1182,22 +1291,24 @@ class StripeVerificationController extends Controller
             ];
         }
 
-        // Package Deliveries (only pending/searching, non-expired, and not rejected by this driver)
-        $deliveries = PackageDelivery::with(['customer'])
-            ->where('verification_status', 'pending_verification')
-            ->whereIn('delivery_status', ['pending', 'created', 'searching'])
-            ->where(function ($q) {
-                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->when(!empty($rejectedDeliveryIds), fn($q) => $q->whereNotIn('id', $rejectedDeliveryIds))
-            ->when($driverId, function ($q) use ($driverId) {
-                $q->where(function ($sub) use ($driverId) {
-                    $sub->where('courier_id', $driverId)->orWhereNull('courier_id');
-                });
-            })
-            ->latest()
-            ->take(20)
-            ->get();
+        // Package Deliveries (only pending/searching, non-expired, not rejected by this driver, and only when Driver Switch is online)
+        $deliveries = $canReceiveRegularRides
+            ? PackageDelivery::with(['customer'])
+                ->where('verification_status', 'pending_verification')
+                ->whereIn('delivery_status', ['pending', 'created', 'searching'])
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
+                ->when(!empty($rejectedDeliveryIds), fn($q) => $q->whereNotIn('id', $rejectedDeliveryIds))
+                ->when($driverId, function ($q) use ($driverId) {
+                    $q->where(function ($sub) use ($driverId) {
+                        $sub->where('courier_id', $driverId)->orWhereNull('courier_id');
+                    });
+                })
+                ->latest()
+                ->take(20)
+                ->get()
+            : collect();
 
         foreach ($deliveries as $pd) {
             $pLat = $pd->pickup_lat ?? $pd->sender_lat ?? null;

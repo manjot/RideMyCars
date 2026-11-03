@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../services/payment_config_service.dart';
+import '../../../services/wallet_service.dart';
 
 class RidePaymentSelection {
   final String method; // 'authorizenet', 'stripe', 'momo', 'cash', 'wallet'
@@ -24,7 +25,8 @@ class RidePaymentSelection {
       case 'cash':
         return 'Cash Direct Pay';
       case 'wallet':
-        return 'RideMyCars Wallet';
+      case 'rmc_account':
+        return 'Pay from RMC Account';
       default:
         return 'Authorize.Net (A Visa Solution)';
     }
@@ -41,7 +43,8 @@ class RidePaymentSelection {
       case 'cash':
         return 'Pay driver physical cash upon reaching destination';
       case 'wallet':
-        return 'Pay directly with in-app balance';
+      case 'rmc_account':
+        return 'Pay directly from your RideMyCars (RMC) account balance';
       default:
         return 'Pre-authorization hold secured';
     }
@@ -63,7 +66,7 @@ class RidePaymentMethodSheet extends StatefulWidget {
     this.currentMomoNetwork,
     this.serviceType = 'ride',
     this.showCash,
-    this.showWallet = false,
+    this.showWallet = true,
   });
 
   bool get isCashAllowed {
@@ -82,7 +85,7 @@ class RidePaymentMethodSheet extends StatefulWidget {
     String? currentMomoNetwork,
     String serviceType = 'ride',
     bool? showCash,
-    bool showWallet = false,
+    bool showWallet = true,
   }) {
     return showModalBottomSheet<RidePaymentSelection>(
       context: context,
@@ -108,6 +111,8 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
   late TextEditingController _momoPhoneController;
   late String _momoNetwork;
   PaymentGatewayConfig _config = PaymentConfigService.currentConfig;
+  double? _walletBalance;
+  String _walletCurrency = '';
 
   @override
   void initState() {
@@ -122,6 +127,19 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
     _momoPhoneController = TextEditingController(text: widget.currentMomoPhone ?? '');
     _momoNetwork = widget.currentMomoNetwork ?? 'MTN';
     _loadConfig();
+    _loadWalletBalance();
+  }
+
+  Future<void> _loadWalletBalance() async {
+    try {
+      final res = await WalletService.getBalance();
+      if (res != null && mounted) {
+        setState(() {
+          _walletBalance = double.tryParse((res['balance'] ?? res['wallet_balance'] ?? 0).toString());
+          _walletCurrency = (res['currency'] ?? '\$').toString();
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadConfig() async {
@@ -778,7 +796,7 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                               runSpacing: 4,
                               children: [
                                 const Text(
-                                  'RideMyCars Wallet',
+                                  'Pay from RMC Account',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
@@ -792,9 +810,11 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
                                   ),
-                                  child: const Text(
-                                    'IN-APP BALANCE',
-                                    style: TextStyle(
+                                  child: Text(
+                                    _walletBalance != null
+                                        ? 'BALANCE: $_walletCurrency${_walletBalance!.toStringAsFixed(2)}'
+                                        : 'RMC ACCOUNT BALANCE',
+                                    style: const TextStyle(
                                       color: Color(0xFFFBBF24),
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w900,
@@ -805,9 +825,11 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Instantly debit from your verified RideMyCars in-app wallet balance',
-                              style: TextStyle(
+                            Text(
+                              _walletBalance != null
+                                  ? 'Pay directly from your RideMyCars (RMC) account balance ($_walletCurrency${_walletBalance!.toStringAsFixed(2)} available)'
+                                  : 'Pay directly from your RideMyCars (RMC) account balance',
+                              style: const TextStyle(
                                 color: AppColors.textMuted,
                                 fontSize: 11.5,
                                 height: 1.3,

@@ -206,6 +206,17 @@ class DriverProfileResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->description(fn (DriverProfile $record): string => $record->user?->email ?? ''),
+                Tables\Columns\TextColumn::make('rating')
+                    ->label('Rating')
+                    ->sortable()
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => '★ ' . number_format((float) ($state ?? 5.0), 2))
+                    ->color(fn ($state): string => match (true) {
+                        ((float) $state) >= 4.5 => 'success',
+                        ((float) $state) >= 4.0 => 'info',
+                        ((float) $state) >= 3.0 => 'warning',
+                        default => 'danger',
+                    }),
                 Tables\Columns\IconColumn::make('is_live')
                     ->label('Live (Active)')
                     ->boolean()
@@ -250,6 +261,26 @@ class DriverProfileResource extends Resource
                     ->boolean(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('rating_tier')
+                    ->label('Filter by Rating')
+                    ->options([
+                        '5_only' => '★★★★★ 5.0 Stars (Perfect)',
+                        '4_5_up' => '★★★★☆ 4.5+ Stars (Top Rated)',
+                        '4_0_up' => '★★★★☆ 4.0+ Stars (Good)',
+                        '3_to_4' => '★★★☆☆ 3.0 – 3.9 Stars (Average)',
+                        'below_3' => '★★☆☆☆ Below 3.0 Stars (Low Rated)',
+                    ])
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                        $val = $data['value'] ?? null;
+                        return match ($val) {
+                            '5_only' => $query->where('rating', '>=', 4.95),
+                            '4_5_up' => $query->where('rating', '>=', 4.5),
+                            '4_0_up' => $query->where('rating', '>=', 4.0),
+                            '3_to_4' => $query->whereBetween('rating', [3.0, 3.99]),
+                            'below_3' => $query->where('rating', '<', 3.0),
+                            default => $query,
+                        };
+                    }),
                 Tables\Filters\TernaryFilter::make('is_live')
                     ->label('Live / Inactive Status'),
                 Tables\Filters\SelectFilter::make('vehicle_insurance_status')

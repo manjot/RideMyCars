@@ -388,12 +388,14 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
 
             _buildMethodTile(
               id: 'wallet',
-              title: 'RideMyCars Wallet',
+              title: 'Pay from RMC Account',
               subtitle: _isLoadingWallet
-                  ? 'Loading balance...'
-                  : 'Balance: ${widget.currencySymbol}${_walletBalance.toStringAsFixed(0)}',
+                  ? 'Loading RMC account balance...'
+                  : 'RMC Account Balance: ${widget.currencySymbol}${_walletBalance.toStringAsFixed(0)}',
               icon: Icons.account_balance_wallet_rounded,
               isDark: isDark,
+              badgeText: 'RMC Balance',
+              badgeColor: const Color(0xFFF59E0B),
             ),
             const SizedBox(height: 8),
 
@@ -917,7 +919,7 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  hasEnough ? 'Sufficient Balance' : 'Insufficient Wallet Balance',
+                  hasEnough ? 'Sufficient RMC Account Balance' : 'Insufficient RMC Account Balance',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
@@ -926,8 +928,8 @@ class _PaymentGatewaySheetState extends State<PaymentGatewaySheet> {
                 ),
                 Text(
                   hasEnough
-                      ? 'Funds will be immediately deducted from your in-app wallet balance.'
-                      : 'You need ${widget.currencySymbol}${(widget.payNowAmount - _walletBalance).toStringAsFixed(0)} more. Please top up your wallet.',
+                      ? 'Funds will be immediately deducted from your RideMyCars (RMC) account balance.'
+                      : 'You need ${widget.currencySymbol}${(widget.payNowAmount - _walletBalance).toStringAsFixed(0)} more. Please top up your RMC Account.',
                   style: const TextStyle(fontSize: 11),
                 ),
               ],

@@ -16,6 +16,8 @@ class DriverModel {
   final double weeklyRate;
   final String? phone;
   final String country;
+  final String serviceArea;
+  final bool activeChauffeurOnline;
   final String currencySymbol;
 
   DriverModel({
@@ -36,6 +38,8 @@ class DriverModel {
     required this.isAvailable,
     required this.isVerified,
     required this.country,
+    this.serviceArea = '',
+    this.activeChauffeurOnline = false,
     this.currencySymbol = '\$',
   });
 
@@ -87,6 +91,11 @@ class DriverModel {
       isAvailable: json['is_available'] == null || json['is_available'] == true || json['is_available'] == 1,
       isVerified: json['is_verified'] == null || json['is_verified'] == true || json['is_verified'] == 1,
       country: countryStr,
+      serviceArea: (json['service_area'] ?? json['city'] ?? '').toString(),
+      activeChauffeurOnline: json['active_chauffeur_online'] == true ||
+          json['active_chauffeur_online'] == 1 ||
+          json['is_available'] == true ||
+          json['is_available'] == 1,
       currencySymbol: symbol,
     );
   }

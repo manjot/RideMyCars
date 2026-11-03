@@ -181,6 +181,8 @@ Route::middleware(\App\Http\Middleware\ResolveApiUser::class)->group(function ()
     Route::post('/driver/rides/{id}/verify-pin', [RideController::class, 'verifyPin']);
     Route::post('/rides/{id}/confirm-payment', [RideController::class, 'confirmPayment']);
     Route::post('/rides/{id}/cancel', [RideController::class, 'cancel']);
+    Route::post('/rides/{id}/review', [RideController::class, 'submitReview']);
+    Route::post('/ride/{id}/review', [RideController::class, 'submitReview']);
 
     // Proximity Chauffeur Backup Lifecycle
     Route::post('/rides/{id}/backup/toggle', [RideController::class, 'toggleBackupChauffeur']);
@@ -243,25 +245,51 @@ Route::middleware(\App\Http\Middleware\ResolveApiUser::class)->group(function ()
         $activeCountry = $request->input('country') ?: (\App\Services\CountryService::getCurrentCountryCode($request) ?: 'GHA');
         $fallbackCurrencyCode = \App\Models\CountryPricing::forCountry($activeCountry)->currency_code ?? 'GHS';
 
-        $notifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
+        $isDriverRequest = strtolower((string) $request->header('X-User-Role', '')) === 'driver' || $user->role === 'driver';
+        $dp = $user->driverProfile;
+        $driverOnline = (bool) ($dp && $dp->is_available);
+        $chauffeurOnline = (bool) ($dp && $dp->active_chauffeur_online);
+
+        $rawNotifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
             ->orderBy('created_at', 'desc')
             ->take(30)
-            ->get()
-            ->map(function ($n) use ($fallbackCurrencyCode) {
-                return [
-                    'id' => $n->id,
-                    'type' => $n->type,
-                    'title' => $n->title,
-                    'message' => \App\Services\NotificationService::formatNotificationMessage($n, $fallbackCurrencyCode),
-                    'link' => $n->link,
-                    'data' => $n->data,
-                    'is_read' => (bool)$n->is_read,
-                    'time_ago' => $n->created_at->diffForHumans(),
-                    'created_at' => $n->created_at->toIso8601String(),
-                ];
-            });
+            ->get();
 
-        $unreadCount = \App\Models\UserNotification::whereIn('user_id', $userIds)->where('is_read', false)->count();
+        if ($isDriverRequest && $dp) {
+            $rawNotifications = $rawNotifications->filter(function ($n) use ($driverOnline, $chauffeurOnline) {
+                $t = strtolower((string) ($n->type ?? ''));
+                $title = strtolower((string) ($n->title ?? ''));
+                $isHire = in_array($t, ['driver_hiring_assigned', 'driver_booking'], true) || str_contains($title, 'chauffeur request') || str_contains($title, 'driver hire');
+                $isRideOrDel = in_array($t, ['ride_assignment', 'new_ride_request', 'backup_ride_assigned', 'backup_ride_request', 'package_delivery_assigned', 'delivery_request'], true)
+                    || str_contains($title, 'new ride request')
+                    || str_contains($title, 'new parcel delivery');
+                if ($isHire && !$chauffeurOnline) {
+                    return false;
+                }
+                if ($isRideOrDel && !$driverOnline) {
+                    return false;
+                }
+                return true;
+            })->values();
+        }
+
+        $notifications = $rawNotifications->map(function ($n) use ($fallbackCurrencyCode) {
+            $dataArr = is_array($n->data) ? $n->data : [];
+            return [
+                'id' => $n->id,
+                'type' => $n->type,
+                'title' => $n->title,
+                'message' => \App\Services\NotificationService::formatNotificationMessage($n, $fallbackCurrencyCode),
+                'ride_id' => $n->ride_id ?? ($dataArr['ride_id'] ?? null),
+                'link' => $n->link,
+                'data' => $n->data,
+                'is_read' => (bool)$n->is_read,
+                'time_ago' => $n->created_at->diffForHumans(),
+                'created_at' => $n->created_at->toIso8601String(),
+            ];
+        })->values();
+
+        $unreadCount = $rawNotifications->where('is_read', false)->count();
 
         return response()->json([
             'success' => true,

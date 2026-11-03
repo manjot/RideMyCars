@@ -38,6 +38,8 @@ class PaymentGatewayConfig {
       case 'cash':
         return isCashActive;
       case 'wallet':
+      case 'rmc_account':
+      case 'rmc_wallet':
         return true;
       default:
         return false;
