@@ -95,11 +95,9 @@ class MainActivity : FlutterActivity() {
                         val svcIntent = Intent(this, OrderAlertService::class.java).apply {
                             action = OrderAlertService.ACTION_START
                         }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            startForegroundService(svcIntent)
-                        } else {
+                        try {
                             startService(svcIntent)
-                        }
+                        } catch (_: Exception) {}
                         result.success(true)
                     }
                     "updateLocation" -> {

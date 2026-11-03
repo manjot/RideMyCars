@@ -70,7 +70,10 @@ class OrderAlertService : Service() {
         when (action) {
             ACTION_STOP -> {
                 stopNativeRingtoneAndVibration()
-                stopForeground(true)
+                try {
+                    val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    nm.cancel(MONITOR_NOTIF_ID)
+                } catch (_: Exception) {}
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -117,17 +120,10 @@ class OrderAlertService : Service() {
                 .setContentIntent(pendingIntent)
                 .build()
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(
-                    MONITOR_NOTIF_ID,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-                )
-            } else {
-                startForeground(MONITOR_NOTIF_ID, notification)
-            }
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.notify(MONITOR_NOTIF_ID, notification)
         } catch (e: Exception) {
-            Log.e("OrderAlertService", "startForeground error: ${e.message}")
+            Log.e("OrderAlertService", "startForegroundMonitorNotification error: ${e.message}")
         }
     }
 
@@ -540,9 +536,9 @@ class OrderAlertService : Service() {
                 val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 val triggerAt = SystemClock.elapsedRealtime() + 1000
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                    am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
                 } else {
-                    am.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                    am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
                 }
             } catch (e: Exception) {
                 Log.e("OrderAlertService", "onTaskRemoved alarm error: ${e.message}")
@@ -569,11 +565,9 @@ class OrderAlertReceiver : BroadcastReceiver() {
             val svcIntent = Intent(context, OrderAlertService::class.java).apply {
                 action = OrderAlertService.ACTION_START
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(svcIntent)
-            } else {
+            try {
                 context.startService(svcIntent)
-            }
+            } catch (_: Exception) {}
         }
     }
 }
