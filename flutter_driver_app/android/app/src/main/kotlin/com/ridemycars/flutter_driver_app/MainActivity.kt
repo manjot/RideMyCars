@@ -65,30 +65,15 @@ class MainActivity : FlutterActivity() {
                 val svcIntent = Intent(this, OrderAlertService::class.java).apply {
                     action = OrderAlertService.ACTION_START
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(svcIntent)
-                } else {
+                try {
                     startService(svcIntent)
-                }
+                } catch (_: Throwable) {}
             }
         } catch (_: Throwable) {}
     }
 
     private fun requestBatteryOptimizationExemptionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                val prefs = getSharedPreferences(OrderAlertService.PREFS_NAME, Context.MODE_PRIVATE)
-                val alreadyPrompted = prefs.getBoolean("battery_opt_prompted", false)
-                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-                if (!pm.isIgnoringBatteryOptimizations(packageName) && !alreadyPrompted) {
-                    prefs.edit().putBoolean("battery_opt_prompted", true).apply()
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = Uri.parse("package:$packageName")
-                    }
-                    startActivity(intent)
-                }
-            } catch (_: Throwable) {}
-        }
+        // Handled via AlarmManager setAndAllowWhileIdle + WakeLock without restricted battery exemption intent
     }
 
     @Suppress("DEPRECATION")
@@ -147,16 +132,8 @@ class MainActivity : FlutterActivity() {
                             action = OrderAlertService.ACTION_START
                         }
                         try {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                startForegroundService(svcIntent)
-                            } else {
-                                startService(svcIntent)
-                            }
-                        } catch (_: Throwable) {
-                            try {
-                                startService(svcIntent)
-                            } catch (_: Throwable) {}
-                        }
+                            startService(svcIntent)
+                        } catch (_: Throwable) {}
                         result.success(true)
                     }
                     "updateLocation" -> {

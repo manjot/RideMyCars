@@ -640,21 +640,8 @@ class OrderAlertService : Service() {
                 .setContentIntent(pendingIntent)
                 .build()
 
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(
-                        MONITOR_NOTIF_ID,
-                        notification,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-                    )
-                } else {
-                    startForeground(MONITOR_NOTIF_ID, notification)
-                }
-            } catch (fgsErr: Throwable) {
-                Log.w("OrderAlertService", "startForeground fallback to notify: ${fgsErr.message}")
-                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                nm.notify(MONITOR_NOTIF_ID, notification)
-            }
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.notify(MONITOR_NOTIF_ID, notification)
         } catch (e: Exception) {
             Log.e("OrderAlertService", "startForegroundMonitorNotification error: ${e.message}")
         }
@@ -726,16 +713,8 @@ class OrderAlertReceiver : BroadcastReceiver() {
             this.action = OrderAlertService.ACTION_START
         }
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(svcIntent)
-            } else {
-                context.startService(svcIntent)
-            }
-        } catch (_: Throwable) {
-            try {
-                context.startService(svcIntent)
-            } catch (_: Throwable) {}
-        }
+            context.startService(svcIntent)
+        } catch (_: Throwable) {}
 
         // 3. Even if the app was swiped closed and Android blocked background Service start,
         // execute a direct background server poll inside goAsync() with a PARTIAL_WAKE_LOCK!
