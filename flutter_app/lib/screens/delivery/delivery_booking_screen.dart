@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -198,10 +199,38 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
   }
 
   // Prescription upload state (Mandatory for Pharmeasy category)
+  final ImagePicker _imagePicker = ImagePicker();
   List<Map<String, dynamic>> _prescriptions = [];
   String? _prescriptionTempToken;
   bool _isUploadingPrescription = false;
   String? _prescriptionError;
+
+  Future<void> _pickAndUploadPrescriptionImage(ImageSource source) async {
+    try {
+      final XFile? picked = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1920,
+      );
+      if (picked == null) return;
+      final Uint8List bytes = await picked.readAsBytes();
+      final String filename = picked.name.isNotEmpty
+          ? picked.name
+          : 'Prescription_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await _uploadPrescriptionBytes(
+        bytes: bytes,
+        filename: filename,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not access ${source == ImageSource.camera ? 'camera' : 'gallery'}. Please check app permissions.'),
+          backgroundColor: const Color(0xFFEF4444),
+        ),
+      );
+    }
+  }
 
   Future<void> _uploadPrescriptionBytes({
     required List<int> bytes,
@@ -212,8 +241,9 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
       _prescriptionError = null;
     });
 
+    final Uint8List rawBytes = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
     final res = await DeliveryService.uploadPrescription(
-      bytes: bytes,
+      bytes: rawBytes,
       filename: filename,
       tempToken: _prescriptionTempToken,
     );
@@ -227,10 +257,26 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
       }
       final newRxList = (res['prescriptions'] as List?) ?? [];
       setState(() {
-        for (final item in newRxList) {
-          if (item is Map) {
-            _prescriptions.add(Map<String, dynamic>.from(item));
+        if (newRxList.isNotEmpty) {
+          for (final item in newRxList) {
+            if (item is Map) {
+              final mapItem = Map<String, dynamic>.from(item);
+              mapItem['bytes'] = rawBytes;
+              _prescriptions.add(mapItem);
+            }
           }
+        } else {
+          final ext = filename.split('.').last.toLowerCase();
+          _prescriptions.add({
+            'id': DateTime.now().millisecondsSinceEpoch,
+            'file_name': filename,
+            'file_type': ext,
+            'formatted_size': '${(rawBytes.length / 1024).toStringAsFixed(1)} KB',
+            'created_at': DateFormat('MMM dd, yyyy hh:mm a').format(DateTime.now()),
+            'view_url': null,
+            'download_url': null,
+            'bytes': rawBytes,
+          });
         }
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -247,10 +293,11 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
           'id': DateTime.now().millisecondsSinceEpoch,
           'file_name': filename,
           'file_type': ext,
-          'formatted_size': '${(bytes.length / 1024).toStringAsFixed(1)} KB',
+          'formatted_size': '${(rawBytes.length / 1024).toStringAsFixed(1)} KB',
           'created_at': DateFormat('MMM dd, yyyy hh:mm a').format(DateTime.now()),
           'view_url': null,
           'download_url': null,
+          'bytes': rawBytes,
         });
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -318,11 +365,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                 subtitle: const Text('Snap photo of physical doctor prescription', style: TextStyle(color: Colors.white54, fontSize: 11)),
                 onTap: () {
                   Navigator.pop(ctx);
-                  final sampleBytes = base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
-                  _uploadPrescriptionBytes(
-                    bytes: sampleBytes,
-                    filename: 'Prescription_Camera_${DateTime.now().millisecondsSinceEpoch}.jpg',
-                  );
+                  _pickAndUploadPrescriptionImage(ImageSource.camera);
                 },
               ),
               const SizedBox(height: 10),
@@ -340,33 +383,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                 subtitle: const Text('Prescription image from device gallery or storage', style: TextStyle(color: Colors.white54, fontSize: 11)),
                 onTap: () {
                   Navigator.pop(ctx);
-                  final sampleBytes = base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
-                  _uploadPrescriptionBytes(
-                    bytes: sampleBytes,
-                    filename: 'Doctor_Rx_${DateTime.now().millisecondsSinceEpoch}.png',
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
-
-              // Option 3: PDF Document Upload
-              ListTile(
-                tileColor: const Color(0xFF1E293B),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: const Color(0xFFEF4444).withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFEF4444)),
-                ),
-                title: const Text('Upload PDF E-Prescription', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5)),
-                subtitle: const Text('Digital hospital / e-clinic prescription PDF document', style: TextStyle(color: Colors.white54, fontSize: 11)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  final pdfContent = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000052 00000 n \n0000000098 00000 n \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n167\n%%EOF";
-                  _uploadPrescriptionBytes(
-                    bytes: utf8.encode(pdfContent),
-                    filename: 'Hospital_EPrescription_${DateTime.now().millisecondsSinceEpoch}.pdf',
-                  );
+                  _pickAndUploadPrescriptionImage(ImageSource.gallery);
                 },
               ),
               const SizedBox(height: 10),
@@ -382,6 +399,8 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     final fileType = rx['file_type']?.toString().toUpperCase() ?? 'FILE';
     final isPdf = fileType == 'PDF';
     final downloadUrl = rx['download_url']?.toString();
+    final viewUrl = rx['view_url']?.toString();
+    final Uint8List? localBytes = rx['bytes'] is Uint8List ? rx['bytes'] as Uint8List : null;
 
     showDialog(
       context: context,
@@ -442,50 +461,54 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                     minScale: 0.8,
                     maxScale: 4.0,
                     child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isPdf ? Icons.picture_as_pdf_rounded : Icons.receipt_long_rounded,
-                                color: isPdf ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-                                size: 48,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              fileName,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                '✓ VALID PRESCRIPTION ATTACHED',
-                                style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Pinch with 2 fingers to zoom in/out\nDriver & Pharmacy store will inspect this prescription',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white38, fontSize: 10.5),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: (!isPdf && localBytes != null)
+                          ? Image.memory(localBytes, fit: BoxFit.contain)
+                          : (!isPdf && viewUrl != null && viewUrl.isNotEmpty)
+                              ? Image.network(viewUrl, fit: BoxFit.contain)
+                              : Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF10B981).withOpacity(0.15),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          isPdf ? Icons.picture_as_pdf_rounded : Icons.receipt_long_rounded,
+                                          color: isPdf ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                                          size: 48,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        fileName,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF10B981).withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Text(
+                                          '✓ VALID PRESCRIPTION ATTACHED',
+                                          style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Pinch with 2 fingers to zoom in/out\nDriver & Pharmacy store will inspect this prescription',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: Colors.white38, fontSize: 10.5),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                     ),
                   ),
                 ),
@@ -560,11 +583,24 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
   final _packageDescController = TextEditingController(text: 'Important Legal Contracts & Office Supplies');
   final _declaredValueController = TextEditingController(text: '150');
   String _selectedSize = 'Small'; // Small, Medium, Large
-  double _weightKg = 1.5;
+  double _weightKg = 2.0;
   int _quantity = 1;
   bool _signatureRequired = true;
   bool _climateControlled = false;
   bool _whiteGlove = false;
+
+  double _weightForPackageSize(String size) {
+    switch (size) {
+      case 'Small':
+        return 2.0;
+      case 'Medium':
+        return 8.0;
+      case 'Large':
+        return 9.0;
+      default:
+        return 2.0;
+    }
+  }
 
   // Step 5: Payment & Terms
   String _paymentMethod = PaymentConfigService.currentConfig.isAuthorizeNetActive ? 'authorizenet' : PaymentConfigService.currentConfig.firstActiveMethod;
@@ -626,6 +662,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     if (widget.initialTier != null) {
       if (widget.initialTier!.contains('Van') || widget.initialTier!.contains('Medium')) {
         _selectedSize = 'Medium';
+        _weightKg = _weightForPackageSize(_selectedSize);
       } else if (widget.initialTier!.contains('Priority') || widget.initialTier!.contains('Express')) {
         _selectedDeliverySpeed = 'Express';
       }
@@ -1025,6 +1062,378 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     }
   }
 
+  Future<bool> _collectPreBookingPayment(CountryProvider countryProv) async {
+    if (_paymentMethod == 'cash') {
+      return true;
+    }
+
+    final sym = countryProv.currencySymbol;
+    final isMomo = _paymentMethod == 'momo';
+    final phoneCtrl = TextEditingController(
+      text: (_momoPhone != null && _momoPhone!.trim().isNotEmpty)
+          ? _momoPhone!
+          : _senderPhoneController.text.trim(),
+    );
+    final nameCtrl = TextEditingController(text: _cardholderController.text.trim());
+    final numberCtrl = TextEditingController(text: '');
+    final expiryCtrl = TextEditingController(text: '');
+    final cvcCtrl = TextEditingController(text: '');
+    String selectedNet = _momoNetwork.isNotEmpty ? _momoNetwork : 'MTN';
+    String? errorText;
+    bool isProcessingPayment = false;
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: const Color(0xFF0F172A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                18,
+                20,
+                MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              isMomo ? Icons.phone_android_rounded : Icons.credit_card_rounded,
+                              color: const Color(0xFFF59E0B),
+                              size: 22,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              isMomo ? 'Complete MoMo Payment' : 'Complete Card Payment',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white60),
+                          onPressed: isProcessingPayment ? null : () => Navigator.pop(ctx, false),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Payment of $sym${_totalAmount.toStringAsFixed(0)} must be completed before your Package Delivery request is issued.',
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    const SizedBox(height: 14),
+                    if (errorText != null) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFEF4444)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorText!,
+                                style: const TextStyle(
+                                  color: Color(0xFFEF4444),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (isMomo) ...[
+                      const Text(
+                        'MOBILE MONEY NETWORK *',
+                        style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: ['MTN', 'Telecel', 'AirtelTigo'].map((net) {
+                          final isSel = selectedNet == net;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => setSheetState(() => selectedNet = net),
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isSel ? const Color(0xFFF59E0B) : const Color(0xFF1E293B),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSel ? const Color(0xFFF59E0B) : Colors.white12,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  net,
+                                  style: TextStyle(
+                                    color: isSel ? Colors.black : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'MOMO PHONE NUMBER *',
+                        style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                        decoration: InputDecoration(
+                          hintText: 'e.g. 055 977 6761',
+                          hintStyle: const TextStyle(color: Colors.white38),
+                          filled: true,
+                          fillColor: const Color(0xFF1E293B),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      const Text(
+                        'CARDHOLDER NAME *',
+                        style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: nameCtrl,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: 'Full Name on Card',
+                          hintStyle: const TextStyle(color: Colors.white38),
+                          filled: true,
+                          fillColor: const Color(0xFF1E293B),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'CARD NUMBER *',
+                        style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: numberCtrl,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: '•••• •••• •••• ••••',
+                          hintStyle: const TextStyle(color: Colors.white38),
+                          filled: true,
+                          fillColor: const Color(0xFF1E293B),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'EXPIRY (MM/YY) *',
+                                  style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: expiryCtrl,
+                                  keyboardType: TextInputType.datetime,
+                                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                                  decoration: InputDecoration(
+                                    hintText: 'MM/YY',
+                                    hintStyle: const TextStyle(color: Colors.white38),
+                                    filled: true,
+                                    fillColor: const Color(0xFF1E293B),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'CVV *',
+                                  style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: cvcCtrl,
+                                  keyboardType: TextInputType.number,
+                                  obscureText: true,
+                                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                                  decoration: InputDecoration(
+                                    hintText: '123',
+                                    hintStyle: const TextStyle(color: Colors.white38),
+                                    filled: true,
+                                    fillColor: const Color(0xFF1E293B),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isProcessingPayment ? null : () => Navigator.pop(ctx, false),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.white24),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: isProcessingPayment
+                                ? null
+                                : () async {
+                                    if (isMomo) {
+                                      final cleanPhone = phoneCtrl.text.replaceAll(RegExp(r'\D'), '');
+                                      if (cleanPhone.length < 7 || cleanPhone.length > 15) {
+                                        setSheetState(() {
+                                          errorText = 'Please enter a valid Mobile Money phone number (7–15 digits).';
+                                        });
+                                        return;
+                                      }
+                                      setSheetState(() {
+                                        errorText = null;
+                                        isProcessingPayment = true;
+                                      });
+                                      await Future.delayed(const Duration(milliseconds: 900));
+                                      setState(() {
+                                        _momoPhone = phoneCtrl.text.trim();
+                                        _momoNetwork = selectedNet;
+                                      });
+                                      if (ctx.mounted) Navigator.pop(ctx, true);
+                                    } else {
+                                      final cleanCard = numberCtrl.text.replaceAll(RegExp(r'\D'), '');
+                                      final cleanCvc = cvcCtrl.text.replaceAll(RegExp(r'\D'), '');
+                                      if (nameCtrl.text.trim().isEmpty) {
+                                        setSheetState(() => errorText = 'Please enter the cardholder name.');
+                                        return;
+                                      }
+                                      if (cleanCard.length < 12 || cleanCard.length > 19) {
+                                        setSheetState(() => errorText = 'Please enter a valid 16-digit card number.');
+                                        return;
+                                      }
+                                      if (expiryCtrl.text.trim().length < 4) {
+                                        setSheetState(() => errorText = 'Please enter a valid card expiry date (MM/YY).');
+                                        return;
+                                      }
+                                      if (cleanCvc.length < 3 || cleanCvc.length > 4) {
+                                        setSheetState(() => errorText = 'Please enter a valid 3 or 4 digit CVV.');
+                                        return;
+                                      }
+                                      setSheetState(() {
+                                        errorText = null;
+                                        isProcessingPayment = true;
+                                      });
+                                      await Future.delayed(const Duration(milliseconds: 900));
+                                      _cardholderController.text = nameCtrl.text.trim();
+                                      _cardNumberController.text = numberCtrl.text.trim();
+                                      _cardExpiryController.text = expiryCtrl.text.trim();
+                                      _cardCvcController.text = cvcCtrl.text.trim();
+                                      if (ctx.mounted) Navigator.pop(ctx, true);
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: isProcessingPayment
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Text(
+                                    'Pay $sym${_totalAmount.toStringAsFixed(0)} & Issue Request',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    return confirmed == true;
+  }
+
   Future<void> _submitBooking() async {
     if (!_prohibitedAcknowledged) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1033,8 +1442,24 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
+
+    // Require Card or MoMo payment completion BEFORE issuing the Package Delivery request
+    if (_paymentMethod != 'cash') {
+      final paid = await _collectPreBookingPayment(countryProv);
+      if (!paid) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment must be completed before a Package Delivery request is issued.'),
+            backgroundColor: Color(0xFFEF4444),
+          ),
+        );
+        return;
+      }
+    }
+
+    setState(() => _isSubmitting = true);
 
     final payload = {
       'pickup_location': _pickupController.text.trim(),
@@ -1058,8 +1483,9 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
       'package_weight_kg': _weightKg,
       'quantity': _quantity,
       'declared_value': double.tryParse(_declaredValueController.text.trim()) ?? 0,
-      'has_prescription': _selectedCategory == 'Pharmeasy',
+      'has_prescription': _selectedCategoryRequiresRx || _prescriptions.isNotEmpty,
       'temp_token': _prescriptionTempToken,
+      'prescription_temp_token': _prescriptionTempToken,
       'prescription_ids': _prescriptions.map((p) => p['id']).whereType<int>().toList(),
       'special_handling': [
         if (_signatureRequired) 'signature_required',
@@ -1067,6 +1493,8 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
         if (_whiteGlove) 'white_glove',
       ],
       'payment_method': _paymentMethod,
+      'payment_verified': _paymentMethod != 'cash',
+      'payment_status': _paymentMethod != 'cash' ? 'paid' : 'pending',
       'momo_phone': _momoPhone,
       'momo_network': _momoNetwork,
       'prohibited_items_acknowledged': true,
@@ -1078,11 +1506,22 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
     setState(() => _isSubmitting = false);
     if (!mounted) return;
 
-    final trackingCode = result?['delivery_code'] ?? 'DEL-${Random().nextInt(90000000) + 10000000}';
-    final deliveryOtp = result?['delivery_otp'] ?? '${Random().nextInt(9000) + 1000}';
-    final deliveryId = (result?['delivery_id'] is int)
-        ? result!['delivery_id']
-        : int.tryParse(result?['delivery_id']?.toString() ?? '1') ?? 1;
+    if (result == null || result['success'] == false) {
+      final errMsg = result?['message']?.toString() ?? 'Failed to issue package delivery request. Please check your details and try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errMsg),
+          backgroundColor: const Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
+
+    final trackingCode = result['delivery_code'] ?? 'DEL-${Random().nextInt(90000000) + 10000000}';
+    final deliveryOtp = result['delivery_otp'] ?? '${Random().nextInt(9000) + 1000}';
+    final deliveryId = (result['delivery_id'] is int)
+        ? result['delivery_id']
+        : int.tryParse(result['delivery_id']?.toString() ?? '1') ?? 1;
 
     Navigator.pushReplacement(
       context,
@@ -1968,7 +2407,7 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
         'id': 'Large',
         'icon': '🚚',
         'title': 'Large',
-        'sub': 'Up to 25 kg\n(Cartons / Heavy)',
+        'sub': 'from 9Kg and above\n(Cartons / Heavy)',
       },
     ];
 
@@ -2333,7 +2772,10 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
             return Expanded(
               child: GestureDetector(
                 onTap: () {
-                  setState(() => _selectedSize = s['id'] as String);
+                  setState(() {
+                    _selectedSize = s['id'] as String;
+                    _weightKg = _weightForPackageSize(_selectedSize);
+                  });
                   _calculatePrice();
                 },
                 child: Container(
@@ -2381,29 +2823,28 @@ class _DeliveryBookingScreenState extends State<DeliveryBookingScreen> {
                   const Text('Weight (kg) *', style: TextStyle(color: Colors.white70, fontSize: 11)),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(10)),
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white12),
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('$_weightKg kg', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(
+                          '${_weightKg.toStringAsFixed(_weightKg.truncateToDouble() == _weightKg ? 0 : 1)} kg',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
                         Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle_outline, color: Colors.white70, size: 20),
-                              onPressed: () {
-                                if (_weightKg > 0.5) {
-                                  setState(() => _weightKg = double.parse((_weightKg - 0.5).toStringAsFixed(1)));
-                                  _calculatePrice();
-                                }
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.add_circle_outline, color: Color(0xFFF59E0B), size: 20),
-                              onPressed: () {
-                                setState(() => _weightKg = double.parse((_weightKg + 0.5).toStringAsFixed(1)));
-                                _calculatePrice();
-                              },
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.lock_outline_rounded, color: Colors.white38, size: 14),
+                            SizedBox(width: 4),
+                            Text(
+                              'By Size',
+                              style: TextStyle(color: Colors.white38, fontSize: 10.5, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),

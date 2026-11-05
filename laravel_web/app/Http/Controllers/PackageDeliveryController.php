@@ -176,19 +176,20 @@ class PackageDeliveryController extends Controller
 
             // Default weight by package size if not provided
             if (empty($validated['package_weight_kg'])) {
-                $sizeWeights = ['Small' => 1.5, 'Medium' => 5.0, 'Large' => 10.0];
-                $validated['package_weight_kg'] = $sizeWeights[$validated['package_size']] ?? 1.5;
+                $sizeWeights = ['Small' => 2.0, 'Medium' => 8.0, 'Large' => 9.0];
+                $validated['package_weight_kg'] = $sizeWeights[$validated['package_size']] ?? 2.0;
             }
             if (empty($validated['quantity'])) {
                 $validated['quantity'] = 1;
             }
 
             // Mandatory Doctor Prescription validation for categories requiring Rx (e.g. Pharmeasy)
+            $tempTokenInput = $request->input('prescription_temp_token') ?: $request->input('temp_token');
             $isPrescriptionMandatory = PackageCategory::isPrescriptionMandatory($validated['package_category']);
             if ($isPrescriptionMandatory) {
                 $hasUploads = $request->hasFile('prescriptions') || $request->hasFile('prescription') || $request->hasFile('files');
                 $hasIds = $request->filled('prescription_ids') && !empty($request->input('prescription_ids'));
-                $hasToken = $request->filled('prescription_temp_token') && PackagePrescription::where('temp_token', $request->input('prescription_temp_token'))->exists();
+                $hasToken = !empty($tempTokenInput) && PackagePrescription::where('temp_token', $tempTokenInput)->exists();
 
                 if (!$hasUploads && !$hasIds && !$hasToken) {
                     return response()->json([
@@ -308,8 +309,8 @@ class PackageDeliveryController extends Controller
                 if ($updated > 0) $hasPrescription = true;
             }
 
-            if ($request->filled('prescription_temp_token')) {
-                $updated = PackagePrescription::where('temp_token', $request->input('prescription_temp_token'))->update([
+            if (!empty($tempTokenInput)) {
+                $updated = PackagePrescription::where('temp_token', $tempTokenInput)->update([
                     'package_delivery_id' => $delivery->id,
                 ]);
                 if ($updated > 0) $hasPrescription = true;
@@ -325,6 +326,12 @@ class PackageDeliveryController extends Controller
             } catch (\Throwable $pe) {
                 \Illuminate\Support\Facades\Log::warning("Payment processing warning for delivery {$delivery->id}: " . $pe->getMessage());
             }
+
+            // If pre-booking payment was already completed/verified on the client before issuing the request
+            if ($request->boolean('payment_verified') || strtolower((string) $request->input('payment_status', '')) === 'paid') {
+                $delivery->update(['payment_status' => 'paid']);
+            }
+            $delivery->refresh();
 
             // Initiate proximity courier assignment only if cash or already paid/held
             $rawMethod = strtolower($validated['payment_method'] ?? '');
@@ -600,6 +607,8 @@ class PackageDeliveryController extends Controller
                 \App\Services\NotificationService::notifyDeliveryPickedUp($delivery);
             } elseif ($newStatus === 'delivered') {
                 \App\Services\NotificationService::notifyDeliveryCompleted($delivery);
+            } elseif ($newStatus === 'cancelled') {
+                \App\Services\NotificationService::notifyDeliveryCancelled($delivery, $request->input('reason'), true);
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning("Delivery notification error: " . $e->getMessage());
@@ -612,6 +621,71 @@ class PackageDeliveryController extends Controller
         );
 
         return back()->with('success', "Delivery status updated to {$newStatus}.");
+    }
+
+    /**
+     * Cancel a package delivery via API (Rider "Cancel Courier Search" or Courier cancel).
+     */
+    public function cancelApi(Request $request, $id)
+    {
+        $rawId = trim((string) $id);
+        $cleanId = preg_replace('/^(DEL)-?/i', '', ltrim($rawId, '#'));
+
+        $delivery = PackageDelivery::where('id', $id)
+            ->orWhere('id', $cleanId)
+            ->orWhere('delivery_code', $rawId)
+            ->first();
+
+        if (!$delivery) {
+            return response()->json([
+                'success' => true,
+                'status' => 'not_found',
+                'message' => 'Delivery request not found or already canceled.',
+            ]);
+        }
+
+        if ($delivery->delivery_status === 'cancelled') {
+            return response()->json([
+                'success' => true,
+                'status' => 'cancelled',
+                'message' => 'Delivery request is already canceled.',
+            ]);
+        }
+
+        $reason = $request->input('reason', 'Canceled by user');
+        $user = $request->user();
+        $isCourier = $user && ($user->role === 'driver' || $user->driverProfile || $delivery->courier_id == $user->id);
+
+        $delivery->update([
+            'delivery_status' => 'cancelled',
+            'cancellation_reason' => $reason,
+        ]);
+
+        \App\Models\RideAssignment::where('package_delivery_id', $delivery->id)
+            ->whereNotIn('status', ['completed'])
+            ->update(['status' => 'cancelled']);
+
+        if ($delivery->courier_id) {
+            $courierUser = User::find($delivery->courier_id);
+            if ($courierUser && $courierUser->driverProfile) {
+                $courierUser->driverProfile->update(['is_available' => true]);
+            }
+        }
+
+        try {
+            \App\Services\BookingRefundService::refundCustomerForCancelledBooking($delivery, 'package_delivery', $reason);
+        } catch (\Throwable $e) {}
+
+        try {
+            \App\Services\NotificationService::notifyDeliveryCancelled($delivery, $reason, (bool) $isCourier);
+        } catch (\Throwable $e) {}
+
+        return response()->json([
+            'success' => true,
+            'status' => 'cancelled',
+            'delivery_status' => 'cancelled',
+            'message' => 'Delivery Canceled',
+        ]);
     }
 
     /**

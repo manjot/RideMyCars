@@ -188,6 +188,16 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     ).then((_) => _dialogOpen = false);
   }
 
+  bool get _isDelivery {
+    final t = (_ride['type'] ?? _ride['request_type'] ?? '').toString().toLowerCase();
+    return t.contains('delivery') ||
+        t.contains('package') ||
+        _ride['package_delivery_id'] != null ||
+        _ride['delivery_id'] != null ||
+        _ride['delivery_code'] != null ||
+        (_ride['code']?.toString().toUpperCase().startsWith('DEL') ?? false);
+  }
+
   String get _currentDestination {
     final status = _ride['status'];
     if (status == 'in_progress') {
@@ -1868,24 +1878,26 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                         height: 54,
                         child: _buildActionButton(status),
                       ),
-                      const SizedBox(height: 10),
+                      if (!_isDelivery) ...[
+                        const SizedBox(height: 10),
 
-                      // Driver Cancel Button
-                      SizedBox(
-                        height: 42,
-                        child: TextButton.icon(
-                          onPressed: _isUpdating ? null : _showCancelDialog,
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.danger,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                          icon: const Icon(Icons.cancel_outlined, size: 16),
-                          label: const Text(
-                            'Cancel This Ride',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        // Driver Cancel Button (for regular Rides only — Parcel Delivery uses the inline Cancel button)
+                        SizedBox(
+                          height: 42,
+                          child: TextButton.icon(
+                            onPressed: _isUpdating ? null : _showCancelDialog,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.danger,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            icon: const Icon(Icons.cancel_outlined, size: 16),
+                            label: const Text(
+                              'Cancel This Ride',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

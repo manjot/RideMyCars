@@ -36,7 +36,20 @@ class NotificationProvider extends ChangeNotifier {
       final res = await _dio.get(ApiConstants.notifications);
       if (res.statusCode == 200 && res.data['success'] == true) {
         final List list = res.data['notifications'] ?? [];
-        final newNotifications = list.map((e) => Map<String, dynamic>.from(e)).toList();
+        final newNotifications = list
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((n) {
+              final t = (n['type'] ?? '').toString().toLowerCase();
+              final msg = (n['message'] ?? '').toString().trim();
+              if (t == 'courier_accepted_driver' ||
+                  t == 'delivery_cancelled_driver' ||
+                  t == 'package_delivery_assigned' ||
+                  msg.startsWith('You accepted ')) {
+                return false;
+              }
+              return true;
+            })
+            .toList();
         
         if (newNotifications.isNotEmpty) {
           final topId = (newNotifications.first['id'] as num?)?.toInt() ?? 0;

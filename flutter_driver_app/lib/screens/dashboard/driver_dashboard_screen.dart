@@ -1620,26 +1620,55 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   }
 
   Widget _buildOnlineStatusCard(DriverProvider driver) {
+    final isLocked = driver.isCommissionLocked;
+    final hasWarning = driver.commissionWalletBalance >= 100;
+
     return GestureDetector(
-      onTap: driver.isLoading ? null : () => _handleToggleOnline(driver),
+      onTap: driver.isLoading
+          ? null
+          : () {
+              if (isLocked) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DriverEarningsScreen()),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      '🔒 Driver Switch is locked due to unpaid commission exceeding 7 days. Top up your wallet to unlock!',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
+                return;
+              }
+              _handleToggleOnline(driver);
+            },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: driver.isOnline
-                ? [const Color(0xFF064E3B), const Color(0xFF065F46)]
-                : [AppColors.surfaceDark, const Color(0xFF1E293B)],
+            colors: isLocked
+                ? [const Color(0xFF7F1D1D), const Color(0xFF991B1B)]
+                : (driver.isOnline
+                    ? [const Color(0xFF064E3B), const Color(0xFF065F46)]
+                    : [AppColors.surfaceDark, const Color(0xFF1E293B)]),
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: driver.isOnline ? AppColors.success : Colors.white10,
+            color: isLocked
+                ? AppColors.danger
+                : (driver.isOnline ? AppColors.success : Colors.white10),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: driver.isOnline ? AppColors.success.withOpacity(0.2) : Colors.black26,
+              color: isLocked
+                  ? AppColors.danger.withOpacity(0.25)
+                  : (driver.isOnline ? AppColors.success.withOpacity(0.2) : Colors.black26),
               blurRadius: 18,
               offset: const Offset(0, 5),
             ),
@@ -1649,20 +1678,27 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           children: [
             Row(
               children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: driver.isOnline ? AppColors.success : AppColors.textMuted,
-                    shape: BoxShape.circle,
+                if (isLocked)
+                  const Icon(Icons.lock_rounded, color: Colors.amberAccent, size: 18)
+                else
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: driver.isOnline ? AppColors.success : AppColors.textMuted,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    driver.isOnline ? 'ONLINE & ACCEPTING JOBS' : 'YOU ARE OFFLINE',
+                    isLocked
+                        ? 'DRIVER SWITCH LOCKED (UNPAID COMMISSION)'
+                        : (driver.isOnline ? 'ONLINE & ACCEPTING JOBS' : 'YOU ARE OFFLINE'),
                     style: TextStyle(
-                      color: driver.isOnline ? Colors.white : AppColors.textMuted,
+                      color: isLocked
+                          ? Colors.amberAccent
+                          : (driver.isOnline ? Colors.white : AppColors.textMuted),
                       fontWeight: FontWeight.w900,
                       fontSize: 12.5,
                       letterSpacing: 0.3,
@@ -1684,27 +1720,91 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     : Transform.scale(
                         scale: 0.88,
                         child: Switch(
-                          value: driver.isOnline,
+                          value: isLocked ? false : driver.isOnline,
                           activeColor: AppColors.success,
                           activeTrackColor: AppColors.success.withOpacity(0.3),
-                          inactiveThumbColor: AppColors.textMuted,
+                          inactiveThumbColor: isLocked ? Colors.redAccent : AppColors.textMuted,
                           inactiveTrackColor: Colors.white10,
-                          onChanged: driver.isLoading ? null : (_) => _handleToggleOnline(driver),
+                          onChanged: (driver.isLoading || isLocked)
+                              ? null
+                              : (_) => _handleToggleOnline(driver),
                         ),
                       ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
-              driver.isOnline
-                  ? 'Your GPS is transmitting live. Nearby ride & delivery orders will ring with a loud ringtone.'
-                  : 'Turn your status online to start receiving ride and delivery orders.',
+              isLocked
+                  ? 'Your Driver Switch has been turned off and locked because your Cash Commission Wallet exceeded the 7-day payment deadline. Pay your outstanding commission to automatically turn on and unlock your Driver Switch.'
+                  : (driver.isOnline
+                      ? 'Your GPS is transmitting live. Nearby ride & delivery orders will ring with a loud ringtone.'
+                      : 'Turn your status online to start receiving ride and delivery orders.'),
               style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withOpacity(0.85),
                 fontSize: 12.5,
                 height: 1.35,
               ),
             ),
+            if (isLocked || hasWarning) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.28),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isLocked ? Colors.redAccent : Colors.amberAccent.withOpacity(0.6),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          isLocked ? Icons.lock_clock_rounded : Icons.warning_amber_rounded,
+                          color: Colors.amberAccent,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Kindly top up your wallet balance within 7 days for Commission Deduction or risk deactivation.',
+                            style: TextStyle(
+                              color: Colors.amberAccent,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 36,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const DriverEarningsScreen()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF97316),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.account_balance_wallet_rounded, size: 15),
+                        label: Text(
+                          isLocked ? 'Pay Commission & Unlock Switch' : 'Top Up Wallet for Commission Deduction',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

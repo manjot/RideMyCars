@@ -1475,6 +1475,10 @@ class RideController extends Controller
                 NotificationService::notifyDeliveryPickedUp($delivery);
             } elseif ($delStatus === 'delivered') {
                 NotificationService::notifyDeliveryCompleted($delivery);
+            } elseif ($delStatus === 'cancelled') {
+                $reason = request()->input('reason');
+                $isCourier = $user && ($user->role === 'driver' || $user->driverProfile || $delivery->courier_id == $user->id);
+                NotificationService::notifyDeliveryCancelled($delivery, $reason, (bool) $isCourier);
             }
         } catch (\Throwable $e) {}
 
@@ -1738,6 +1742,21 @@ class RideController extends Controller
         $rawId = trim((string)$id);
         $cleanId = ltrim($rawId, '#');
         $cleanId = preg_replace('/^(RIDE|DEL|DRV)-?/i', '', $cleanId);
+        $reqType = strtolower(trim((string) $request->input('type', '')));
+
+        if (str_contains($reqType, 'delivery') || str_contains($reqType, 'package') || str_starts_with(strtoupper($rawId), 'DEL')) {
+            $del = \App\Models\PackageDelivery::where('id', $id)->orWhere('id', $cleanId)->orWhere('delivery_code', $rawId)->first();
+            if ($del) {
+                return $this->handlePackageDeliveryUpdate($del, 'cancelled', $request->user());
+            }
+        }
+
+        if (str_contains($reqType, 'booking') || str_contains($reqType, 'hire') || str_contains($reqType, 'chauffeur') || str_starts_with(strtoupper($rawId), 'DRV')) {
+            $bk = \App\Models\DriverBooking::where('id', $id)->orWhere('id', $cleanId)->orWhere('booking_code', $rawId)->first();
+            if ($bk) {
+                return $this->updateStatus($request->merge(['status' => 'cancelled', 'type' => 'driver_booking']), $id);
+            }
+        }
 
         $ride = null;
         if (is_numeric($cleanId)) {

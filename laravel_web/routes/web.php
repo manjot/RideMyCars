@@ -4854,6 +4854,7 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
 
     \App\Services\IncentiveService::ensureTables();
     \App\Models\Incentive::ensureTableExists();
+    \App\Models\DriverProfile::ensureCommissionColumnsExist();
 
     // Include recent laravel.log lines for debugging
     $logFiles = glob(storage_path('logs/*.log'));

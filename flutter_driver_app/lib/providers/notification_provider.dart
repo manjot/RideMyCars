@@ -81,13 +81,21 @@ class NotificationProvider extends ChangeNotifier {
                     continue;
                   }
                   triggeredOrderRingtone = true;
-                  final orderId = n['ride_id'] ?? n['data']?['ride_id'] ?? n['data']?['booking_id'] ?? n['data']?['delivery_id'] ?? nId;
-                  await SoundService.instance.startIncomingOrderRingtone(
-                    orderType: n['type']?.toString() ?? 'ride',
-                    orderId: orderId,
-                    title: title,
-                    body: body,
-                  );
+                  final dataMap = n['data'] is Map ? Map<String, dynamic>.from(n['data']) : <String, dynamic>{};
+                  final orderId = dataMap['delivery_id'] ??
+                      dataMap['package_delivery_id'] ??
+                      dataMap['booking_id'] ??
+                      n['ride_id'] ??
+                      dataMap['ride_id'] ??
+                      nId;
+                  if (!SoundService.instance.isRinging) {
+                    await SoundService.instance.startIncomingOrderRingtone(
+                      orderType: n['type']?.toString() ?? 'ride',
+                      orderId: orderId,
+                      title: title,
+                      body: body,
+                    );
+                  }
                   LocalNotificationService.instance.onOrderPushReceived?.call();
                 } else {
                   LocalNotificationService.instance.showNotification(

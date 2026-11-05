@@ -193,10 +193,10 @@ class NotificationService
         }
 
         // 2. Notify Courier
-        if ($delivery->courier_id) {
+        if ($delivery->courier_id && $delivery->courier_id !== $delivery->customer_id) {
             self::send(
                 $delivery->courier_id,
-                'courier_accepted',
+                'courier_accepted_driver',
                 'Delivery Accepted',
                 "You accepted Parcel Delivery #{$delivery->delivery_code} for {$delivery->recipient_name}. Pickup: {$delivery->pickup_location}.",
                 $delivery->id,
@@ -206,6 +206,67 @@ class NotificationService
                     'status' => 'courier_accepted',
                     'icon' => 'check',
                     'color' => 'emerald'
+                ]
+            );
+        }
+    }
+
+    /**
+     * Notify Customer (and Courier) when a package delivery request is canceled.
+     */
+    public static function notifyDeliveryCancelled(PackageDelivery $delivery, ?string $reason = null, bool $cancelledByCourier = true): void
+    {
+        $delivery->refresh();
+        $code = $delivery->delivery_code ?: ('DEL-' . $delivery->id);
+
+        // Mark any previous unread acceptance notifications for this delivery as read
+        try {
+            UserNotification::whereIn('type', ['courier_accepted', 'courier_accepted_driver', 'package_delivery_assigned'])
+                ->where(function ($q) use ($delivery) {
+                    $q->where('ride_id', $delivery->id)
+                      ->orWhere('message', 'like', "%{$delivery->delivery_code}%");
+                })
+                ->update(['is_read' => true]);
+        } catch (\Throwable $e) {}
+
+        if ($delivery->customer_id) {
+            $msg = $cancelledByCourier
+                ? "Your Parcel Delivery #{$code} has been canceled by the courier."
+                : "Your Parcel Delivery #{$code} has been canceled.";
+            if ($reason && !in_array(strtolower(trim($reason)), ['cancelled by driver', 'cancelled by user', 'delivery cancelled'])) {
+                $msg .= " Reason: {$reason}";
+            }
+
+            self::send(
+                $delivery->customer_id,
+                'delivery_cancelled',
+                'Delivery Canceled',
+                $msg,
+                $delivery->id,
+                "/delivery/{$delivery->id}/tracker",
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'cancelled',
+                    'reason' => $reason,
+                    'icon' => 'x-circle',
+                    'color' => 'red',
+                ]
+            );
+        }
+
+        if ($delivery->courier_id && $delivery->courier_id !== $delivery->customer_id) {
+            self::send(
+                $delivery->courier_id,
+                'delivery_cancelled_driver',
+                'Delivery Canceled',
+                "Parcel Delivery #{$code} has been canceled.",
+                $delivery->id,
+                '/driver/dashboard',
+                [
+                    'delivery_id' => $delivery->id,
+                    'status' => 'cancelled',
+                    'icon' => 'x-circle',
+                    'color' => 'red',
                 ]
             );
         }

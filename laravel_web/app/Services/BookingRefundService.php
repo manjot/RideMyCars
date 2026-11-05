@@ -453,11 +453,13 @@ class BookingRefundService
             $profile = $user->driverProfile;
             $newCommissionWalletBalance = $remainingUnpaid;
             if ($profile) {
+                \App\Models\DriverProfile::ensureCommissionColumnsExist();
                 $currentCommissionWallet = max(0.0, round((float)($profile->cash_commission_wallet ?? 0.00)));
                 $newCommissionWalletBalance = round($currentCommissionWallet + $remainingUnpaid);
                 $profile->update([
                     'cash_commission_wallet' => $newCommissionWalletBalance,
                 ]);
+                \App\Models\DriverProfile::syncCommissionStatus($profile->fresh(), false);
             }
 
             // 2. Record transaction in WalletTransaction ledger
@@ -619,40 +621,24 @@ class BookingRefundService
             ];
         } elseif ($booking instanceof PackageDelivery) {
             RideAssignment::where('package_delivery_id', $booking->id)
-                ->when($cancelledDriverId, fn($q) => $q->where('driver_id', $cancelledDriverId))
                 ->whereNotIn('status', ['completed'])
-                ->update(['status' => 'rejected', 'expires_at' => now()]);
+                ->update(['status' => 'expired', 'expires_at' => now()]);
 
+            $reason = 'Your Parcel Delivery request was canceled by the courier.';
             $booking->update([
                 'courier_id' => null,
                 'courier_profile_id' => null,
-                'delivery_status' => 'pending',
-            ]);
-
-            // Attempt proximity dispatch to next available courier
-            $nextCourierAssignment = null;
-            try {
-                $nextCourierAssignment = PackageDeliveryAssignmentService::assignNextCourier($booking);
-            } catch (\Throwable $ce) {
-                Log::warning("Next courier dispatch error for Delivery #{$booking->id}: " . $ce->getMessage());
-            }
-
-            if ($nextCourierAssignment) {
-                return ['status' => 'reassigned', 'assignment' => $nextCourierAssignment];
-            }
-
-            // No replacement courier available -> cancel and refund
-            $reason = 'Assigned courier cancelled and no replacement courier was available.';
-            $booking->update([
                 'delivery_status' => 'cancelled',
                 'cancellation_reason' => $reason,
             ]);
 
-            RideAssignment::where('package_delivery_id', $booking->id)
-                ->whereNotIn('status', ['completed'])
-                ->update(['status' => 'expired']);
-
             $refunded = self::refundCustomerForCancelledBooking($booking, 'package_delivery', $reason);
+
+            try {
+                NotificationService::notifyDeliveryCancelled($booking, $reason, true);
+            } catch (\Throwable $ne) {
+                Log::warning("Failed to send notifyDeliveryCancelled for Delivery #{$booking->id}: " . $ne->getMessage());
+            }
 
             return [
                 'status' => 'cancelled',

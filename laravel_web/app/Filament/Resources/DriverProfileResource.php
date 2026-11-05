@@ -256,6 +256,17 @@ class DriverProfileResource extends Resource
                 Tables\Columns\IconColumn::make('is_available')
                     ->label('Online')
                     ->boolean(),
+                Tables\Columns\TextColumn::make('cash_commission_wallet')
+                    ->label('Commission Wallet')
+                    ->sortable()
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => 'GH₵ ' . number_format((float) ($state ?? 0), 0))
+                    ->color(fn ($state): string => ((float) $state) >= 100 ? 'danger' : (((float) $state) > 0 ? 'warning' : 'success')),
+                Tables\Columns\TextColumn::make('commission_locked')
+                    ->label('Driver Switch Lock')
+                    ->badge()
+                    ->formatStateUsing(fn (DriverProfile $record): string => $record->is_commission_locked ? '🔒 Locked (7+ Days Overdue)' : '✓ Unlocked')
+                    ->color(fn (DriverProfile $record): string => $record->is_commission_locked ? 'danger' : 'success'),
                 Tables\Columns\IconColumn::make('is_banned')
                     ->label('Banned')
                     ->boolean(),

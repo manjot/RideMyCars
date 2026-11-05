@@ -157,6 +157,7 @@ Route::get('/delivery/categories', [\App\Http\Controllers\PackageDeliveryControl
 Route::post('/delivery/calculate-price', [\App\Http\Controllers\PackageDeliveryController::class, 'calculatePrice']);
 Route::post('/delivery/book', [\App\Http\Controllers\PackageDeliveryController::class, 'storeBooking']);
 Route::get('/delivery/{id}/status', [\App\Http\Controllers\PackageDeliveryController::class, 'statusApi']);
+Route::post('/delivery/{id}/cancel', [\App\Http\Controllers\PackageDeliveryController::class, 'cancelApi']);
 Route::post('/delivery/{id}/verify-otp', [\App\Http\Controllers\PackageDeliveryController::class, 'verifyOtp']);
 Route::post('/delivery/{id}/update-status', [\App\Http\Controllers\PackageDeliveryController::class, 'updateDeliveryStatus']);
 Route::post('/delivery/prescriptions/upload', [\App\Http\Controllers\PackageDeliveryController::class, 'uploadPrescription']);
@@ -236,8 +237,11 @@ Route::middleware(\App\Http\Middleware\ResolveApiUser::class)->group(function ()
         if (!$user) return response()->json(['success' => true, 'notifications' => [], 'unread_count' => 0]);
 
         $userIds = [$user->id];
-        $matchingIds = \App\Models\User::where('name', $user->name)
-            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
+        $matchingIds = \App\Models\User::where('role', $user->role)
+            ->where(function ($q) use ($user) {
+                $q->where('name', $user->name)
+                  ->orWhere('email', 'like', explode('@', $user->email)[0] . '%');
+            })
             ->pluck('id')
             ->toArray();
         $userIds = array_unique(array_merge($userIds, $matchingIds));
@@ -267,6 +271,32 @@ Route::middleware(\App\Http\Middleware\ResolveApiUser::class)->group(function ()
                     return false;
                 }
                 if ($isRideOrDel && !$driverOnline) {
+                    return false;
+                }
+                return true;
+            })->values();
+        } else {
+            // Rider App: exclude driver-only notifications (e.g. "You accepted Parcel Delivery...")
+            $rawNotifications = $rawNotifications->filter(function ($n) {
+                $t = strtolower((string) ($n->type ?? ''));
+                $msg = trim((string) ($n->message ?? ''));
+                $link = (string) ($n->link ?? '');
+                if (in_array($t, [
+                    'courier_accepted_driver',
+                    'delivery_cancelled_driver',
+                    'package_delivery_assigned',
+                    'ride_assignment',
+                    'driver_hiring_assigned',
+                    'driver_booking',
+                    'backup_ride_request',
+                    'backup_waiting_confirmation',
+                    'commission_threshold_warning',
+                    'commission_switch_locked',
+                    'commission_switch_unlocked',
+                ], true)) {
+                    return false;
+                }
+                if (str_starts_with($msg, 'You accepted ') || $link === '/driver/dashboard') {
                     return false;
                 }
                 return true;

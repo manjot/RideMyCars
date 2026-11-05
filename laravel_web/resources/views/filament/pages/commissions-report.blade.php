@@ -205,6 +205,14 @@
                         {{ count($driverHistory) }}
                     </span>
                 </button>
+                <button @click="activeTab = 'overdue_drivers'" 
+                        :class="activeTab === 'overdue_drivers' ? 'border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/20' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-2.5 px-4 border-b-2 font-bold text-sm rounded-t-lg transition flex items-center gap-2">
+                    <span>🚨 Exceeded 7-Day Payment Deadline</span>
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300">
+                        {{ count($overdueDrivers ?? []) }}
+                    </span>
+                </button>
             </nav>
         </div>
 
@@ -616,6 +624,75 @@
                         <tr>
                             <td colspan="9" class="py-8 text-center text-gray-400 dark:text-gray-500">
                                 No commission transactions recorded yet. Completed trips with cash or online payments will appear here in real time.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- TAB 7: DRIVERS WHO EXCEEDED 7-DAY PAYMENT DEADLINE --}}
+        <div x-show="activeTab === 'overdue_drivers'" class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-rose-200 dark:border-rose-800/60 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2">
+                        <span>🚨 Drivers Exceeding 7-Day Commission Payment Deadline</span>
+                    </h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Drivers whose Cash Commission Wallet reached or exceeded GH₵100 and have exceeded the 7-day payment deadline. Their Driver Switch is automatically turned off and locked until payment is made. Once payment is made, their record is automatically removed from this tab and their Driver Switch is automatically turned on and unlocked.
+                    </p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 uppercase">
+                        <tr>
+                            <th class="py-3 px-4">Driver</th>
+                            <th class="py-3 px-4">Contact</th>
+                            <th class="py-3 px-4">Unpaid Commission</th>
+                            <th class="py-3 px-4">GH₵100 Reached On</th>
+                            <th class="py-3 px-4">7-Day Deadline</th>
+                            <th class="py-3 px-4">Overdue Duration</th>
+                            <th class="py-3 px-4 text-right">Driver Switch Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60 font-medium">
+                        @forelse(($overdueDrivers ?? []) as $od)
+                        <tr class="hover:bg-rose-50/30 dark:hover:bg-rose-950/20 transition">
+                            <td class="py-3 px-4 font-bold text-gray-900 dark:text-white">
+                                {{ $od['driver_name'] }}
+                            </td>
+                            <td class="py-3 px-4 text-gray-600 dark:text-gray-300">
+                                <div>{{ $od['driver_phone'] }}</div>
+                                <div class="text-[10px] text-gray-400">{{ $od['driver_email'] }}</div>
+                            </td>
+                            <td class="py-3 px-4 font-black text-rose-600 dark:text-rose-400 text-sm">
+                                GH₵ {{ number_format($od['commission_ghs'] ?? 0, 0) }}
+                                <span class="text-xs text-gray-400 font-semibold">(${{ number_format($od['commission_usd'] ?? 0, 0) }})</span>
+                            </td>
+                            <td class="py-3 px-4 text-gray-600 dark:text-gray-300">
+                                {{ $od['threshold_reached_at'] }}
+                            </td>
+                            <td class="py-3 px-4 text-rose-600 dark:text-rose-400 font-bold">
+                                {{ $od['deadline_at'] }}
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200">
+                                    {{ $od['days_overdue'] }} {{ $od['days_overdue'] == 1 ? 'day' : 'days' }} overdue
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-600 text-white">
+                                    🔒 OFF &amp; LOCKED
+                                </span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="py-8 text-center text-gray-400 dark:text-gray-500">
+                                ✅ No drivers have exceeded the 7-day commission payment deadline. Drivers who exceed the deadline appear here automatically and are removed automatically once they pay.
                             </td>
                         </tr>
                         @endforelse

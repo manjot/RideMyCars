@@ -162,9 +162,9 @@ class LocalNotificationService {
           provisional: false,
         );
         await fcm.setForegroundNotificationPresentationOptions(
-          alert: true,
-          badge: true,
-          sound: true,
+          alert: false,
+          badge: false,
+          sound: false,
         );
       } catch (e) {
         debugPrint('[FCM] permission request error: $e');
@@ -207,10 +207,18 @@ class LocalNotificationService {
             debugPrint('[Driver FCM Foreground] Ignored order alert ($type) because corresponding switch is OFF');
             return;
           }
-          final orderId = message.data['ride_id'] ??
-              message.data['booking_id'] ??
-              message.data['delivery_id'] ??
-              DateTime.now().millisecondsSinceEpoch;
+          String nonEmpty(dynamic v) => (v == null || v.toString().trim().isEmpty) ? '' : v.toString().trim();
+          final dId = nonEmpty(message.data['delivery_id']);
+          final pId = nonEmpty(message.data['package_delivery_id']);
+          final bId = nonEmpty(message.data['booking_id']);
+          final rId = nonEmpty(message.data['ride_id']);
+          final orderId = dId.isNotEmpty
+              ? dId
+              : (pId.isNotEmpty
+                  ? pId
+                  : (bId.isNotEmpty
+                      ? bId
+                      : (rId.isNotEmpty ? rId : 'new')));
           SoundService.instance.startIncomingOrderRingtone(
             orderType: type.isNotEmpty ? type : 'ride',
             orderId: orderId,
@@ -400,6 +408,21 @@ class LocalNotificationService {
       debugPrint(
           '[LocalNotificationService] Driver error showing notification: $e');
     }
+  }
+
+  Future<void> showStatusNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    await showNotification(
+      id: id,
+      title: title,
+      body: body,
+      payload: payload,
+      force: true,
+    );
   }
 
   void markAsDisplayed(int id) {

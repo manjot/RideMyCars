@@ -48,6 +48,10 @@ class DriverProfile extends Model
         'is_live',
         'is_chauffeur',
         'cash_commission_wallet',
+        'commission_threshold_reached_at',
+        'commission_warning_notified_at',
+        'commission_locked',
+        'commission_locked_at',
         'active_chauffeur_online',
         'chauffeur_mode',
         'driver_type',
@@ -69,6 +73,10 @@ class DriverProfile extends Model
         'active_chauffeur_online' => 'boolean',
         'chauffeur_mode' => 'boolean',
         'cash_commission_wallet' => 'float',
+        'commission_threshold_reached_at' => 'datetime',
+        'commission_warning_notified_at' => 'datetime',
+        'commission_locked' => 'boolean',
+        'commission_locked_at' => 'datetime',
         'id_card_expiry' => 'date',
         'vehicle_insurance_expiry' => 'date',
         'vehicle_fitness_expiry' => 'date',
@@ -92,6 +100,10 @@ class DriverProfile extends Model
         'license_back_url',
         'id_card_front_url',
         'id_card_back_url',
+        'is_commission_locked',
+        'commission_deadline_at',
+        'commission_days_remaining',
+        'commission_warning_message',
     ];
 
     /**
@@ -405,5 +417,254 @@ class DriverProfile extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Ensure commission threshold & lock columns exist on driver_profiles table.
+     */
+    public static function ensureCommissionColumnsExist(): void
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+        $checked = true;
+
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('driver_profiles')) {
+                return;
+            }
+            \Illuminate\Support\Facades\Schema::table('driver_profiles', function (\Illuminate\Database\Schema\Blueprint $table) {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'cash_commission_wallet')) {
+                    $table->decimal('cash_commission_wallet', 10, 2)->default(0)->after('is_live');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'commission_threshold_reached_at')) {
+                    $table->timestamp('commission_threshold_reached_at')->nullable()->after('cash_commission_wallet');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'commission_warning_notified_at')) {
+                    $table->timestamp('commission_warning_notified_at')->nullable()->after('commission_threshold_reached_at');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'commission_locked')) {
+                    $table->boolean('commission_locked')->default(false)->after('commission_warning_notified_at');
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('driver_profiles', 'commission_locked_at')) {
+                    $table->timestamp('commission_locked_at')->nullable()->after('commission_locked');
+                }
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('DriverProfile::ensureCommissionColumnsExist warning: ' . $e->getMessage());
+        }
+    }
+
+    public function getIsCommissionLockedAttribute(): bool
+    {
+        $commBalance = round((float) ($this->cash_commission_wallet ?? 0));
+        if ($commBalance < 100) {
+            return false;
+        }
+        if (!empty($this->attributes['commission_locked']) && (bool) $this->attributes['commission_locked']) {
+            return true;
+        }
+        if (!empty($this->attributes['commission_threshold_reached_at'])) {
+            try {
+                $reachedAt = \Carbon\Carbon::parse($this->attributes['commission_threshold_reached_at']);
+                if ($reachedAt->lte(now()->subDays(7))) {
+                    return true;
+                }
+            } catch (\Throwable $e) {}
+        }
+        return false;
+    }
+
+    public function getCommissionDeadlineAtAttribute(): ?string
+    {
+        $commBalance = round((float) ($this->cash_commission_wallet ?? 0));
+        if ($commBalance < 100 || empty($this->attributes['commission_threshold_reached_at'])) {
+            return null;
+        }
+        try {
+            return \Carbon\Carbon::parse($this->attributes['commission_threshold_reached_at'])->addDays(7)->toIso8601String();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function getCommissionDaysRemainingAttribute(): ?int
+    {
+        $commBalance = round((float) ($this->cash_commission_wallet ?? 0));
+        if ($commBalance < 100) {
+            return null;
+        }
+        if (empty($this->attributes['commission_threshold_reached_at'])) {
+            return 7;
+        }
+        try {
+            $deadline = \Carbon\Carbon::parse($this->attributes['commission_threshold_reached_at'])->addDays(7);
+            if (now()->gte($deadline)) {
+                return 0;
+            }
+            return (int) max(0, ceil(now()->diffInHours($deadline, false) / 24));
+        } catch (\Throwable $e) {
+            return 7;
+        }
+    }
+
+    public function getCommissionWarningMessageAttribute(): ?string
+    {
+        $commBalance = round((float) ($this->cash_commission_wallet ?? 0));
+        if ($commBalance >= 100) {
+            return 'Kindly top up your wallet balance within 7 days for Commission Deduction or risk deactivation.';
+        }
+        return null;
+    }
+
+    /**
+     * Synchronize and enforce the driver's Cash Commission Wallet threshold (100),
+     * 7-day payment deadline, automatic Driver Switch lock/off, and automatic unlock/on upon payment.
+     */
+    public static function syncCommissionStatus(DriverProfile $profile, bool $fromPayment = false): array
+    {
+        self::ensureCommissionColumnsExist();
+
+        $commBalance = round((float) ($profile->cash_commission_wallet ?? 0));
+        $warningText = 'Kindly top up your wallet balance within 7 days for Commission Deduction or risk deactivation.';
+
+        if ($commBalance >= 100) {
+            $dirty = false;
+
+            if (empty($profile->commission_threshold_reached_at)) {
+                $profile->commission_threshold_reached_at = now();
+                $dirty = true;
+            }
+
+            if (empty($profile->commission_warning_notified_at)) {
+                $profile->commission_warning_notified_at = now();
+                $dirty = true;
+
+                try {
+                    \App\Services\NotificationService::send(
+                        $profile->user_id,
+                        'commission_threshold_warning',
+                        'Cash Commission Payment Due',
+                        $warningText,
+                        null,
+                        '/driver/earnings',
+                        [
+                            'commission_wallet_balance' => (int) $commBalance,
+                            'deadline_days' => 7,
+                        ]
+                    );
+                } catch (\Throwable $e) {}
+            }
+
+            $reachedAt = $profile->commission_threshold_reached_at
+                ? \Carbon\Carbon::parse($profile->commission_threshold_reached_at)
+                : now();
+            $deadlineExceeded = $reachedAt->lte(now()->subDays(7)) || (bool) $profile->commission_locked;
+
+            if ($deadlineExceeded) {
+                $justLocked = !(bool) $profile->commission_locked;
+
+                if ($profile->is_available || $profile->active_chauffeur_online || !$profile->commission_locked) {
+                    $profile->is_available = false;
+                    $profile->active_chauffeur_online = false;
+                    $profile->commission_locked = true;
+                    if (empty($profile->commission_locked_at)) {
+                        $profile->commission_locked_at = now();
+                    }
+                    $dirty = true;
+                }
+
+                if ($justLocked) {
+                    try {
+                        \App\Services\NotificationService::send(
+                            $profile->user_id,
+                            'commission_switch_locked',
+                            'Driver Switch Turned Off & Locked',
+                            'Your Driver Switch has been turned off due to unpaid commission exceeding the 7-day payment deadline. Kindly pay your outstanding commission to unlock your Driver Switch.',
+                            null,
+                            '/driver/earnings',
+                            [
+                                'commission_wallet_balance' => (int) $commBalance,
+                                'is_commission_locked' => true,
+                                'is_available' => false,
+                            ]
+                        );
+                    } catch (\Throwable $e) {}
+                }
+            }
+
+            if ($dirty) {
+                $profile->save();
+            }
+
+            return [
+                'threshold_reached' => true,
+                'is_commission_locked' => (bool) $profile->commission_locked,
+                'is_available' => (bool) $profile->is_available,
+                'warning_message' => $warningText,
+            ];
+        }
+
+        // Commission balance is < 100 (paid or below threshold)
+        $wasOverdueOrTracked = (bool) $profile->commission_locked
+            || !empty($profile->commission_threshold_reached_at)
+            || !empty($profile->commission_warning_notified_at)
+            || !empty($profile->commission_locked_at);
+
+        if ($wasOverdueOrTracked || $fromPayment) {
+            $wasLockedOrThreshold = $wasOverdueOrTracked;
+            $profile->commission_threshold_reached_at = null;
+            $profile->commission_warning_notified_at = null;
+            $profile->commission_locked = false;
+            $profile->commission_locked_at = null;
+
+            if ($fromPayment || $wasLockedOrThreshold) {
+                $profile->is_available = true;
+                $profile->is_live = true;
+            }
+            $profile->save();
+
+            if ($fromPayment || $wasLockedOrThreshold) {
+                try {
+                    \App\Services\NotificationService::send(
+                        $profile->user_id,
+                        'commission_switch_unlocked',
+                        'Driver Switch Turned On & Unlocked',
+                        'Your Driver Switch has been turned on and unlocked. You can now receive ride requests.',
+                        null,
+                        '/driver/dashboard',
+                        [
+                            'commission_wallet_balance' => (int) $commBalance,
+                            'is_commission_locked' => false,
+                            'is_available' => true,
+                        ]
+                    );
+                } catch (\Throwable $e) {}
+            }
+        }
+
+        return [
+            'threshold_reached' => false,
+            'is_commission_locked' => false,
+            'is_available' => (bool) $profile->is_available,
+            'warning_message' => null,
+        ];
+    }
+
+    /**
+     * Sweep all drivers with cash_commission_wallet >= 100 and enforce threshold/7-day lock.
+     */
+    public static function enforceAllOverdueCommissionDeadlines(): void
+    {
+        self::ensureCommissionColumnsExist();
+        try {
+            $profiles = self::where('cash_commission_wallet', '>=', 100)->get();
+            foreach ($profiles as $profile) {
+                self::syncCommissionStatus($profile, false);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('enforceAllOverdueCommissionDeadlines warning: ' . $e->getMessage());
+        }
     }
 }

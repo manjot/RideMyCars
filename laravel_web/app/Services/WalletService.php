@@ -125,6 +125,8 @@ class WalletService
             if (abs((float) $profile->cash_commission_wallet - $roundedComm) > 0.001) {
                 $profile->update(['cash_commission_wallet' => $roundedComm]);
             }
+
+            \App\Models\DriverProfile::syncCommissionStatus($profile->fresh(), false);
         } catch (\Throwable $e) {
             Log::warning('reconcileDriverCashCommissionWallet warning: ' . $e->getMessage());
         }
@@ -158,6 +160,10 @@ class WalletService
 
         // Additional Cash Commission Wallet (whole number)
         $driverProfile = $user->driverProfile?->fresh() ?? $user->driverProfile;
+        if ($driverProfile) {
+            \App\Models\DriverProfile::syncCommissionStatus($driverProfile, false);
+            $driverProfile->refresh();
+        }
         $commissionWalletBalance = (int) round((float) ($driverProfile?->cash_commission_wallet ?? 0));
         $mainWalletBalance = (int) round((float) ($user->wallet_balance ?? 0));
         $cashCommissionsCount = 0;
@@ -186,11 +192,26 @@ class WalletService
             'withdrawals_count' => $withdrawalsCount,
             'settings' => $settings,
             'commission_wallet_balance' => $commissionWalletBalance,
+            'commission_threshold_reached' => $commissionWalletBalance >= 100,
+            'commission_warning_message' => $commissionWalletBalance >= 100
+                ? 'Kindly top up your wallet balance within 7 days for Commission Deduction or risk deactivation.'
+                : null,
+            'is_commission_locked' => (bool) ($driverProfile?->is_commission_locked ?? false),
+            'is_available' => (bool) ($driverProfile?->is_available ?? false),
+            'commission_threshold_reached_at' => $driverProfile?->commission_threshold_reached_at?->toIso8601String(),
+            'commission_deadline_at' => $driverProfile?->commission_deadline_at,
+            'commission_days_remaining' => $driverProfile?->commission_days_remaining,
             'commission_wallet' => [
                 'balance' => $commissionWalletBalance,
                 'currency' => $currency,
                 'count' => $cashCommissionsCount,
                 'recent' => $recentCashCommissions,
+                'threshold_reached' => $commissionWalletBalance >= 100,
+                'warning_message' => $commissionWalletBalance >= 100
+                    ? 'Kindly top up your wallet balance within 7 days for Commission Deduction or risk deactivation.'
+                    : null,
+                'is_locked' => (bool) ($driverProfile?->is_commission_locked ?? false),
+                'days_remaining' => $driverProfile?->commission_days_remaining,
             ],
         ];
     }
@@ -548,10 +569,22 @@ class WalletService
             $newOutstandingComm = max(0.0, round($outstandingComm - $settledCommission));
             $netWalletCredit = max(0.0, round($amount - $settledCommission));
 
+            $driverSwitchUnlocked = false;
             if ($profile && $settledCommission > 0) {
+                $wasLockedOrOverThreshold = (bool) $profile->commission_locked
+                    || !empty($profile->commission_threshold_reached_at)
+                    || $outstandingComm >= 100
+                    || !$profile->is_available;
+
                 $profile->update([
                     'cash_commission_wallet' => $newOutstandingComm,
                 ]);
+                \App\Models\DriverProfile::syncCommissionStatus($profile->fresh(), true);
+                $profile->refresh();
+
+                if ($newOutstandingComm < 100 && $wasLockedOrOverThreshold) {
+                    $driverSwitchUnlocked = true;
+                }
             }
 
             $balanceBefore = max(0.0, round((float) ($freshUser->wallet_balance ?? 0)));
@@ -620,11 +653,16 @@ class WalletService
                 'wallet_balance' => (int) $balanceAfter,
                 'commission_wallet_balance' => (int) $newOutstandingComm,
                 'settled_commission' => (int) $settledCommission,
+                'driver_switch_unlocked' => $driverSwitchUnlocked,
+                'is_available' => (bool) ($profile?->is_available ?? true),
+                'is_commission_locked' => (bool) ($profile?->is_commission_locked ?? false),
                 'amount_added' => (int) $amount,
                 'currency' => $currency,
                 'transaction' => $transaction,
                 'message' => $settledCommission > 0
-                    ? "Successfully added {$currency}{$amount}! {$currency}{$settledCommission} was deducted for your Cash Commission Wallet."
+                    ? ($driverSwitchUnlocked
+                        ? "Successfully added {$currency}{$amount}! {$currency}{$settledCommission} was deducted for your Cash Commission Wallet. Your Driver Switch has been turned on and unlocked — you can now receive ride requests!"
+                        : "Successfully added {$currency}{$amount}! {$currency}{$settledCommission} was deducted for your Cash Commission Wallet.")
                     : "Successfully added {$currency}{$amount} to your wallet!",
             ];
         });

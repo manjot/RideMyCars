@@ -95,6 +95,7 @@ class DeliveryService {
   }) async {
     try {
       final formData = FormData.fromMap({
+        'files[]': MultipartFile.fromBytes(bytes, filename: filename),
         'prescriptions[]': MultipartFile.fromBytes(bytes, filename: filename),
         if (tempToken != null && tempToken.isNotEmpty) 'temp_token': tempToken,
       });
@@ -102,6 +103,7 @@ class DeliveryService {
       final res = await _dio.post(
         ApiConstants.deliveryPrescriptionUpload,
         data: formData,
+        options: Options(contentType: 'multipart/form-data'),
       );
 
       if (res.statusCode == 200 && res.data != null) {

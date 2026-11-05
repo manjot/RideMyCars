@@ -51,6 +51,7 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
         if (bal['commission_wallet']?['recent'] is List) {
           _cashCommissions = List<dynamic>.from(bal['commission_wallet']['recent']);
         }
+        driver.syncCommissionFromWalletSummary(Map<String, dynamic>.from(bal));
         _pendingWithdrawals = (bal['pending_withdrawals_sum'] as num?)?.toDouble() ?? 0.0;
         _currency = bal['currency']?.toString() ?? 'GH₵';
         final settings = bal['settings'] as Map<String, dynamic>?;
@@ -573,6 +574,56 @@ class _DriverEarningsScreenState extends State<DriverEarningsScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70, fontSize: 11, height: 1.3),
             ),
+            if (_commissionWalletBalance >= 100) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.amberAccent, width: 1.2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: Colors.amberAccent, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Kindly top up your wallet balance within 7 days for Commission Deduction or risk deactivation.',
+                            style: TextStyle(
+                              color: Colors.amberAccent,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 36,
+                      child: ElevatedButton.icon(
+                        onPressed: _openAddMoneyModal,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF97316),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.add_card_rounded, size: 16),
+                        label: const Text(
+                          'Top Up Now for Commission Deduction',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             const Divider(color: Colors.white12, height: 1),
             const SizedBox(height: 10),
@@ -1779,6 +1830,13 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
       if (!mounted) return;
       final data = res['data'] is Map ? Map<String, dynamic>.from(res['data']) : <String, dynamic>{};
       final settledComm = (data['settled_commission'] as num?)?.toInt() ?? 0;
+      final switchUnlocked = data['driver_switch_unlocked'] == true || settledComm > 0;
+      if (switchUnlocked) {
+        try {
+          await Provider.of<DriverProvider>(context, listen: false).unlockSwitchAfterCommissionPayment();
+        } catch (_) {}
+      }
+      if (!mounted) return;
       Navigator.pop(context);
       widget.onSuccess();
 
@@ -1796,7 +1854,7 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
           ),
           content: Text(
             settledComm > 0
-                ? '${widget.currency}${amt.toStringAsFixed(0)} was authorized and credited (${widget.currency}$settledComm applied to your Cash Commission Wallet).\n\nYou can now accept rides or cashouts immediately.'
+                ? '${widget.currency}${amt.toStringAsFixed(0)} was authorized and credited (${widget.currency}$settledComm applied to your Cash Commission Wallet).\n\nYour Driver Switch has been turned on and unlocked. You can now receive ride requests.'
                 : '${widget.currency}${amt.toStringAsFixed(0)} has been credited to your driver wallet.\n\nYou can now accept rides or cashouts immediately.',
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
           ),

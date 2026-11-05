@@ -28,9 +28,20 @@ class SoundService {
   Timer? _vibrateTimer;
   Timer? _ringWatchdogTimer;
   String? _currentOrderKey;
-  String? _lastAlertTitle;
-  String? _lastAlertBody;
+  final Map<String, DateTime> _alertedOrderTimestamps = <String, DateTime>{};
   bool _keepAliveActive = false;
+
+  static String normalizeOrderKey(String? orderType, dynamic orderId) {
+    final t = (orderType ?? '').toLowerCase();
+    String normType = 'ride';
+    if (t.contains('delivery') || t.contains('package') || t.contains('parcel')) {
+      normType = 'delivery';
+    } else if (t.contains('hire') || t.contains('chauffeur') || t.contains('booking') || t.contains('hiring')) {
+      normType = 'booking';
+    }
+    final idStr = (orderId ?? '').toString().trim();
+    return '${normType}_${idStr.isEmpty ? "new" : idStr}';
+  }
 
   void _initAudioContext() {
     try {
@@ -107,12 +118,17 @@ class SoundService {
       debugPrint('SoundService: suppressed order alert ($orderType) because corresponding switch is OFF');
       return;
     }
-    final newKey = '${orderType ?? "order"}_${orderId ?? "new"}';
+    final newKey = normalizeOrderKey(orderType, orderId);
 
     // If already ringing (or user intentionally muted) for this exact order, keep state
     if (isRinging && _currentOrderKey == newKey) {
       return;
     }
+
+    // Also if we already alerted for this exact order within the last 45 seconds and it's the same order key, don't re-post duplicate banner
+    final prevAlertAt = _alertedOrderTimestamps[newKey];
+    final alreadyPostedBanner = prevAlertAt != null &&
+        DateTime.now().difference(prevAlertAt).inSeconds < 60;
 
     _currentOrderKey = newKey;
     isRingingNotifier.value = true;
@@ -120,15 +136,16 @@ class SoundService {
 
     final alertTitle = title ?? _formatOrderAlertTitle(orderType);
     final alertBody = body ?? 'New order request waiting! Tap to open and accept.';
-    _lastAlertTitle = alertTitle;
-    _lastAlertBody = alertBody;
 
-    // Fire high-priority system lock-screen notification with insistent ringtone
-    LocalNotificationService.instance.showIncomingOrderAlert(
-      title: alertTitle,
-      body: alertBody,
-      orderKey: newKey,
-    );
+    // Fire high-priority system lock-screen notification once per order
+    if (!alreadyPostedBanner) {
+      _alertedOrderTimestamps[newKey] = DateTime.now();
+      LocalNotificationService.instance.showIncomingOrderAlert(
+        title: alertTitle,
+        body: alertBody,
+        orderKey: newKey,
+      );
+    }
 
     await _playLoudRingtoneLoop();
 
@@ -165,22 +182,11 @@ class SoundService {
 
   void _startRingWatchdog() {
     _ringWatchdogTimer?.cancel();
-    int tickCount = 0;
     _ringWatchdogTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
       if (!isRinging || isMuted) return;
-      tickCount++;
       try {
         if (_ringtonePlayer.state != PlayerState.playing) {
           await _playLoudRingtoneLoop();
-        }
-        // Re-post lock-screen alert every 8 seconds while ringing so iOS/Android lock screen keeps ringing
-        if (tickCount % 2 == 0 && _currentOrderKey != null) {
-          LocalNotificationService.instance.showIncomingOrderAlert(
-            title: _lastAlertTitle ?? '🚨 Incoming Order Request!',
-            body: _lastAlertBody ?? 'Tap to view and accept the order.',
-            orderKey: _currentOrderKey,
-            forceRefresh: true,
-          );
         }
       } catch (_) {}
     });

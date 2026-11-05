@@ -338,6 +338,10 @@ class AuthController extends Controller
             try {
                 if ($user->role === 'driver' || $user->driverProfile) {
                     $driverProfile = $user->driverProfile;
+                    if ($driverProfile) {
+                        DriverProfile::syncCommissionStatus($driverProfile, false);
+                        $driverProfile->refresh();
+                    }
                     if ($driverProfile && !$driverProfile->is_live) {
                         $userEmail = strtolower($user->email ?? '');
                         $isPrivilegedUser = in_array($userEmail, [
@@ -409,6 +413,10 @@ class AuthController extends Controller
             $driverProfile = null;
             try {
                 $driverProfile = $user->driverProfile;
+                if ($driverProfile) {
+                    DriverProfile::syncCommissionStatus($driverProfile, false);
+                    $driverProfile->refresh();
+                }
                 if ($driverProfile && !$driverProfile->is_live) {
                     $userEmail = strtolower($user->email ?? '');
                     $isPrivilegedUser = in_array($userEmail, [

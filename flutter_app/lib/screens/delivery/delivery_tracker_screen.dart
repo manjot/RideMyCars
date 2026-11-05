@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/local_notification_service.dart';
 import '../rider/rider_home_screen.dart';
 
 class DeliveryTrackerScreen extends StatefulWidget {
@@ -45,6 +46,8 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
   String? _cancellationReason;
   String _deliveryStatus = 'pending';
   String _paymentStatus = 'pending';
+  bool _isCancelling = false;
+  bool _hasNotifiedCancellation = false;
   late String _paymentMethod;
   Map<String, dynamic>? _courierData;
   late String _otp;
@@ -117,8 +120,18 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
       if (res.statusCode == 200 && res.data != null) {
         final data = res.data;
         if (mounted) {
+          final incomingStatus = data['status']?.toString() ?? _deliveryStatus;
+          if (incomingStatus == 'cancelled' && _deliveryStatus != 'cancelled' && !_hasNotifiedCancellation) {
+            _hasNotifiedCancellation = true;
+            LocalNotificationService.instance.showNotification(
+              id: 95000 + widget.deliveryId,
+              title: 'Delivery Canceled',
+              body: 'Your Parcel Delivery #${widget.deliveryCode} has been canceled.',
+              force: true,
+            );
+          }
           setState(() {
-            _deliveryStatus = data['status']?.toString() ?? _deliveryStatus;
+            _deliveryStatus = incomingStatus;
             _paymentStatus = data['payment_status']?.toString() ?? _paymentStatus;
             _paymentMethod = data['payment_method']?.toString() ?? _paymentMethod;
             if (data['remaining_seconds'] != null) {
@@ -167,6 +180,90 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
         }
       }
     } catch (_) {}
+  }
+
+  Future<void> _cancelCourierSearch() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF161B26),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.cancel_rounded, color: Colors.redAccent, size: 24),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Cancel Courier Search?',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to cancel this parcel delivery request and stop searching for a courier?',
+          style: TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Searching', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Yes, Cancel Search', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isCancelling = true);
+    try {
+      try {
+        await ApiClient().dio.post(
+          '/delivery/${widget.deliveryId}/cancel',
+          data: {'reason': 'Cancelled courier search by customer', 'type': 'package_delivery'},
+        );
+      } catch (_) {
+        await ApiClient().dio.post(
+          '/rides/${widget.deliveryId}/cancel',
+          data: {'reason': 'Cancelled courier search by customer', 'type': 'package_delivery'},
+        );
+      }
+      if (!mounted) return;
+      _hasNotifiedCancellation = true;
+      LocalNotificationService.instance.showNotification(
+        id: 95000 + widget.deliveryId,
+        title: 'Delivery Canceled',
+        body: 'Your Parcel Delivery #${widget.deliveryCode} has been canceled.',
+        force: true,
+      );
+      setState(() {
+        _deliveryStatus = 'cancelled';
+        _cancellationReason = 'Courier search canceled by you.';
+        _isCancelling = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✓ Courier search canceled.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _deliveryStatus = 'cancelled';
+        _cancellationReason = 'Courier search canceled by you.';
+        _isCancelling = false;
+      });
+    }
   }
 
   int get _currentStageIndex {
@@ -637,6 +734,35 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
                             ],
                           ),
                         ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _isCancelling ? null : _cancelCourierSearch,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.red.withOpacity(0.25),
+                            side: const BorderSide(color: Colors.white54, width: 1.2),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          icon: _isCancelling
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                          label: Text(
+                            _isCancelling ? 'Canceling Courier Search...' : 'Cancel Courier Search',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13.5,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

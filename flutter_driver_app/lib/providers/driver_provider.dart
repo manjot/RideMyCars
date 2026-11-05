@@ -23,6 +23,12 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool _activeChauffeurOnline = false;
   bool _isDriverDocsVerified = false;
   bool _isGuarantorVerified = false;
+  bool _isCommissionLocked = false;
+  double _commissionWalletBalance = 0.0;
+  int? _commissionDaysRemaining;
+  String? _commissionWarningMessage;
+  bool _hasNotifiedThresholdWarning = false;
+  bool _hasNotifiedLockWarning = false;
   String _professionalBadgeLabel = 'Driver (Document Verification Pending)';
   String? _errorMessage;
   double? _currentLat;
@@ -49,6 +55,10 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get activeChauffeurOnline => _activeChauffeurOnline;
   bool get isDriverDocsVerified => _isDriverDocsVerified;
   bool get isGuarantorVerified => _isGuarantorVerified;
+  bool get isCommissionLocked => _isCommissionLocked;
+  double get commissionWalletBalance => _commissionWalletBalance;
+  int? get commissionDaysRemaining => _commissionDaysRemaining;
+  String? get commissionWarningMessage => _commissionWarningMessage;
   String get professionalBadgeLabel => _professionalBadgeLabel;
   String? get errorMessage => _errorMessage;
   double? get currentLat => _currentLat;
@@ -113,6 +123,20 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
           _activeChauffeurOnline = profile['active_chauffeur_online'] == true || profile['active_chauffeur_online'] == 1 || profile['active_chauffeur_online'] == '1' || profile['chauffeur_mode'] == true;
           _isDriverDocsVerified = profile['is_driver_docs_verified'] == true || profile['is_driver_docs_verified'] == 1;
           _isGuarantorVerified = profile['is_guarantor_verified'] == true || profile['is_guarantor_verified'] == 1;
+          _commissionWalletBalance = (profile['cash_commission_wallet'] as num?)?.toDouble() ?? 0.0;
+          _isCommissionLocked = profile['is_commission_locked'] == true || profile['commission_locked'] == true || profile['commission_locked'] == 1;
+          _commissionDaysRemaining = (profile['commission_days_remaining'] as num?)?.toInt();
+          _commissionWarningMessage = profile['commission_warning_message']?.toString();
+
+          if (_commissionWalletBalance >= 100 && !_hasNotifiedThresholdWarning) {
+            _hasNotifiedThresholdWarning = true;
+            LocalNotificationService.instance.showStatusNotification(
+              id: 88100,
+              title: 'Commission Wallet Alert',
+              body: 'Kindly top up your wallet balance within 7 days for Commission Deduction or risk deactivation.',
+            );
+          }
+
           if (profile['professional_badge_label'] != null && profile['professional_badge_label'].toString().isNotEmpty) {
             _professionalBadgeLabel = profile['professional_badge_label'].toString();
           } else if (_isChauffeur) {
@@ -121,7 +145,20 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
             _professionalBadgeLabel = _isDriverDocsVerified ? 'Verified Professional Driver' : 'Driver (Document Verification Pending)';
           }
           final available = profile['is_available'] == true || profile['is_available'] == 1 || profile['is_available'] == '1';
-          _isOnline = _isLive && available;
+          if (_isCommissionLocked) {
+            _isOnline = false;
+            _activeChauffeurOnline = false;
+            if (!_hasNotifiedLockWarning) {
+              _hasNotifiedLockWarning = true;
+              LocalNotificationService.instance.showStatusNotification(
+                id: 88101,
+                title: 'Driver Switch Turned Off & Locked',
+                body: 'Your Driver Switch has been turned off and locked due to unpaid commission exceeding the 7-day payment deadline. Please pay your outstanding commission to unlock your Driver Switch.',
+              );
+            }
+          } else {
+            _isOnline = _isLive && available;
+          }
           LocalNotificationService.instance.updateSwitchStates(
             isDriverOnline: _isOnline,
             isChauffeurOnline: _activeChauffeurOnline,
@@ -148,9 +185,81 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  /// Sync commission status from Wallet & Payouts summary response
+  void syncCommissionFromWalletSummary(Map<String, dynamic> summary) {
+    final newCommBal = (summary['commission_wallet_balance'] as num?)?.toDouble()
+        ?? (summary['commission_wallet']?['balance'] as num?)?.toDouble()
+        ?? _commissionWalletBalance;
+    final locked = summary['is_commission_locked'] == true
+        || summary['commission_wallet']?['is_commission_locked'] == true;
+    final daysRem = (summary['commission_days_remaining'] as num?)?.toInt()
+        ?? (summary['commission_wallet']?['commission_days_remaining'] as num?)?.toInt();
+    final warnMsg = (summary['commission_warning_message'] ?? summary['commission_wallet']?['commission_warning_message'])?.toString();
+
+    _commissionWalletBalance = newCommBal;
+    _commissionDaysRemaining = daysRem;
+    _commissionWarningMessage = warnMsg;
+
+    if (newCommBal >= 100 && !_hasNotifiedThresholdWarning) {
+      _hasNotifiedThresholdWarning = true;
+      LocalNotificationService.instance.showStatusNotification(
+        id: 88100,
+        title: 'Commission Wallet Alert',
+        body: 'Kindly top up your wallet balance within 7 days for Commission Deduction or risk deactivation.',
+      );
+    } else if (newCommBal < 100) {
+      _hasNotifiedThresholdWarning = false;
+    }
+
+    if (locked) {
+      _isCommissionLocked = true;
+      _isOnline = false;
+      _activeChauffeurOnline = false;
+      _stopDispatchLoop();
+      if (!_hasNotifiedLockWarning) {
+        _hasNotifiedLockWarning = true;
+        LocalNotificationService.instance.showStatusNotification(
+          id: 88101,
+          title: 'Driver Switch Turned Off & Locked',
+          body: 'Your Driver Switch has been turned off and locked due to unpaid commission exceeding the 7-day payment deadline. Please pay your outstanding commission to unlock your Driver Switch.',
+        );
+      }
+    } else if (_isCommissionLocked && !locked) {
+      _isCommissionLocked = false;
+      _hasNotifiedLockWarning = false;
+    }
+    notifyListeners();
+  }
+
+  /// Called immediately after the driver pays/settles their outstanding commission
+  Future<void> unlockSwitchAfterCommissionPayment() async {
+    _isCommissionLocked = false;
+    _hasNotifiedLockWarning = false;
+    _hasNotifiedThresholdWarning = false;
+    _isOnline = true;
+    _isLive = true;
+    _errorMessage = null;
+    LocalNotificationService.instance.updateSwitchStates(
+      isDriverOnline: _isOnline,
+      isChauffeurOnline: _activeChauffeurOnline,
+    );
+    LocalNotificationService.instance.showStatusNotification(
+      id: 88102,
+      title: 'Driver Switch Turned On & Unlocked',
+      body: 'Your Driver Switch has been turned on and unlocked. You can now receive ride requests.',
+    );
+    _startDispatchLoop();
+    notifyListeners();
+  }
+
   /// Requirement 5: Toggle Active Chauffeur Switch (works independently even when regular Driver status is offline)
   Future<bool> toggleChauffeurOnline() async {
     final targetState = !_activeChauffeurOnline;
+    if (targetState && _isCommissionLocked) {
+      _errorMessage = 'Your Driver Switch has been turned off and locked due to unpaid commission exceeding the 7-day payment deadline. Please top up your wallet to pay the outstanding commission and unlock your Driver Switch.';
+      notifyListeners();
+      return false;
+    }
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -193,10 +302,25 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
         await pollPendingRequests();
         return true;
       } else {
+        if (res.data is Map && res.data['is_commission_locked'] == true) {
+          _isCommissionLocked = true;
+          _isOnline = false;
+          _activeChauffeurOnline = false;
+        }
         _errorMessage = res.data['message'] ?? 'Failed to update Chauffeur status';
       }
     } catch (e) {
-      _errorMessage = 'Network error while updating Chauffeur status';
+      if (e is DioException && e.response?.data is Map) {
+        final d = e.response!.data as Map;
+        if (d['is_commission_locked'] == true) {
+          _isCommissionLocked = true;
+          _isOnline = false;
+          _activeChauffeurOnline = false;
+        }
+        _errorMessage = d['message']?.toString() ?? 'Failed to update Chauffeur status';
+      } else {
+        _errorMessage = 'Network error while updating Chauffeur status';
+      }
       debugPrint('Error toggling chauffeur switch: $e');
     }
     _isLoading = false;
@@ -207,6 +331,11 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<bool> toggleOnline() async {
     final previousState = _isOnline;
     final targetState = !previousState;
+    if (targetState && _isCommissionLocked) {
+      _errorMessage = 'Your Driver Switch has been turned off and locked due to unpaid commission exceeding the 7-day payment deadline. Please top up your wallet to pay the outstanding commission and unlock your Driver Switch.';
+      notifyListeners();
+      return false;
+    }
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -255,7 +384,13 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
         notifyListeners();
         return true;
       } else {
-        _isOnline = previousState;
+        if (res.data is Map && res.data['is_commission_locked'] == true) {
+          _isCommissionLocked = true;
+          _isOnline = false;
+          _activeChauffeurOnline = false;
+        } else {
+          _isOnline = previousState;
+        }
         _errorMessage = res.data['message']?.toString() ?? 'Failed to update status.';
         _isLoading = false;
         notifyListeners();
@@ -263,8 +398,18 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
     } catch (e) {
       _isOnline = previousState;
-      if (e is DioException && e.response?.data != null && e.response?.data is Map && e.response?.data['message'] != null) {
-        _errorMessage = e.response?.data['message'].toString();
+      if (e is DioException && e.response?.data != null && e.response?.data is Map) {
+        final d = e.response!.data as Map;
+        if (d['is_commission_locked'] == true) {
+          _isCommissionLocked = true;
+          _isOnline = false;
+          _activeChauffeurOnline = false;
+        }
+        if (d['message'] != null) {
+          _errorMessage = d['message'].toString();
+        } else {
+          _errorMessage = 'Network connection error. Please try again.';
+        }
       } else {
         _errorMessage = 'Network connection error. Please try again.';
       }
@@ -511,6 +656,23 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
           },
         ).timeout(const Duration(seconds: 4));
         if (res.statusCode == 200) {
+          if (res.data is Map && res.data['is_commission_locked'] == true) {
+            _isCommissionLocked = true;
+            _isOnline = false;
+            _activeChauffeurOnline = false;
+            _pendingRequests = [];
+            _stopDispatchLoop();
+            if (!_hasNotifiedLockWarning) {
+              _hasNotifiedLockWarning = true;
+              LocalNotificationService.instance.showStatusNotification(
+                id: 88101,
+                title: 'Driver Switch Turned Off & Locked',
+                body: 'Your Driver Switch has been turned off and locked due to unpaid commission exceeding the 7-day payment deadline. Please pay your outstanding commission to unlock your Driver Switch.',
+              );
+            }
+            notifyListeners();
+            return;
+          }
           final List newReqs = (res.data is Map ? (res.data['requests'] ?? res.data['data']) : (res.data is List ? res.data : [])) ?? [];
           final mapped = newReqs
               .map((e) => Map<String, dynamic>.from(e))
@@ -542,7 +704,7 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
             // Loud and long ringtone + lock-screen alert starts ringing continuously until driver responds
             final firstOrder = mapped.first;
             final orderType = firstOrder['type']?.toString() ?? 'ride';
-            final orderId = firstOrder['ride_id'] ?? firstOrder['assignment_id'] ?? firstOrder['delivery_id'] ?? firstOrder['driver_booking_id'] ?? firstOrder['id'];
+            final orderId = firstOrder['delivery_id'] ?? firstOrder['package_delivery_id'] ?? firstOrder['ride_id'] ?? firstOrder['driver_booking_id'] ?? firstOrder['booking_id'] ?? firstOrder['assignment_id'] ?? firstOrder['id'];
             final pickup = firstOrder['pickup_location'] ?? firstOrder['pickup'] ?? 'Pickup Location';
             final dropoff = firstOrder['dropoff_location'] ?? firstOrder['dropoff'] ?? 'Destination';
             final sym = firstOrder['currency_symbol'] ?? '';
@@ -869,7 +1031,15 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
       _isLoading = true;
       notifyListeners();
 
-      final String? type = fallbackRide?['type']?.toString();
+      String? type = fallbackRide?['type']?.toString();
+      if ((type == null || type.isEmpty) && fallbackRide != null) {
+        if (fallbackRide['package_delivery_id'] != null ||
+            fallbackRide['delivery_id'] != null ||
+            fallbackRide['delivery_code'] != null ||
+            (fallbackRide['code']?.toString().toUpperCase().startsWith('DEL') ?? false)) {
+          type = 'package_delivery';
+        }
+      }
       final cancelData = <String, dynamic>{
         'status': 'cancelled',
         'reason': reason ?? 'Cancelled by driver',
@@ -879,18 +1049,29 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
       bool backendSuccess = false;
 
       if (rideId > 0) {
+        if (type != null && type.toLowerCase().contains('delivery')) {
+          try {
+            final res = await _dio.post('/delivery/$rideId/cancel', data: cancelData);
+            if (res.statusCode == 200) {
+              backendSuccess = true;
+            }
+          } catch (_) {}
+        }
+
         // 1. Try dedicated ride cancel endpoint
-        try {
-          final res = await _dio.post(ApiConstants.rideCancel(rideId), data: cancelData);
-          dynamic data = res.data;
-          if (data is String) {
-            try { data = jsonDecode(data); } catch (_) {}
+        if (!backendSuccess) {
+          try {
+            final res = await _dio.post(ApiConstants.rideCancel(rideId), data: cancelData);
+            dynamic data = res.data;
+            if (data is String) {
+              try { data = jsonDecode(data); } catch (_) {}
+            }
+            if (res.statusCode == 200 && (data is Map && (data['success'] == true || data['status'] == 'cancelled' || data['status'] == 'not_found'))) {
+              backendSuccess = true;
+            }
+          } catch (e) {
+            debugPrint('rideCancel endpoint notice: $e, falling back to rideStatus...');
           }
-          if (res.statusCode == 200 && (data is Map && (data['success'] == true || data['status'] == 'cancelled' || data['status'] == 'not_found'))) {
-            backendSuccess = true;
-          }
-        } catch (e) {
-          debugPrint('rideCancel endpoint notice: $e, falling back to rideStatus...');
         }
 
         // 2. Fallback to status update endpoint with 'cancelled'

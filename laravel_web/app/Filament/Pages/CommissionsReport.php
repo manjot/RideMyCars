@@ -121,6 +121,12 @@ class CommissionsReport extends Page
         }
 
         // -------------------------------------------------------------
+        // Enforce 7-day commission deadline & fetch overdue drivers
+        // -------------------------------------------------------------
+        DriverProfile::enforceAllOverdueCommissionDeadlines();
+        $overdueDrivers = $this->getOverdueCommissionDrivers();
+
+        // -------------------------------------------------------------
         // Individual Driver's Commission History Records
         // -------------------------------------------------------------
         $driverCommissionsHistory = $this->getDriverCommissionsHistory();
@@ -144,6 +150,7 @@ class CommissionsReport extends Page
             'monthlySeries' => $monthlySeries,
             'yearlySeries' => $yearlySeries,
             'driverHistory' => $driverCommissionsHistory,
+            'overdueDrivers' => $overdueDrivers,
             'driversList' => $driversList,
             'activePeriodTab' => $this->activePeriodTab,
             'driverFilter' => $this->driverFilter,
@@ -611,6 +618,65 @@ class CommissionsReport extends Page
         usort($records, fn($a, $b) => $b['timestamp'] <=> $a['timestamp']);
 
         return $records;
+    }
+
+    /**
+     * Get list of drivers who have exceeded the 7-day payment deadline for Cash Commission Wallet (>= 100).
+     * Automatically excludes any driver once they make the payment.
+     */
+    protected function getOverdueCommissionDrivers(): array
+    {
+        try {
+            if (!Schema::hasTable('driver_profiles')) {
+                return [];
+            }
+
+            DriverProfile::ensureCommissionColumnsExist();
+
+            $profiles = DriverProfile::with('user')
+                ->where('cash_commission_wallet', '>=', 100)
+                ->where(function ($q) {
+                    $q->where('commission_locked', true)
+                      ->orWhere('commission_threshold_reached_at', '<=', now()->subDays(7));
+                })
+                ->orderBy('commission_threshold_reached_at', 'asc')
+                ->get();
+
+            $list = [];
+            foreach ($profiles as $profile) {
+                $user = $profile->user;
+                $commVal = round((float) ($profile->cash_commission_wallet ?? 0));
+                $conv = $this->toGhsAndUsd($commVal, 'GHS');
+
+                $reachedAt = $profile->commission_threshold_reached_at
+                    ? Carbon::parse($profile->commission_threshold_reached_at)
+                    : now()->subDays(7);
+                $deadlineAt = $reachedAt->copy()->addDays(7);
+                $daysOverdue = max(1, (int) ceil($deadlineAt->diffInHours(now(), false) / 24));
+
+                $list[] = [
+                    'profile_id' => $profile->id,
+                    'user_id' => $profile->user_id,
+                    'driver_name' => $user?->name ?? ('Driver #' . $profile->id),
+                    'driver_email' => $user?->email ?? 'N/A',
+                    'driver_phone' => $user?->phone ?? 'N/A',
+                    'commission_ghs' => $conv['ghs'],
+                    'commission_usd' => $conv['usd'],
+                    'threshold_reached_at' => $reachedAt->format('M d, Y H:i'),
+                    'deadline_at' => $deadlineAt->format('M d, Y H:i'),
+                    'days_overdue' => $daysOverdue,
+                    'is_switch_locked' => (bool) $profile->commission_locked,
+                    'is_available' => (bool) $profile->is_available,
+                    'locked_at' => $profile->commission_locked_at
+                        ? Carbon::parse($profile->commission_locked_at)->format('M d, Y H:i')
+                        : $deadlineAt->format('M d, Y H:i'),
+                ];
+            }
+
+            return $list;
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**

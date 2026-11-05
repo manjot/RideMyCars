@@ -649,6 +649,24 @@ class DriverApiController extends Controller
             ]
         );
 
+        DriverProfile::syncCommissionStatus($profile, false);
+        $profile->refresh();
+
+        if ($profile->is_commission_locked) {
+            $profile->update([
+                'is_available' => false,
+                'active_chauffeur_online' => false,
+            ]);
+            return response()->json([
+                'success' => false,
+                'is_available' => false,
+                'is_live' => (bool) $profile->is_live,
+                'is_commission_locked' => true,
+                'commission_wallet_balance' => (int) round((float) ($profile->cash_commission_wallet ?? 0)),
+                'message' => 'Your Driver Switch has been turned off and locked due to unpaid commission exceeding the 7-day payment deadline. Kindly pay your outstanding commission in Wallet & Payouts to unlock.',
+            ], 403);
+        }
+
         $isAvailable = $request->has('is_available') ? $request->boolean('is_available') : !$profile->is_available;
 
         // Auto-activate live status if driver is verified, an admin/test account, or certificates not rejected
@@ -1157,6 +1175,23 @@ class DriverApiController extends Controller
         ]) || str_ends_with($userEmail, '@ridemycars.com') || (int)$user->id === 259;
 
         // If driver account is inactive (not live), auto-activate if verified or privileged, else return empty
+        if ($user->driverProfile) {
+            DriverProfile::syncCommissionStatus($user->driverProfile, false);
+            $user->driverProfile->refresh();
+
+            if ($user->driverProfile->is_commission_locked) {
+                return response()->json([
+                    'success' => true,
+                    'requests' => [],
+                    'data' => [],
+                    'is_available' => false,
+                    'is_commission_locked' => true,
+                    'commission_wallet_balance' => (int) round((float) ($user->driverProfile->cash_commission_wallet ?? 0)),
+                    'message' => 'Your Driver Switch has been turned off due to unpaid commission exceeding the 7-day payment deadline.',
+                ]);
+            }
+        }
+
         if ($user->driverProfile && !$user->driverProfile->is_live) {
             $isVerified = in_array($user->driverProfile->verification_status, ['verified', 'approved', 'submitted'])
                 || in_array($user->driverProfile->kyc_status, ['verified', 'approved']);
@@ -1734,15 +1769,26 @@ class DriverApiController extends Controller
 
             if ($assignment->wasRecentlyCreated) {
                 try {
-                    \App\Services\NotificationService::send(
-                        $user->id,
-                        'package_delivery_assigned',
-                        'New Parcel Delivery Request',
-                        "New package delivery from {$pd->pickup_location} to {$pd->dropoff_location}. Tap to accept.",
-                        null,
-                        '/driver/dashboard',
-                        ['delivery_id' => $pd->id, 'type' => 'package_delivery', 'icon' => 'truck', 'color' => 'emerald']
-                    );
+                    $alreadyNotified = \App\Models\UserNotification::where('user_id', $user->id)
+                        ->where('type', 'package_delivery_assigned')
+                        ->where('created_at', '>=', now()->subHours(2))
+                        ->get()
+                        ->contains(function ($n) use ($pd) {
+                            $d = is_array($n->data) ? $n->data : [];
+                            return (int) ($d['delivery_id'] ?? 0) === (int) $pd->id;
+                        });
+
+                    if (!$alreadyNotified) {
+                        \App\Services\NotificationService::send(
+                            $user->id,
+                            'package_delivery_assigned',
+                            'New Parcel Delivery Request',
+                            "New package delivery from {$pd->pickup_location} to {$pd->dropoff_location}. Tap to accept.",
+                            null,
+                            '/driver/dashboard',
+                            ['delivery_id' => $pd->id, 'type' => 'package_delivery', 'icon' => 'truck', 'color' => 'emerald']
+                        );
+                    }
                 } catch (\Throwable $e) {}
             }
 
@@ -2609,6 +2655,24 @@ class DriverApiController extends Controller
         }
 
         \App\Models\DriverCashCommission::ensureTableExists();
+        DriverProfile::syncCommissionStatus($profile, false);
+        $profile->refresh();
+
+        if ($profile->is_commission_locked) {
+            $profile->update([
+                'is_available' => false,
+                'active_chauffeur_online' => false,
+                'chauffeur_mode' => false,
+            ]);
+            return response()->json([
+                'success' => false,
+                'is_chauffeur' => (bool) ($profile->is_chauffeur || $profile->driver_type === 'chauffeur'),
+                'active_chauffeur_online' => false,
+                'chauffeur_mode' => false,
+                'is_commission_locked' => true,
+                'message' => 'Your Driver Switch has been turned off and locked due to unpaid commission exceeding the 7-day payment deadline. Kindly pay your outstanding commission in Wallet & Payouts to unlock.',
+            ], 403);
+        }
 
         // If explicitly passed (boolean/string), use it; otherwise toggle current state
         $newState = $request->has('online') 
