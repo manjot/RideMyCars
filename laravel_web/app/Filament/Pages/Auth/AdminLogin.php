@@ -106,3 +106,4 @@ class AdminLogin extends BaseLogin
         return app(LoginResponse::class);
     }
 }
+
