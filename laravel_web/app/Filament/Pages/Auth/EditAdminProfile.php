@@ -85,3 +85,4 @@ class EditAdminProfile extends BaseEditProfile
             ]);
     }
 }
+
