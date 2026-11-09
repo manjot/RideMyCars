@@ -78,9 +78,36 @@ class LocalNotificationService {
     }
   }
 
+  static const Set<String> _driverOnlyTypes = {
+    'ride_assignment',
+    'new_ride_request',
+    'driver_hiring_assigned',
+    'driver_booking',
+    'package_delivery_assigned',
+    'backup_ride_assigned',
+    'backup_ride_request',
+    'delivery_request',
+    'courier_accepted_driver',
+    'delivery_cancelled_driver',
+    'delivery_completed_driver',
+    'driver_switch_locked',
+    'driver_switch_unlocked',
+    'commission_threshold_warning',
+    'commission_settled',
+  };
+
   void _setupFcmListeners() {
     try {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final type = (message.data['type'] ?? '').toString().toLowerCase();
+        final targetRole = (message.data['target_role'] ?? '').toString().toLowerCase();
+        final link = (message.data['link'] ?? '').toString();
+        if (targetRole == 'driver' ||
+            _driverOnlyTypes.contains(type) ||
+            link.startsWith('/driver/')) {
+          debugPrint('[FCM Foreground] Ignored driver-targeted notification on Rider app ($type)');
+          return;
+        }
         debugPrint('[FCM Foreground] Received: ${message.notification?.title}');
         final title = message.notification?.title ??
             message.data['title'] ??
@@ -89,7 +116,6 @@ class LocalNotificationService {
             message.data['message'] ??
             message.data['body'] ??
             '';
-        final type = (message.data['type'] ?? '').toString().toLowerCase();
         final lowerTitle = title.toString().toLowerCase();
         final lowerBody = body.toString().toLowerCase();
         String? payload;

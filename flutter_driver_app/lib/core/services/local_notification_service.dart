@@ -181,9 +181,31 @@ class LocalNotificationService {
     }
   }
 
+  static const Set<String> _riderOnlyTypes = {
+    'ride_requested',
+    'en_route',
+    'arrived',
+    'courier_accepted',
+    'courier_en_route',
+    'courier_arrived',
+    'package_picked_up',
+    'delivery_cancelled',
+    'delivery_completed',
+  };
+
   void _setupFcmListeners() {
     try {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final type = (message.data['type'] ?? '').toString().toLowerCase();
+        final targetRole = (message.data['target_role'] ?? '').toString().toLowerCase();
+        final link = (message.data['link'] ?? '').toString();
+        if (targetRole == 'rider' ||
+            _riderOnlyTypes.contains(type) ||
+            link.startsWith('/ride?resume=') ||
+            link.startsWith('/delivery/')) {
+          debugPrint('[Driver FCM Foreground] Ignored rider-targeted notification ($type)');
+          return;
+        }
         debugPrint(
             '[Driver FCM Foreground] Received: ${message.notification?.title}');
         final title = message.notification?.title ??
@@ -193,14 +215,17 @@ class LocalNotificationService {
             message.data['message'] ??
             message.data['body'] ??
             'New ride request received.';
-        final type = (message.data['type'] ?? '').toString().toLowerCase();
-        final isOrderAlert = type.contains('ride') ||
-            type.contains('booking') ||
-            type.contains('delivery') ||
-            type.contains('hiring') ||
-            type.contains('request') ||
-            title.toLowerCase().contains('request') ||
-            title.toLowerCase().contains('order');
+        final isOrderAlert = type == 'ride_assignment' ||
+            type == 'new_ride_request' ||
+            type == 'driver_hiring_assigned' ||
+            type == 'driver_booking' ||
+            type == 'package_delivery_assigned' ||
+            type == 'backup_ride_assigned' ||
+            type == 'backup_ride_request' ||
+            type == 'delivery_request' ||
+            title.toLowerCase().contains('new ride request') ||
+            title.toLowerCase().contains('new chauffeur request') ||
+            title.toLowerCase().contains('new parcel delivery');
 
         if (isOrderAlert) {
           if (!isOrderTypeAllowed(type, title: title)) {

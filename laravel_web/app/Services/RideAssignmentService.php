@@ -87,12 +87,19 @@ class RideAssignmentService
             ->pluck('driver_id')
             ->toArray();
 
-        $allExcluded = array_unique(array_merge($excludedDriverIds, $busyDriverIds));
+        $allExcluded = array_values(array_unique(array_merge(
+            $excludedDriverIds,
+            $busyDriverIds,
+            $ride->rider_id ? [(int) $ride->rider_id] : []
+        )));
 
-        // 3. Get all online and live (active) drivers
+        // 3. Get all online and live (active) drivers (strictly driver/chauffeur accounts, never the rider)
         $query = DriverProfile::where('is_available', true)
             ->where('is_live', true)
-            ->whereNotIn('user_id', $allExcluded);
+            ->whereNotIn('user_id', $allExcluded)
+            ->whereHas('user', function ($uq) {
+                $uq->whereIn('role', ['driver', 'chauffeur']);
+            });
 
         // Requirement 5: Drivers upgraded to Chauffeurs operating in Chauffeur mode
         // must NOT receive regular ride requests.

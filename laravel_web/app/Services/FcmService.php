@@ -19,12 +19,22 @@ class FcmService
             return false;
         }
 
-        $token = $user->driverProfile?->fcm_token ?: $user->fcm_token;
+        $targetRole = strtolower((string) ($data['target_role'] ?? ''));
+        if ($targetRole === 'driver') {
+            $token = $user->driverProfile?->fcm_token
+                ?: (in_array($user->role, ['driver', 'chauffeur'], true) ? $user->fcm_token : null);
+        } elseif ($targetRole === 'rider') {
+            $token = $user->fcm_token;
+        } else {
+            $token = $user->driverProfile?->fcm_token ?: $user->fcm_token;
+        }
+
         if (empty($token)) {
             Log::info("[FcmService] No FCM token found for user #{$userId}");
             return false;
         }
 
+        $data['recipient_user_id'] = (string) $userId;
         return self::sendToToken($token, $title, $body, $data, $sound);
     }
 

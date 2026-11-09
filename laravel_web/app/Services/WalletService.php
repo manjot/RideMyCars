@@ -248,6 +248,8 @@ class WalletService
             throw new \InvalidArgumentException('Invalid payout method selected. Please choose Bank Account or Mobile Money (MoMo).');
         }
 
+        $targetRole = $payoutDetails['target_role'] ?? ($user->role === 'driver' ? 'driver' : 'rider');
+
         // Validate and normalize payout details
         if ($payoutMethod === 'bank_account') {
             $bankName = trim($payoutDetails['bank_name'] ?? '');
@@ -296,7 +298,7 @@ class WalletService
 
         $currency = self::getUserCurrency($user);
 
-        return DB::transaction(function () use ($user, $amount, $fee, $netAmount, $payoutMethod, $payoutDetails, $currency, $saveAsDefault) {
+        return DB::transaction(function () use ($user, $amount, $fee, $netAmount, $payoutMethod, $payoutDetails, $currency, $saveAsDefault, $targetRole) {
             // Re-check balance inside transaction
             $freshUser = User::where('id', $user->id)->lockForUpdate()->first();
             if ($freshUser->wallet_balance < $amount) {
@@ -374,6 +376,8 @@ class WalletService
                     'currency' => $currency,
                     'status' => 'approved',
                     'is_instant' => true,
+                    'target_role' => $targetRole,
+                    'recipient_user_id' => $user->id,
                 ]
             );
 
@@ -631,6 +635,8 @@ class WalletService
                 ? "Your deposit of {$currency}{$amount} via {$methodLabel} was received. {$currency}{$settledCommission} was deducted for your Cash Commission Wallet (Remaining: {$currency}{$newOutstandingComm}). Main Wallet Balance: {$currency}{$balanceAfter}"
                 : "Your wallet has been credited with {$currency}{$amount} via {$methodLabel}. Current balance: {$currency}{$balanceAfter}";
 
+            $targetRole = $metadata['target_role'] ?? ($freshUser->role === 'driver' ? 'driver' : 'rider');
+
             NotificationService::send(
                 $freshUser->id,
                 'wallet_credited',
@@ -644,6 +650,8 @@ class WalletService
                     'currency' => $currency,
                     'balance' => (int) $balanceAfter,
                     'commission_wallet_balance' => (int) $newOutstandingComm,
+                    'target_role' => $targetRole,
+                    'recipient_user_id' => $freshUser->id,
                 ]
             );
 

@@ -62,11 +62,19 @@ class WalletApiController extends Controller
         }
 
         try {
+            $isDriverRequest = strtolower((string) $request->header('X-User-Role', '')) === 'driver'
+                || str_contains((string) $request->header('User-Agent', ''), 'RideMyCarsDriver');
+            $targetRole = $isDriverRequest ? 'driver' : 'rider';
+
+            $payoutDetailsWithRole = array_merge($request->input('payout_details', []), [
+                'target_role' => $targetRole,
+            ]);
+
             $withdrawal = WalletService::submitWithdrawal(
                 $user,
                 (float) $request->input('amount'),
                 $request->input('payout_method'),
-                $request->input('payout_details'),
+                $payoutDetailsWithRole,
                 (bool) $request->input('save_payout_method', false)
             );
 
@@ -127,12 +135,17 @@ class WalletApiController extends Controller
         }
 
         try {
+            $isDriverRequest = strtolower((string) $request->header('X-User-Role', '')) === 'driver'
+                || str_contains((string) $request->header('User-Agent', ''), 'RideMyCarsDriver');
+            $targetRole = $isDriverRequest ? 'driver' : 'rider';
+
             $amount = round((float) $request->input('amount'));
             $method = strtolower((string) $request->input('payment_method', 'momo'));
             $details = $request->input('payment_details', []);
             if (!is_array($details)) {
                 $details = [];
             }
+            $details['target_role'] = $targetRole;
 
             $phone = trim((string) ($request->input('phone_number') ?: ($details['phone_number'] ?? ($details['momo_phone'] ?? ($user->phone ?? '')))));
             $network = strtoupper(trim((string) ($request->input('network') ?: ($details['network'] ?? ($details['momo_network'] ?? 'MTN')))));
@@ -209,6 +222,8 @@ class WalletApiController extends Controller
                                 'currency' => $currency,
                                 'phone_number' => $phone,
                                 'network' => $network,
+                                'target_role' => $targetRole,
+                                'recipient_user_id' => $user->id,
                             ]
                         );
                     } catch (\Throwable $ne) {}

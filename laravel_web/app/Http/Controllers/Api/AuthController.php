@@ -1278,6 +1278,16 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user() ?? $request->user('sanctum');
+            if ($user) {
+                try {
+                    $user->update(['fcm_token' => null]);
+                } catch (\Throwable $e) {}
+                if ($user->driverProfile) {
+                    try {
+                        $user->driverProfile->update(['fcm_token' => null]);
+                    } catch (\Throwable $e) {}
+                }
+            }
             if ($user && $user->currentAccessToken()) {
                 $user->currentAccessToken()->delete();
             } else {

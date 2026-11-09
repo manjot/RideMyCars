@@ -29,7 +29,28 @@ class NotificationProvider extends ChangeNotifier {
 
   void stopPolling() {
     _timer?.cancel();
+    _lastSeenId = 0;
+    _notifications = [];
+    _unreadCount = 0;
   }
+
+  static const Set<String> _driverOnlyTypes = {
+    'ride_assignment',
+    'new_ride_request',
+    'driver_hiring_assigned',
+    'driver_booking',
+    'package_delivery_assigned',
+    'backup_ride_assigned',
+    'backup_ride_request',
+    'delivery_request',
+    'courier_accepted_driver',
+    'delivery_cancelled_driver',
+    'delivery_completed_driver',
+    'driver_switch_locked',
+    'driver_switch_unlocked',
+    'commission_threshold_warning',
+    'commission_settled',
+  };
 
   Future<void> fetchNotifications() async {
     try {
@@ -41,10 +62,16 @@ class NotificationProvider extends ChangeNotifier {
             .where((n) {
               final t = (n['type'] ?? '').toString().toLowerCase();
               final msg = (n['message'] ?? '').toString().trim();
-              if (t == 'courier_accepted_driver' ||
-                  t == 'delivery_cancelled_driver' ||
-                  t == 'package_delivery_assigned' ||
-                  msg.startsWith('You accepted ')) {
+              final link = (n['link'] ?? '').toString();
+              final rawData = n['data'];
+              final targetRole = (rawData is Map ? (rawData['target_role'] ?? '') : '')
+                  .toString()
+                  .toLowerCase();
+              if (targetRole == 'driver' ||
+                  _driverOnlyTypes.contains(t) ||
+                  link.startsWith('/driver/') ||
+                  msg.startsWith('You accepted ') ||
+                  msg.startsWith('Completed Ride #')) {
                 return false;
               }
               return true;

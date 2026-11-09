@@ -27,7 +27,22 @@ class NotificationProvider extends ChangeNotifier {
 
   void stopPolling() {
     _timer?.cancel();
+    _lastSeenId = 0;
+    _notifications = [];
+    _unreadCount = 0;
   }
+
+  static const Set<String> _riderOnlyTypes = {
+    'ride_requested',
+    'en_route',
+    'arrived',
+    'courier_accepted',
+    'courier_en_route',
+    'courier_arrived',
+    'package_picked_up',
+    'delivery_cancelled',
+    'delivery_completed',
+  };
 
   bool _isIncomingOrderNotification(Map<String, dynamic> n) {
     final type = (n['type'] ?? '').toString().toLowerCase();
@@ -53,6 +68,21 @@ class NotificationProvider extends ChangeNotifier {
         final newNotifications = list
             .map((e) => Map<String, dynamic>.from(e))
             .where((n) {
+              final t = (n['type'] ?? '').toString().toLowerCase();
+              final msg = (n['message'] ?? '').toString();
+              final link = (n['link'] ?? '').toString();
+              final rawData = n['data'];
+              final targetRole = (rawData is Map ? (rawData['target_role'] ?? '') : '')
+                  .toString()
+                  .toLowerCase();
+              if (targetRole == 'rider' ||
+                  _riderOnlyTypes.contains(t) ||
+                  link.startsWith('/ride?resume=') ||
+                  link.startsWith('/delivery/') ||
+                  msg.contains('has accepted your ride request') ||
+                  msg.contains('Tap to rate your driver')) {
+                return false;
+              }
               if (_isIncomingOrderNotification(n)) {
                 return LocalNotificationService.instance.isOrderTypeAllowed(
                   n['type']?.toString(),

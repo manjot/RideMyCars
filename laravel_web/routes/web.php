@@ -1762,30 +1762,59 @@ Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
     $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user() ?? \App\Http\Controllers\Api\DriverApiController::resolveUser($request);
     if (!$user) return response()->json(['success' => true, 'notifications' => [], 'unread_count' => 0]);
 
-    $userIds = [$user->id];
-    $matchingIds = \App\Models\User::where('name', $user->name)
-        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-        ->pluck('id')
-        ->toArray();
-    $userIds = array_unique(array_merge($userIds, $matchingIds));
-
     $activeCountry = $request->input('country') ?: (\App\Services\CountryService::getCurrentCountryCode($request) ?: 'GHA');
     $fallbackCurrencyCode = \App\Models\CountryPricing::forCountry($activeCountry)->currency_code ?? 'GHS';
 
-    $isDriverRequest = strtolower((string) $request->header('X-User-Role', '')) === 'driver' || $user->role === 'driver';
+    $roleHeader = strtolower((string) $request->header('X-User-Role', ''));
+    $userAgent = (string) $request->header('User-Agent', '');
+    $isDriverRequest = $roleHeader === 'driver'
+        || str_contains($userAgent, 'RideMyCarsDriver')
+        || ($roleHeader === '' && !str_contains($userAgent, 'RideMyCars/') && $user->role === 'driver');
     $dp = $user->driverProfile;
     $driverOnline = (bool) ($dp && $dp->is_available);
     $chauffeurOnline = (bool) ($dp && $dp->active_chauffeur_online);
 
-    $rawNotifications = \App\Models\UserNotification::whereIn('user_id', $userIds)
+    // Strictly fetch notifications ONLY for the authenticated recipient user_id
+    $rawNotifications = \App\Models\UserNotification::where('user_id', $user->id)
         ->orderBy('created_at', 'desc')
         ->take(40)
         ->get();
 
-    if ($isDriverRequest && $dp) {
+    if ($isDriverRequest) {
         $rawNotifications = $rawNotifications->filter(function ($n) use ($driverOnline, $chauffeurOnline) {
             $t = strtolower((string) ($n->type ?? ''));
             $title = strtolower((string) ($n->title ?? ''));
+            $link = (string) ($n->link ?? '');
+            $dataArr = is_array($n->data) ? $n->data : [];
+            $targetRole = strtolower((string) ($dataArr['target_role'] ?? ''));
+
+            if ($targetRole === 'rider') {
+                return false;
+            }
+
+            if (in_array($t, [
+                'ride_requested',
+                'en_route',
+                'arrived',
+                'courier_accepted',
+                'delivery_cancelled',
+                'delivery_en_route',
+                'delivery_arrived_pickup',
+                'delivery_in_transit',
+                'delivery_completed',
+                'backup_searching',
+                'backup_driver_found',
+                'backup_confirmed',
+                'backup_unavailable',
+                'ride_cancelled',
+            ], true)) {
+                return false;
+            }
+
+            if (str_starts_with($link, '/ride?resume=') || $link === '/my-rides' || str_starts_with($link, '/delivery/')) {
+                return false;
+            }
+
             $isHire = in_array($t, ['driver_hiring_assigned', 'driver_booking'], true) || str_contains($title, 'chauffeur request') || str_contains($title, 'driver hire');
             $isRideOrDel = in_array($t, ['ride_assignment', 'new_ride_request', 'backup_ride_assigned', 'backup_ride_request', 'package_delivery_assigned', 'delivery_request'], true)
                 || str_contains($title, 'new ride request')
@@ -1798,6 +1827,55 @@ Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
             }
             return true;
         })->values();
+    } else {
+        // Rider App / Web Client: exclude Driver-only notifications and Driver-initiated wallet alerts
+        $rawNotifications = $rawNotifications->filter(function ($n) {
+            $t = strtolower((string) ($n->type ?? ''));
+            $title = strtolower((string) ($n->title ?? ''));
+            $msg = trim((string) ($n->message ?? ''));
+            $link = (string) ($n->link ?? '');
+            $dataArr = is_array($n->data) ? $n->data : [];
+            $targetRole = strtolower((string) ($dataArr['target_role'] ?? ''));
+
+            if ($targetRole === 'driver') {
+                return false;
+            }
+
+            if (in_array($t, [
+                'courier_accepted_driver',
+                'delivery_cancelled_driver',
+                'package_delivery_assigned',
+                'delivery_request',
+                'ride_assignment',
+                'new_ride_request',
+                'driver_hiring_assigned',
+                'driver_booking',
+                'backup_ride_assigned',
+                'backup_ride_request',
+                'backup_waiting_confirmation',
+                'backup_customer_accepted',
+                'backup_customer_declined',
+                'commission_threshold_warning',
+                'commission_switch_locked',
+                'commission_switch_unlocked',
+                'rental_requested',
+            ], true)) {
+                return false;
+            }
+            if (
+                str_starts_with($msg, 'You accepted ') ||
+                str_starts_with($msg, 'Completed Ride #') ||
+                str_starts_with($msg, 'Trip #') ||
+                str_contains($title, 'new ride request') ||
+                str_contains($title, 'new chauffeur request') ||
+                str_contains($title, 'new parcel delivery') ||
+                $link === '/driver/dashboard' ||
+                str_starts_with($link, '/owner/dashboard')
+            ) {
+                return false;
+            }
+            return true;
+        })->values();
     }
 
     $notifications = $rawNotifications
@@ -1805,6 +1883,7 @@ Route::get('/api/notifications', function (\Illuminate\Http\Request $request) {
             $dataArr = is_array($n->data) ? $n->data : [];
             return [
                 'id' => $n->id,
+                'user_id' => $n->user_id,
                 'type' => $n->type,
                 'title' => $n->title,
                 'message' => \App\Services\NotificationService::formatNotificationMessage($n, $fallbackCurrencyCode),
@@ -1834,18 +1913,11 @@ Route::post('/api/notifications/mark-read', function (\Illuminate\Http\Request $
     $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
     if (!$user) return response()->json(['success' => false], 401);
 
-    $userIds = [$user->id];
-    $matchingIds = \App\Models\User::where('name', $user->name)
-        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-        ->pluck('id')
-        ->toArray();
-    $userIds = array_unique(array_merge($userIds, $matchingIds));
-
     $id = $request->input('id');
     if ($id) {
-        \App\Models\UserNotification::whereIn('user_id', $userIds)->where('id', $id)->update(['is_read' => true]);
+        \App\Models\UserNotification::where('user_id', $user->id)->where('id', $id)->update(['is_read' => true]);
     } else {
-        \App\Models\UserNotification::whereIn('user_id', $userIds)->where('is_read', false)->update(['is_read' => true]);
+        \App\Models\UserNotification::where('user_id', $user->id)->where('is_read', false)->update(['is_read' => true]);
     }
 
     return response()->json(['success' => true]);
@@ -1856,14 +1928,7 @@ Route::post('/api/notifications/clear', function (\Illuminate\Http\Request $requ
     $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
     if (!$user) return response()->json(['success' => false], 401);
 
-    $userIds = [$user->id];
-    $matchingIds = \App\Models\User::where('name', $user->name)
-        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-        ->pluck('id')
-        ->toArray();
-    $userIds = array_unique(array_merge($userIds, $matchingIds));
-
-    \App\Models\UserNotification::whereIn('user_id', $userIds)->delete();
+    \App\Models\UserNotification::where('user_id', $user->id)->delete();
     return response()->json(['success' => true]);
 });
 
@@ -1872,14 +1937,7 @@ Route::delete('/api/notifications/{id}', function (\Illuminate\Http\Request $req
     $user = $request->user() ?? auth('sanctum')->user() ?? auth()->user();
     if (!$user) return response()->json(['success' => false], 401);
 
-    $userIds = [$user->id];
-    $matchingIds = \App\Models\User::where('name', $user->name)
-        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-        ->pluck('id')
-        ->toArray();
-    $userIds = array_unique(array_merge($userIds, $matchingIds));
-
-    \App\Models\UserNotification::whereIn('user_id', $userIds)->where('id', $id)->delete();
+    \App\Models\UserNotification::where('user_id', $user->id)->where('id', $id)->delete();
     return response()->json(['success' => true]);
 });
 
@@ -2198,11 +2256,6 @@ Route::post('/api/driver/requests/{id}/respond', function (\Illuminate\Http\Requ
     if (!$user) return response()->json(['error' => 'Unauthenticated.'], 401);
 
     $userIds = [$user->id];
-    $matchingIds = \App\Models\User::where('name', $user->name)
-        ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-        ->pluck('id')
-        ->toArray();
-    $userIds = array_unique(array_merge($userIds, $matchingIds));
 
     $assignment = \App\Models\RideAssignment::find($id);
     if (!$assignment) {
@@ -2513,11 +2566,6 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         }
 
         $userIds = [$user->id];
-        $matchingIds = \App\Models\User::where('name', $user->name)
-            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-            ->pluck('id')
-            ->toArray();
-        $userIds = array_unique(array_merge($userIds, $matchingIds));
 
         $vehicles = \App\Models\Vehicle::whereIn('owner_id', $userIds)->get();
         
@@ -2753,11 +2801,6 @@ Route::prefix('driver')->middleware('auth')->group(function () {
         }
 
         $userIds = [$user->id];
-        $matchingIds = \App\Models\User::where('name', $user->name)
-            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-            ->pluck('id')
-            ->toArray();
-        $userIds = array_unique(array_merge($userIds, $matchingIds));
 
         // 1. Mark or create RideAssignment as rejected for all matching driver IDs
         foreach ($userIds as $uId) {

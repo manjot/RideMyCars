@@ -79,22 +79,6 @@ class DriverApiController extends Controller
             if ($found) return $found;
         }
 
-        // Fallback: If no user found, resolve active/live driver profile (including offline chauffeurs)
-        $liveDriver = \App\Models\DriverProfile::where(function ($q) {
-                $q->where('is_available', true)
-                  ->orWhere('active_chauffeur_online', true)
-                  ->orWhere('chauffeur_mode', true);
-            })
-            ->where('is_live', true)
-            ->latest('last_location_update')
-            ->first()
-            ?? \App\Models\DriverProfile::where('is_live', true)
-                ->latest('updated_at')
-                ->first();
-        if ($liveDriver && $liveDriver->user) {
-            return $liveDriver->user;
-        }
-
         return null;
     }
 
@@ -1244,13 +1228,6 @@ class DriverApiController extends Controller
         }
 
         $userIds = [$user->id];
-        if (!empty($user->name) || !empty($user->email)) {
-            $matchingIds = \App\Models\User::where('name', $user->name)
-                ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-                ->pluck('id')
-                ->toArray();
-            $userIds = array_unique(array_merge($userIds, $matchingIds));
-        }
 
         $rejectedRideIds = \App\Models\RideAssignment::whereIn('driver_id', $userIds)
             ->where('status', 'rejected')
@@ -1577,6 +1554,9 @@ class DriverApiController extends Controller
         $openPendingRides = \App\Models\Ride::with('rider')
             ->where('status', 'pending')
             ->whereNull('driver_id')
+            ->where(function($q) use ($user) {
+                $q->whereNull('rider_id')->orWhere('rider_id', '!=', $user->id);
+            })
             ->where(function($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })
@@ -1634,12 +1614,6 @@ class DriverApiController extends Controller
                 ['ride_id' => $pr->id, 'driver_id' => $user->id],
                 ['status' => 'pending', 'expires_at' => $expiresAt]
             );
-
-            if ($assignment->wasRecentlyCreated) {
-                try {
-                    \App\Services\NotificationService::notifyDriverRideAssigned($pr, $user->id);
-                } catch (\Throwable $e) {}
-            }
 
             if ($assignment->status === 'rejected') {
                 continue;
@@ -1709,6 +1683,9 @@ class DriverApiController extends Controller
         $openPendingDeliveries = \App\Models\PackageDelivery::with(['customer', 'prescriptions'])
             ->whereIn('delivery_status', ['pending', 'created', 'searching'])
             ->whereNull('courier_id')
+            ->where(function($q) use ($user) {
+                $q->whereNull('customer_id')->orWhere('customer_id', '!=', $user->id);
+            })
             ->where(function($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })
@@ -1766,31 +1743,6 @@ class DriverApiController extends Controller
                 ['package_delivery_id' => $pd->id, 'driver_id' => $user->id],
                 ['status' => 'pending', 'expires_at' => $dExpiresAt]
             );
-
-            if ($assignment->wasRecentlyCreated) {
-                try {
-                    $alreadyNotified = \App\Models\UserNotification::where('user_id', $user->id)
-                        ->where('type', 'package_delivery_assigned')
-                        ->where('created_at', '>=', now()->subHours(2))
-                        ->get()
-                        ->contains(function ($n) use ($pd) {
-                            $d = is_array($n->data) ? $n->data : [];
-                            return (int) ($d['delivery_id'] ?? 0) === (int) $pd->id;
-                        });
-
-                    if (!$alreadyNotified) {
-                        \App\Services\NotificationService::send(
-                            $user->id,
-                            'package_delivery_assigned',
-                            'New Parcel Delivery Request',
-                            "New package delivery from {$pd->pickup_location} to {$pd->dropoff_location}. Tap to accept.",
-                            null,
-                            '/driver/dashboard',
-                            ['delivery_id' => $pd->id, 'type' => 'package_delivery', 'icon' => 'truck', 'color' => 'emerald']
-                        );
-                    }
-                } catch (\Throwable $e) {}
-            }
 
             if ($assignment->status === 'rejected') {
                 continue;
@@ -1888,13 +1840,6 @@ class DriverApiController extends Controller
         }
 
         $userIds = [$user->id];
-        if (!empty($user->name) || !empty($user->email)) {
-            $matchingIds = \App\Models\User::where('name', $user->name)
-                ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-                ->pluck('id')
-                ->toArray();
-            $userIds = array_unique(array_merge($userIds, $matchingIds));
-        }
 
         $assignment = null;
 
@@ -2304,11 +2249,6 @@ class DriverApiController extends Controller
         if (!$user) return response()->json(['success' => false, 'rides' => [], 'data' => []]);
 
         $userIds = [$user->id];
-        $matchingIds = \App\Models\User::where('name', $user->name)
-            ->orWhere('email', 'like', explode('@', $user->email)[0] . '%')
-            ->pluck('id')
-            ->toArray();
-        $userIds = array_unique(array_merge($userIds, $matchingIds));
         $driverProfileId = $user->driverProfile?->id;
 
         $items = [];
@@ -2616,6 +2556,22 @@ class DriverApiController extends Controller
             return response()->json(['success' => false, 'message' => 'Token is required.'], 422);
         }
 
+        $isDriverApp = strtolower((string) $request->header('X-User-Role', '')) === 'driver'
+            || str_contains((string) $request->header('User-Agent', ''), 'RideMyCarsDriver');
+
+        // Deduplicate FCM token across all other accounts so device switches never leak push notifications
+        try {
+            \App\Models\User::where('fcm_token', $token)
+                ->where('id', '!=', $user->id)
+                ->update(['fcm_token' => null]);
+        } catch (\Throwable $e) {}
+
+        try {
+            \App\Models\DriverProfile::where('fcm_token', $token)
+                ->where('user_id', '!=', $user->id)
+                ->update(['fcm_token' => null]);
+        } catch (\Throwable $e) {}
+
         try {
             $user->update([
                 'fcm_token' => $token,
@@ -2623,7 +2579,7 @@ class DriverApiController extends Controller
             ]);
         } catch (\Throwable $e) {}
 
-        if ($user->driverProfile) {
+        if ($user->driverProfile && ($isDriverApp || in_array($user->role, ['driver', 'chauffeur'], true))) {
             try {
                 $user->driverProfile->update([
                     'fcm_token' => $token,

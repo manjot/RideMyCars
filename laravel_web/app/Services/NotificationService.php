@@ -29,6 +29,37 @@ class NotificationService
             'driver_booking',
         ], true);
 
+        $isDriverOnlyType = $isRideOrDeliveryRequest || $isChauffeurHireRequest || in_array($type, [
+            'courier_accepted_driver',
+            'delivery_cancelled_driver',
+            'delivery_completed_driver',
+            'driver_switch_locked',
+            'driver_switch_unlocked',
+            'commission_threshold_warning',
+            'commission_settled',
+        ], true);
+
+        $isRiderOnlyType = in_array($type, [
+            'ride_requested',
+            'en_route',
+            'arrived',
+            'courier_accepted',
+            'courier_en_route',
+            'courier_arrived',
+            'package_picked_up',
+            'delivery_cancelled',
+            'delivery_completed',
+        ], true);
+
+        if (empty($data['target_role'])) {
+            if ($isDriverOnlyType || (is_string($link) && str_starts_with($link, '/driver/'))) {
+                $data['target_role'] = 'driver';
+            } elseif ($isRiderOnlyType || (is_string($link) && (str_starts_with($link, '/ride') || str_starts_with($link, '/delivery/') || str_starts_with($link, '/my-rides')))) {
+                $data['target_role'] = 'rider';
+            }
+        }
+        $data['recipient_user_id'] = $userId;
+
         $suppressDriverAlert = false;
         if ($isRideOrDeliveryRequest || $isChauffeurHireRequest) {
             try {
@@ -478,6 +509,14 @@ class NotificationService
      */
     public static function notifyDriverRideAssigned(Ride $ride, int $driverId): void
     {
+        if ($ride->rider_id && (int) $ride->rider_id === (int) $driverId) {
+            return;
+        }
+        $driverUser = User::find($driverId);
+        if (!$driverUser || !in_array($driverUser->role, ['driver', 'chauffeur'], true)) {
+            return;
+        }
+
         $currencyCode = CountryService::resolveItemCurrencyCode($ride, 'GHS');
         $rawFare = round((float) ($ride->fare ?? $ride->total_amount ?? 0), 0);
         $fare = number_format($rawFare, 0);
@@ -488,7 +527,15 @@ class NotificationService
             "New ride request from {$ride->pickup_location} to {$ride->dropoff_location} ({$currencyCode} {$fare}). Tap to respond.",
             $ride->id,
             '/driver/dashboard',
-            ['ride_id' => $ride->id, 'fare' => $rawFare, 'currency_code' => $currencyCode, 'icon' => 'car', 'color' => 'indigo']
+            [
+                'ride_id' => $ride->id,
+                'fare' => $rawFare,
+                'currency_code' => $currencyCode,
+                'icon' => 'car',
+                'color' => 'indigo',
+                'target_role' => 'driver',
+                'recipient_user_id' => $driverId,
+            ]
         );
     }
 

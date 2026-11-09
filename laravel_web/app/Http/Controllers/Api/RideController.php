@@ -674,6 +674,7 @@ class RideController extends Controller
                 'message' => 'Paid from RMC Account balance. Dispatched to nearby drivers.',
             ];
             try {
+                \App\Services\NotificationService::notifyRideRequested($ride);
                 \App\Services\RideAssignmentService::assignNextDriver($ride);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning("Ride wallet assignNextDriver error: " . $e->getMessage());
@@ -689,6 +690,7 @@ class RideController extends Controller
                 'message' => 'Cash booking created. Dispatched to nearby drivers.',
             ];
             try {
+                \App\Services\NotificationService::notifyRideRequested($ride);
                 \App\Services\RideAssignmentService::assignNextDriver($ride);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning("Ride cash assignNextDriver error: " . $e->getMessage());

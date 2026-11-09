@@ -24,6 +24,7 @@ class ApiClient {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'User-Agent': _defaultUserAgent,
+          'X-User-Role': 'rider',
         },
         followRedirects: true,
         maxRedirects: 5,
@@ -54,6 +55,7 @@ class ApiClient {
             options.headers['X-Country'] = countryCode;
             options.headers['X-Country-Code'] = countryCode;
           }
+          options.headers['X-User-Role'] = 'rider';
           if (!options.headers.containsKey('User-Agent') || options.headers['User-Agent'] == null) {
             options.headers['User-Agent'] = _defaultUserAgent;
           }
