@@ -79,7 +79,10 @@ class EditAdminProfile extends BaseEditProfile
 
                                 $this->getPasswordConfirmationFormComponent()
                                     ->label('Confirm New Password')
-                                    ->placeholder('Re-enter new password'),
+                                    ->placeholder('Re-enter new password')
+                                    ->visible(true)
+                                    ->required(false)
+                                    ->requiredWith('password'),
                             ]),
                     ]),
             ]);

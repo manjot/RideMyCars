@@ -95,20 +95,21 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
 
     // Direct Laravel authentication attempt
     if (!auth()->attempt(['email' => $email, 'password' => $password])) {
-        // Dynamic demo accounts from database settings managed by admin
+        // Dynamic demo accounts from database settings managed by admin (never overwrite admin passwords)
         $demoUsers = \App\Services\SettingService::getDemoUsers();
         $isDemoPassword = \App\Services\SettingService::isDemoPassword($password);
+        $adminEmails = ['admin@ridemycars.com', 'ridemycars1@gmail.com', 'ridemycars@gmail.com', 'support@ridemycars.com'];
 
-        if ($isDemoPassword) {
+        if ($isDemoPassword && !in_array($email, $adminEmails, true)) {
             $user = \App\Models\User::where('email', $email)->orWhereRaw('LOWER(email) = ?', [$email])->first();
-            if ($user) {
+            if ($user && $user->role !== 'admin' && isset($demoUsers[$email])) {
                 $user->password = \Illuminate\Support\Facades\Hash::make($password);
                 if (empty($user->account_status) || in_array($user->account_status, ['pending', null])) {
                     $user->account_status = 'active';
                 }
                 $user->save();
                 auth()->login($user);
-            } elseif (isset($demoUsers[$email])) {
+            } elseif (!$user && isset($demoUsers[$email])) {
                 $meta = $demoUsers[$email];
                 $newUser = \App\Models\User::create([
                     'name' => $meta['name'],
@@ -4638,17 +4639,6 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
                 ]
             );
         }
-
-        \App\Models\User::firstOrCreate(
-            ['email' => 'ridemycars1@gmail.com'],
-            [
-                'name' => 'RideMyCars Administrator',
-                'password' => \Illuminate\Support\Facades\Hash::make('Rideme2026#'),
-                'role' => 'admin',
-                'account_status' => 'active',
-                'email_verified_at' => now(),
-            ]
-        );
 
         \Illuminate\Support\Facades\DB::table('users')
             ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(email)'), [

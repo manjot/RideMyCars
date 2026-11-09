@@ -283,8 +283,8 @@ class AuthController extends Controller
             $isValidPassword = false;
             if ($user) {
                 $isValidPassword = Hash::check($request->password, $user->password);
-                if (!$isValidPassword && $isDemoPassword && 
-                    (str_ends_with($user->email, '@ridemycars.com') || isset($demoUsers[$user->email]))) {
+                $isAdminUser = $user->role === 'admin' || in_array(strtolower($user->email), ['admin@ridemycars.com', 'ridemycars1@gmail.com', 'ridemycars@gmail.com', 'support@ridemycars.com'], true);
+                if (!$isValidPassword && !$isAdminUser && $isDemoPassword && isset($demoUsers[strtolower($user->email)])) {
                     $user->password = Hash::make($request->password);
                     if (empty($user->account_status) || $user->account_status === 'pending') {
                         $user->account_status = 'active';

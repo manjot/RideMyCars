@@ -713,12 +713,6 @@ class SettingService
             'role' => 'owner',
         ];
 
-        // Primary Admin Account
-        $list['admin@ridemycars.com'] = [
-            'name' => 'Admin User',
-            'role' => 'admin',
-        ];
-
         return $list;
     }
 
