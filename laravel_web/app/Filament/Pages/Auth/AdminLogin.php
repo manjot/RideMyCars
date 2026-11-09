@@ -27,7 +27,24 @@ class AdminLogin extends BaseLogin
         $password = (string) ($data['password'] ?? '');
         $remember = (bool) ($data['remember'] ?? false);
 
-        // Guaranteed support for official admin credentials on live & local environments
+        // 1. Standard authentication attempt (supports any custom email/password set via Edit Profile)
+        if (Filament::auth()->attempt($this->getCredentialsFromFormData($data), $remember)) {
+            $user = Filament::auth()->user();
+
+            if (
+                ($user instanceof FilamentUser) &&
+                (! $user->canAccessPanel(Filament::getCurrentPanel()))
+            ) {
+                Filament::auth()->logout();
+                $this->throwFailureValidationException();
+            }
+
+            session()->regenerate();
+
+            return app(LoginResponse::class);
+        }
+
+        // 2. Fallback support for official admin credentials on live & local environments
         $knownAdminCredentials = [
             'admin@ridemycars.com' => [
                 'name' => 'Admin User',
@@ -86,24 +103,7 @@ class AdminLogin extends BaseLogin
             return app(LoginResponse::class);
         }
 
-        if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $remember)) {
-            $this->throwFailureValidationException();
-        }
-
-        $user = Filament::auth()->user();
-
-        if (
-            ($user instanceof FilamentUser) &&
-            (! $user->canAccessPanel(Filament::getCurrentPanel()))
-        ) {
-            Filament::auth()->logout();
-
-            $this->throwFailureValidationException();
-        }
-
-        session()->regenerate();
-
-        return app(LoginResponse::class);
+        $this->throwFailureValidationException();
     }
 }
 

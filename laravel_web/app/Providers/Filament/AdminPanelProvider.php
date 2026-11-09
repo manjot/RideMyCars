@@ -6,6 +6,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -27,6 +28,17 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(\App\Filament\Pages\Auth\AdminLogin::class)
+            ->profile(\App\Filament\Pages\Auth\EditAdminProfile::class, isSimple: false)
+            ->userMenuItems([
+                'profile' => MenuItem::make()
+                    ->label(fn (): string => auth()->user()?->name ?? 'Admin User')
+                    ->url(fn (): string => \App\Filament\Pages\Auth\EditAdminProfile::getUrl())
+                    ->icon('heroicon-m-user-circle'),
+                'edit_profile' => MenuItem::make()
+                    ->label('Edit Profile')
+                    ->url(fn (): string => \App\Filament\Pages\Auth\EditAdminProfile::getUrl())
+                    ->icon('heroicon-m-pencil-square'),
+            ])
             ->brandName('RideMyCars Admin')
             ->brandLogo(asset('images/logo.png'))
             ->brandLogoHeight('2.5rem')

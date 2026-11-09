@@ -19,6 +19,16 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Fallback route to serve public storage files (e.g. avatars) when public/storage symlink is absent on shared hosting
+Route::get('/storage/{path}', function (string $path) {
+    $safePath = str_replace(['..', '\\'], ['', '/'], $path);
+    $fullPath = storage_path('app/public/' . ltrim($safePath, '/'));
+    if (file_exists($fullPath) && is_file($fullPath)) {
+        return response()->file($fullPath);
+    }
+    abort(404);
+})->where('path', '.*');
+
 Route::get('/onboarding', function () {
     return view('onboarding');
 });
@@ -4610,19 +4620,26 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['dispatch_waiting_time_sync_err'] = $e->getMessage();
         }
 
-        // Ensure all admin users have role 'admin', active status, and synced credentials
-        \App\Models\User::updateOrCreate(
-            ['email' => 'admin@ridemycars.com'],
-            [
-                'name' => 'Admin User',
-                'password' => \Illuminate\Support\Facades\Hash::make('123456'),
-                'role' => 'admin',
-                'account_status' => 'active',
-                'email_verified_at' => now(),
-            ]
-        );
+        // Ensure all admin users have role 'admin', active status, and default credentials if not yet created
+        $avatarsDir = storage_path('app/public/avatars');
+        if (!file_exists($avatarsDir)) {
+            @mkdir($avatarsDir, 0755, true);
+        }
 
-        \App\Models\User::updateOrCreate(
+        if (\App\Models\User::where('role', 'admin')->doesntExist()) {
+            \App\Models\User::firstOrCreate(
+                ['email' => 'admin@ridemycars.com'],
+                [
+                    'name' => 'Admin User',
+                    'password' => \Illuminate\Support\Facades\Hash::make('123456'),
+                    'role' => 'admin',
+                    'account_status' => 'active',
+                    'email_verified_at' => now(),
+                ]
+            );
+        }
+
+        \App\Models\User::firstOrCreate(
             ['email' => 'ridemycars1@gmail.com'],
             [
                 'name' => 'RideMyCars Administrator',
