@@ -147,6 +147,9 @@ Route::post('/login', function (\Illuminate\Http\Request $request) {
         \App\Services\ActivityLogService::log('login', 'User logged in successfully', auth()->id());
         \App\Services\NotificationService::notifyLogin(auth()->user());
 
+        if (auth()->user()->role === 'admin') {
+            return redirect('/admin');
+        }
         if (auth()->user()->role === 'driver') {
             return redirect('/driver/dashboard');
         }
@@ -4607,7 +4610,29 @@ Route::get('/api-sync-deploy', function (\Illuminate\Http\Request $request) {
             $output['dispatch_waiting_time_sync_err'] = $e->getMessage();
         }
 
-        // Ensure all admin users have role 'admin' and active status
+        // Ensure all admin users have role 'admin', active status, and synced credentials
+        \App\Models\User::updateOrCreate(
+            ['email' => 'admin@ridemycars.com'],
+            [
+                'name' => 'Admin User',
+                'password' => \Illuminate\Support\Facades\Hash::make('123456'),
+                'role' => 'admin',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        \App\Models\User::updateOrCreate(
+            ['email' => 'ridemycars1@gmail.com'],
+            [
+                'name' => 'RideMyCars Administrator',
+                'password' => \Illuminate\Support\Facades\Hash::make('Rideme2026#'),
+                'role' => 'admin',
+                'account_status' => 'active',
+                'email_verified_at' => now(),
+            ]
+        );
+
         \Illuminate\Support\Facades\DB::table('users')
             ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(email)'), [
                 'admin@ridemycars.com',

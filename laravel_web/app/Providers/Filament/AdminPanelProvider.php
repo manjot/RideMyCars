@@ -26,7 +26,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\AdminLogin::class)
             ->brandName('RideMyCars Admin')
             ->brandLogo(asset('images/logo.png'))
             ->brandLogoHeight('2.5rem')
