@@ -97,7 +97,6 @@ class NotificationProvider extends ChangeNotifier {
         if (newNotifications.isNotEmpty) {
           final topId = (newNotifications.first['id'] as num?)?.toInt() ?? 0;
           if (_lastSeenId != 0 && topId > _lastSeenId) {
-            bool triggeredOrderRingtone = false;
             for (final n in newNotifications) {
               final nId = (n['id'] as num?)?.toInt() ?? 0;
               if (nId > _lastSeenId && n['is_read'] != true) {
@@ -110,7 +109,6 @@ class NotificationProvider extends ChangeNotifier {
                   )) {
                     continue;
                   }
-                  triggeredOrderRingtone = true;
                   final dataMap = n['data'] is Map ? Map<String, dynamic>.from(n['data']) : <String, dynamic>{};
                   final orderId = dataMap['delivery_id'] ??
                       dataMap['package_delivery_id'] ??
