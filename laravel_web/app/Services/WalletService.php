@@ -108,11 +108,12 @@ class WalletService
                 }
             }
 
-            // 3. If both main wallet > 0 and cash_commission_wallet > 0, apply main wallet balance to reduce outstanding cash_commission_wallet
+            // 3. If both main wallet > 0 and cash_commission_wallet > 0, apply main wallet balance to reduce outstanding cash_commission_wallet (only when operating in driver context)
             $roundedMain = max(0.0, round($rawMain));
             $roundedComm = max(0.0, round($rawComm));
+            $requestedRole = strtolower((string) request()?->header('X-User-Role', ''));
 
-            if ($roundedMain > 0 && $roundedComm > 0) {
+            if ($roundedMain > 0 && $roundedComm > 0 && $requestedRole !== 'rider') {
                 $settled = min($roundedMain, $roundedComm);
                 $roundedMain = max(0.0, round($roundedMain - $settled));
                 $roundedComm = max(0.0, round($roundedComm - $settled));
@@ -575,10 +576,10 @@ class WalletService
 
             $driverSwitchUnlocked = false;
             if ($profile && $settledCommission > 0) {
-                $wasLockedOrOverThreshold = (bool) $profile->commission_locked
-                    || !empty($profile->commission_threshold_reached_at)
-                    || $outstandingComm >= 100
-                    || !$profile->is_available;
+                $hadExceededDeadline = (bool) $profile->commission_locked
+                    || !empty($profile->commission_locked_at)
+                    || (!empty($profile->commission_threshold_reached_at)
+                        && \Carbon\Carbon::parse($profile->commission_threshold_reached_at)->addDays(7)->isPast());
 
                 $profile->update([
                     'cash_commission_wallet' => $newOutstandingComm,
@@ -586,7 +587,7 @@ class WalletService
                 \App\Models\DriverProfile::syncCommissionStatus($profile->fresh(), true);
                 $profile->refresh();
 
-                if ($newOutstandingComm < 100 && $wasLockedOrOverThreshold) {
+                if ($newOutstandingComm < 100 && $hadExceededDeadline) {
                     $driverSwitchUnlocked = true;
                 }
             }

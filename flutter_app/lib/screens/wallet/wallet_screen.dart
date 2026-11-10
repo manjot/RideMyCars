@@ -1648,6 +1648,14 @@ class _RiderAddMoneyBottomSheetState extends State<_RiderAddMoneyBottomSheet> {
       setState(() => _isSubmitting = false);
 
       txRef = initRes['transaction_ref']?.toString();
+      try {
+        await LocalNotificationService.instance.showNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: '📲 $_momoNetwork MoMo USSD Prompt',
+          body: 'Authorize wallet top-up of ${widget.currency}${amt.toStringAsFixed(0)} from ${_momoPhoneController.text.trim()} (Ref: ${txRef ?? 'MOMO'}). Enter your 4-digit MoMo PIN.',
+          force: true,
+        );
+      } catch (_) {}
       final approved = await _showMomoAuthorizationPromptDialog(
         amount: amt,
         network: _momoNetwork,

@@ -566,6 +566,10 @@ class BookingRefundService
 
         // Expire or cancel active assignment for this driver
         if ($booking instanceof Ride) {
+            $wasAlreadyAcceptedByDriver = !empty($booking->driver_id)
+                && (!$cancelledDriverId || (int) $booking->driver_id === (int) $cancelledDriverId)
+                && in_array($booking->status, ['accepted', 'en_route', 'arrived', 'in_progress'], true);
+
             RideAssignment::where('ride_id', $booking->id)
                 ->when($cancelledDriverId, fn($q) => $q->where('driver_id', $cancelledDriverId))
                 ->whereNotIn('status', ['completed'])
@@ -575,18 +579,6 @@ class BookingRefundService
                 'driver_id' => null,
                 'status' => 'pending',
             ]);
-
-            // Attempt backup chauffeur first if enabled
-            if ($booking->backup_chauffeur_enabled && BackupChauffeurService::isFeatureEnabled()) {
-                try {
-                    $backupAssignment = BackupChauffeurService::dispatchBackupOffer($booking);
-                    if ($backupAssignment) {
-                        return ['status' => 'reassigned_backup', 'assignment' => $backupAssignment];
-                    }
-                } catch (\Throwable $be) {
-                    Log::warning("Backup dispatch error for Ride #{$booking->id}: " . $be->getMessage());
-                }
-            }
 
             // Attempt proximity dispatch to next available driver
             $nextDriverAssignment = null;
@@ -600,8 +592,33 @@ class BookingRefundService
                 return ['status' => 'reassigned', 'assignment' => $nextDriverAssignment];
             }
 
-            // No replacement driver available -> cancel and refund
-            $reason = 'Assigned driver cancelled and no replacement driver was available.';
+            // IMPORTANT (Issue 11): If the 5-minute waiting window has NOT expired yet, NEVER cancel the ride prematurely!
+            // Keep it in 'pending' status so other drivers can still receive and accept the request until expires_at.
+            if (!$booking->isExpired()) {
+                $waitMinutes = \App\Services\SettingService::getRideWaitingTimeMinutes();
+                $keepUntil = $booking->expires_at ?? now()->addMinutes($waitMinutes);
+
+                // Re-open expired offers (excluding explicitly rejected ones by this driver)
+                RideAssignment::where('ride_id', $booking->id)
+                    ->where('status', 'expired')
+                    ->when($cancelledDriverId, fn($q) => $q->where('driver_id', '!=', $cancelledDriverId))
+                    ->update([
+                        'status' => 'pending',
+                        'expires_at' => $keepUntil,
+                    ]);
+
+                return [
+                    'status' => 'searching',
+                    'replacement_found' => false,
+                    'refunded' => false,
+                    'message' => 'Searching for another nearby driver within the waiting window.',
+                ];
+            }
+
+            // Waiting window has truly expired and no replacement driver available -> cancel and refund
+            $reason = $wasAlreadyAcceptedByDriver
+                ? 'Assigned driver cancelled and no replacement driver was available.'
+                : 'No driver was available within the waiting period.';
             $booking->update([
                 'status' => 'cancelled',
                 'cancellation_reason' => $reason,

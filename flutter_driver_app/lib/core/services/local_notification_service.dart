@@ -14,10 +14,10 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  static const String channelId = 'ridemycars_alerts';
-  static const String channelName = 'Ride & Booking Alerts';
+  static const String channelId = 'ridemycars_driver_silent';
+  static const String channelName = 'Driver Status & Updates';
   static const String channelDesc =
-      'High priority alerts for incoming ride assignments and requests';
+      'Silent updates for earnings, status changes, and general notifications';
 
   static const String incomingOrderChannelId = 'ridemycars_incoming_orders_v2';
   static const String incomingOrderChannelName = 'Incoming Order Ringtone Alerts';
@@ -107,11 +107,9 @@ class LocalNotificationService {
           channelId,
           channelName,
           description: channelDesc,
-          importance: Importance.max,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound('incoming_order_ringtone'),
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-          enableVibration: true,
+          importance: Importance.defaultImportance,
+          playSound: false,
+          enableVibration: false,
           showBadge: true,
         );
 
@@ -394,17 +392,14 @@ class LocalNotificationService {
         channelId,
         channelName,
         channelDescription: channelDesc,
-        importance: Importance.max,
-        priority: Priority.high,
-        ticker: 'Driver Partner Alert',
-        playSound: true,
-        sound: RawResourceAndroidNotificationSound('incoming_order_ringtone'),
-        audioAttributesUsage: AudioAttributesUsage.alarm,
-        enableVibration: true,
+        importance: Importance.defaultImportance,
+        priority: Priority.defaultPriority,
+        ticker: 'Driver Partner Update',
+        playSound: false,
+        enableVibration: false,
         icon: '@mipmap/launcher_icon',
         visibility: NotificationVisibility.public,
-        category: AndroidNotificationCategory.call,
-        fullScreenIntent: true,
+        category: AndroidNotificationCategory.status,
       );
 
       const NotificationDetails platformDetails = NotificationDetails(
@@ -414,9 +409,7 @@ class LocalNotificationService {
           presentBanner: true,
           presentList: true,
           presentBadge: true,
-          presentSound: true,
-          sound: 'incoming_order_ringtone.wav',
-          interruptionLevel: InterruptionLevel.timeSensitive,
+          presentSound: false,
         ),
       );
 

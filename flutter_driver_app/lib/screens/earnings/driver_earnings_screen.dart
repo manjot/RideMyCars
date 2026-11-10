@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/local_notification_service.dart';
 import '../../providers/driver_provider.dart';
 import '../../services/wallet_service.dart';
 import 'incentives_screen.dart';
@@ -1770,6 +1771,14 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
 
       if (initRes['requires_authorization'] == true || initRes['status'] == 'pending_prompt') {
         final txRef = (initRes['transaction_ref'] ?? 'MOMO-${DateTime.now().millisecondsSinceEpoch}').toString();
+        try {
+          await LocalNotificationService.instance.showNotification(
+            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title: '📲 $network MoMo USSD Prompt',
+            body: 'Authorize wallet top-up of ${widget.currency}${amt.toStringAsFixed(0)} from $phone (Ref: $txRef). Enter your 4-digit MoMo PIN.',
+            force: true,
+          );
+        } catch (_) {}
         final confirmed = await _showMomoAuthorizationPromptDialog(
           amount: amt,
           phone: phone,
@@ -1830,7 +1839,7 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
       if (!mounted) return;
       final data = res['data'] is Map ? Map<String, dynamic>.from(res['data']) : <String, dynamic>{};
       final settledComm = (data['settled_commission'] as num?)?.toInt() ?? 0;
-      final switchUnlocked = data['driver_switch_unlocked'] == true || settledComm > 0;
+      final switchUnlocked = data['driver_switch_unlocked'] == true;
       if (switchUnlocked) {
         try {
           await Provider.of<DriverProvider>(context, listen: false).unlockSwitchAfterCommissionPayment();
@@ -1853,9 +1862,11 @@ class _DriverAddMoneyModalState extends State<_DriverAddMoneyModal> {
             ],
           ),
           content: Text(
-            settledComm > 0
+            switchUnlocked
                 ? '${widget.currency}${amt.toStringAsFixed(0)} was authorized and credited (${widget.currency}$settledComm applied to your Cash Commission Wallet).\n\nYour Driver Switch has been turned on and unlocked. You can now receive ride requests.'
-                : '${widget.currency}${amt.toStringAsFixed(0)} has been credited to your driver wallet.\n\nYou can now accept rides or cashouts immediately.',
+                : (settledComm > 0
+                    ? '${widget.currency}${amt.toStringAsFixed(0)} was authorized and credited (${widget.currency}$settledComm applied to your Cash Commission Wallet).'
+                    : '${widget.currency}${amt.toStringAsFixed(0)} has been credited to your driver wallet.\n\nYou can now accept rides or cashouts immediately.'),
             style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
           ),
           actions: [

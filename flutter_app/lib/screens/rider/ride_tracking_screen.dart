@@ -712,33 +712,48 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
             ),
           ),
 
-          // Bottom Sheet
+          // Bottom Sheet (Issue 8: Constrained max height so map, route polyline & driver progress remain clearly visible)
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surfaceDark,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity( 0.55),
-                    blurRadius: 30,
-                    offset: const Offset(0, -10),
-                  ),
-                ],
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.46,
               ),
-              child: SafeArea(
-                top: false,
-                bottom: true,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Status Banner & Driver Waiting Countdown
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceDark,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.55),
+                      blurRadius: 30,
+                      offset: const Offset(0, -10),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  bottom: true,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white24,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        // Status Banner & Driver Waiting Countdown
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                         decoration: BoxDecoration(
@@ -881,10 +896,11 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                         ),
                       ],
 
-                      // 4-Digit Secure Ride PIN Verification Card
-                      _buildSecurePinCard(currentRide, status),
+                      // 4-Digit Secure Ride PIN Verification Card (Issue 7: Automatically disappear once trip starts)
+                      if (!['in_progress', 'started', 'completed', 'cancelled'].contains(status.toLowerCase()))
+                        _buildSecurePinCard(currentRide, status),
 
-                      // In-App Modal Card: Primary Chauffeur Unavailable
+                      // In-App Modal Card: Nearby Chauffeur Available
                       if (status == 'pending' && currentRide['backup_status'] == 'waiting' && currentRide['backup_driver'] != null) ...[
                         _buildBackupConfirmationCard(currentRide, currentRide['backup_driver']),
                         const SizedBox(height: 14),
@@ -1308,6 +1324,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
                 ),
               ),
             ),
+            ),
           ),
         ],
       ),
@@ -1395,7 +1412,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Primary Chauffeur Unavailable',
+                'Nearby Chauffeur Available',
                 style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -1520,7 +1537,7 @@ class _RideTrackingScreenState extends State<RideTrackingScreen> {
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Primary Chauffeur Unavailable',
+                  'Nearby Chauffeur Available',
                   style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),

@@ -5,16 +5,39 @@ import '../core/constants/api_constants.dart';
 
 class WalletService {
   static final Dio _dio = ApiClient().dio;
+  static double? cachedBalance;
+  static String cachedCurrency = 'GH₵';
 
   /// Get wallet balance, currency, pending sums, and configuration
   static Future<Map<String, dynamic>?> getBalance() async {
-    try {
-      final res = await _dio.get(ApiConstants.walletBalance);
-      if (res.statusCode == 200 && res.data['success'] == true) {
-        return Map<String, dynamic>.from(res.data['data'] ?? {});
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        final res = await _dio.get(ApiConstants.walletBalance);
+        if (res.statusCode == 200 && res.data['success'] == true) {
+          final data = Map<String, dynamic>.from(res.data['data'] ?? {});
+          final parsedBal = double.tryParse((data['balance'] ?? data['wallet_balance'] ?? 0).toString());
+          if (parsedBal != null) {
+            cachedBalance = parsedBal;
+          }
+          final curr = (data['currency'] ?? '').toString();
+          if (curr.isNotEmpty) {
+            cachedCurrency = curr;
+          }
+          return data;
+        }
+      } catch (e) {
+        debugPrint('Error getting wallet balance (attempt ${attempt + 1}): $e');
+        if (attempt == 0) {
+          await Future.delayed(const Duration(milliseconds: 350));
+        }
       }
-    } catch (e) {
-      debugPrint('Error getting wallet balance: $e');
+    }
+    if (cachedBalance != null) {
+      return {
+        'balance': cachedBalance,
+        'wallet_balance': cachedBalance,
+        'currency': cachedCurrency,
+      };
     }
     return null;
   }

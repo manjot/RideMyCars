@@ -41,16 +41,26 @@ class CommissionsOverviewWidget extends BaseWidget
         $onlineUsd = 0.0;
         $countedRideIds = [];
         $countedBookingIds = [];
+        $rideRatePercent = (float) (\App\Models\Setting::where('key', 'ride_hailing.platform_commission')->value('value') ?? 10.0);
+        if ($rideRatePercent <= 0) {
+            $rideRatePercent = 10.0;
+        }
+        $rideRateFraction = $rideRatePercent / 100.0;
+        $rentalRatePercent = (float) (\App\Models\Setting::where('key', 'vehicle_rental.platform_commission')->value('value') ?? $rideRatePercent);
+        $rentalRateFraction = ($rentalRatePercent > 0 ? $rentalRatePercent : $rideRatePercent) / 100.0;
 
         try {
             if (Schema::hasTable('driver_cash_commissions')) {
                 $rows = DriverCashCommission::whereBetween('created_at', [$start, $end])->get();
                 foreach ($rows as $r) {
-                    $c = $this->toGhsAndUsd((float) $r->commission_amount, $r->currency ?? 'GHS');
+                    $grossRaw = (float) ($r->gross_fare ?: $r->cash_amount_collected ?: 0);
+                    $commRaw = $grossRaw > 0 ? round($grossRaw * $rideRateFraction) : (float) $r->commission_amount;
+                    $c = $this->toGhsAndUsd($commRaw, $r->currency ?? 'GHS');
                     $cashGhs += $c['ghs'];
                     $cashUsd += $c['usd'];
-                    if ($r->trip_id) {
-                        $countedRideIds[$r->trip_id] = true;
+                    $refTripId = $r->booking_id ?: $r->trip_id;
+                    if ($refTripId) {
+                        $countedRideIds[$refTripId] = true;
                     }
                 }
             }
@@ -60,7 +70,7 @@ class CommissionsOverviewWidget extends BaseWidget
                     ->get();
                 foreach ($rows as $r) {
                     $gross = (float) ($r->gross_amount ?: $r->amount ?: 0);
-                    $fee = (float) ($r->platform_fee > 0 ? $r->platform_fee : round($gross * 0.15));
+                    $fee = $gross > 0 ? round($gross * $rideRateFraction) : (float) ($r->platform_fee ?: 0);
                     $c = $this->toGhsAndUsd($fee, $r->currency ?? 'GHS');
                     $onlineGhs += $c['ghs'];
                     $onlineUsd += $c['usd'];
@@ -89,7 +99,7 @@ class CommissionsOverviewWidget extends BaseWidget
                     if ($fare <= 0) {
                         continue;
                     }
-                    $c = $this->toGhsAndUsd(round($fare * 0.15), $ride->currency ?? 'GHS');
+                    $c = $this->toGhsAndUsd(round($fare * $rideRateFraction), $ride->currency ?? 'GHS');
                     if (strtolower((string) ($ride->payment_method ?? 'cash')) === 'cash') {
                         $cashGhs += $c['ghs'];
                         $cashUsd += $c['usd'];
@@ -111,7 +121,7 @@ class CommissionsOverviewWidget extends BaseWidget
                     if ($price <= 0) {
                         continue;
                     }
-                    $c = $this->toGhsAndUsd(round($price * 0.15), $b->currency ?? 'GHS');
+                    $c = $this->toGhsAndUsd(round($price * $rentalRateFraction), $b->currency ?? 'GHS');
                     $onlineGhs += $c['ghs'];
                     $onlineUsd += $c['usd'];
                 }

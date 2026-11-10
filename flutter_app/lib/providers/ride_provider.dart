@@ -195,6 +195,23 @@ class RideProvider extends ChangeNotifier {
         final newRide = r != null ? Map<String, dynamic>.from(r) : null;
         if (_activeRide != null && newRide == null) {
           final lastStatus = _activeRide?['status']?.toString();
+          if (lastStatus == 'pending' && notif == null) {
+            // Issue 11 guard: If the pending ride still has remaining waiting time and no explicit cancellation notification was sent,
+            // do not falsely cancel the ride on a transient null response!
+            bool stillWithinWaitingWindow = false;
+            final expStr = _activeRide?['expires_at']?.toString();
+            if (expStr != null && expStr.isNotEmpty) {
+              try {
+                final expTime = DateTime.parse(expStr).toLocal();
+                if (expTime.isAfter(DateTime.now())) {
+                  stillWithinWaitingWindow = true;
+                }
+              } catch (_) {}
+            }
+            if (stillWithinWaitingWindow) {
+              return;
+            }
+          }
           if (lastStatus == 'in_progress' || lastStatus == 'started' || lastStatus == 'completed') {
             _cancellationNotification = notif ?? {
               'type': 'ride_completed',
@@ -237,6 +254,10 @@ class RideProvider extends ChangeNotifier {
     String? scheduleTime,
     String? momoPhone,
     String? momoNetwork,
+    bool momoAuthorized = false,
+    bool cardAuthorized = false,
+    String? cardLast4,
+    String? transactionRef,
   }) async {
     _isBooking = true;
     _errorMessage = null;
@@ -266,6 +287,10 @@ class RideProvider extends ChangeNotifier {
         if (scheduleTime != null) 'pickup_time': scheduleTime,
         if (momoPhone != null) 'momo_phone': momoPhone,
         if (momoNetwork != null) 'momo_network': momoNetwork,
+        if (momoAuthorized) 'momo_authorized': true,
+        if (cardAuthorized) 'card_authorized': true,
+        if (cardLast4 != null && cardLast4.isNotEmpty) 'card_last4': cardLast4,
+        if (transactionRef != null && transactionRef.isNotEmpty) 'transaction_ref': transactionRef,
       });
 
       if ((res.statusCode == 200 || res.statusCode == 201) && res.data['success'] == true) {

@@ -81,12 +81,14 @@ class NotificationProvider extends ChangeNotifier {
         if (newNotifications.isNotEmpty) {
           final topId = (newNotifications.first['id'] as num?)?.toInt() ?? 0;
           if (_lastSeenId != 0 && topId > _lastSeenId) {
-            _playChime();
             for (final n in newNotifications) {
               final nId = (n['id'] as num?)?.toInt() ?? 0;
               if (nId > _lastSeenId && n['is_read'] != true) {
                 final nType = (n['type'] ?? '').toString().toLowerCase();
                 final nTitle = (n['title'] ?? 'RideMyCars Alert').toString();
+                if (nTitle.toLowerCase().contains('primary chauffeur unavailable')) {
+                  continue;
+                }
                 final nBody = (n['message'] ?? '').toString();
                 String? payload;
                 if (nType == 'completed' ||

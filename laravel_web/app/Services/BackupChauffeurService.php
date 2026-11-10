@@ -398,7 +398,21 @@ class BackupChauffeurService
             if ($nextAssignment) {
                 return [
                     'success' => true,
-                    'message' => 'Backup chauffeur declined. Searching for another nearby chauffeur.',
+                    'message' => 'Searching for another nearby chauffeur.',
+                    'status' => 'searching',
+                    'ride' => $lockedRide->fresh(['stops']),
+                ];
+            }
+
+            // IMPORTANT (Issue 11): Never cancel a pending ride while its waiting timer ($lockedRide->isExpired()) still has time remaining!
+            if (!$lockedRide->isExpired()) {
+                $lockedRide->update([
+                    'backup_driver_id' => null,
+                    'backup_status' => 'none',
+                ]);
+                return [
+                    'success' => true,
+                    'message' => 'Searching for nearby drivers.',
                     'status' => 'searching',
                     'ride' => $lockedRide->fresh(['stops']),
                 ];
@@ -406,18 +420,18 @@ class BackupChauffeurService
 
             $lockedRide->update([
                 'status' => 'cancelled',
-                'cancellation_reason' => 'No nearby chauffeur is currently available.',
+                'cancellation_reason' => 'No driver was available within the waiting period.',
             ]);
 
             try {
-                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($lockedRide, 'ride', 'No nearby chauffeur is currently available.');
+                \App\Services\BookingRefundService::refundCustomerForCancelledBooking($lockedRide, 'ride', 'No driver was available within the waiting period.');
             } catch (\Throwable $re) {
                 Log::warning("BackupChauffeurService refund error: " . $re->getMessage());
             }
 
             return [
                 'success' => true,
-                'message' => 'No nearby chauffeur is currently available.',
+                'message' => 'No driver was available within the waiting period.',
                 'status' => 'cancelled',
                 'ride' => $lockedRide->fresh(),
             ];

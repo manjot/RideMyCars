@@ -7,11 +7,15 @@ class RidePaymentSelection {
   final String method; // 'authorizenet', 'stripe', 'momo', 'cash', 'wallet'
   final String? momoPhone;
   final String? momoNetwork;
+  final String? cardLast4;
+  final String? cardHolderName;
 
   RidePaymentSelection({
     required this.method,
     this.momoPhone,
     this.momoNetwork,
+    this.cardLast4,
+    this.cardHolderName,
   });
 
   String get displayName {
@@ -109,10 +113,15 @@ class RidePaymentMethodSheet extends StatefulWidget {
 class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
   late String _selectedMethod;
   late TextEditingController _momoPhoneController;
+  final TextEditingController _cardHolderController = TextEditingController();
+  final TextEditingController _cardNumberController = TextEditingController();
+  final TextEditingController _cardExpiryController = TextEditingController();
+  final TextEditingController _cardCvvController = TextEditingController();
+  String? _sheetError;
   late String _momoNetwork;
   PaymentGatewayConfig _config = PaymentConfigService.currentConfig;
-  double? _walletBalance;
-  String _walletCurrency = '';
+  double? _walletBalance = WalletService.cachedBalance;
+  String _walletCurrency = WalletService.cachedCurrency;
 
   @override
   void initState() {
@@ -126,6 +135,8 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
     }
     _momoPhoneController = TextEditingController(text: widget.currentMomoPhone ?? '');
     _momoNetwork = widget.currentMomoNetwork ?? 'MTN';
+    _walletBalance = WalletService.cachedBalance;
+    _walletCurrency = WalletService.cachedCurrency;
     _loadConfig();
     _loadWalletBalance();
   }
@@ -135,8 +146,8 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
       final res = await WalletService.getBalance();
       if (res != null && mounted) {
         setState(() {
-          _walletBalance = double.tryParse((res['balance'] ?? res['wallet_balance'] ?? 0).toString());
-          _walletCurrency = (res['currency'] ?? '\$').toString();
+          _walletBalance = double.tryParse((res['balance'] ?? res['wallet_balance'] ?? 0).toString()) ?? _walletBalance ?? 0.0;
+          _walletCurrency = (res['currency'] ?? _walletCurrency).toString();
         });
       }
     } catch (_) {}
@@ -157,7 +168,123 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
   @override
   void dispose() {
     _momoPhoneController.dispose();
+    _cardHolderController.dispose();
+    _cardNumberController.dispose();
+    _cardExpiryController.dispose();
+    _cardCvvController.dispose();
     super.dispose();
+  }
+
+  Widget _buildInlineCardDetailsForm() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.credit_card_rounded, color: Color(0xFF38BDF8), size: 16),
+              SizedBox(width: 6),
+              Text(
+                'CARD DETAILS',
+                style: TextStyle(
+                  color: Color(0xFF38BDF8),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _cardHolderController,
+            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              hintText: 'Cardholder Full Name',
+              hintStyle: const TextStyle(color: Colors.white38, fontSize: 11.5),
+              filled: true,
+              fillColor: const Color(0xFF1E293B),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _cardNumberController,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 1.1),
+            decoration: InputDecoration(
+              hintText: 'Card Number (16 digits)',
+              hintStyle: const TextStyle(color: Colors.white38, fontSize: 11.5, letterSpacing: 0),
+              filled: true,
+              fillColor: const Color(0xFF1E293B),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _cardExpiryController,
+                  keyboardType: TextInputType.datetime,
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    hintText: 'MM/YY',
+                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 11.5),
+                    filled: true,
+                    fillColor: const Color(0xFF1E293B),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.white24),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _cardCvvController,
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    hintText: 'CVV (3-4 digits)',
+                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 11.5),
+                    filled: true,
+                    fillColor: const Color(0xFF1E293B),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.white24),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBrandIcon(String assetName, {double height = 23}) {
@@ -364,6 +491,7 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                           _buildBrandIcon('amex.png'),
                         ],
                       ),
+                      if (_selectedMethod == 'authorizenet') _buildInlineCardDetailsForm(),
                     ],
                   ),
                 ),
@@ -475,6 +603,7 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                           _buildBrandIcon('apple_pay.png'),
                         ],
                       ),
+                      if (_selectedMethod == 'stripe') _buildInlineCardDetailsForm(),
                     ],
                   ),
                 ),
@@ -848,6 +977,22 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                 ),
               ),
             ],
+            if (_sheetError != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.danger.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.danger.withOpacity(0.4)),
+                ),
+                child: Text(
+                  _sheetError!,
+                  style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
 
             // Done Button: Yellow with Bold Black Text
@@ -866,6 +1011,17 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                   if (!widget.showWallet && finalMethod == 'wallet') {
                     finalMethod = _config.firstActiveMethod;
                   }
+                  String? cardLast4;
+                  if (finalMethod == 'authorizenet' || finalMethod == 'stripe') {
+                    final rawDigits = _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
+                    if (rawDigits.isNotEmpty) {
+                      if (rawDigits.length < 12 || _cardExpiryController.text.trim().isEmpty || _cardCvvController.text.trim().length < 3) {
+                        setState(() => _sheetError = 'Please complete all Card Details (Card Number, Expiry MM/YY, and CVV).');
+                        return;
+                      }
+                      cardLast4 = rawDigits.substring(rawDigits.length - 4);
+                    }
+                  }
                   Navigator.pop(
                     context,
                     RidePaymentSelection(
@@ -874,6 +1030,10 @@ class _RidePaymentMethodSheetState extends State<RidePaymentMethodSheet> {
                           ? _momoPhoneController.text.trim()
                           : null,
                       momoNetwork: _momoNetwork,
+                      cardLast4: cardLast4,
+                      cardHolderName: _cardHolderController.text.trim().isNotEmpty
+                          ? _cardHolderController.text.trim()
+                          : null,
                     ),
                   );
                 },

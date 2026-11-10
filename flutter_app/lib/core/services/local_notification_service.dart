@@ -10,10 +10,10 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  static const String channelId = 'ridemycars_alerts';
-  static const String channelName = 'Ride & Booking Alerts';
+  static const String channelId = 'ridemycars_silent_notifications';
+  static const String channelName = 'Ride & Booking Updates';
   static const String channelDesc =
-      'High priority alerts for rides, bookings, and notifications';
+      'Silent updates for rides, bookings, and account notifications';
 
   final Set<int> _displayedNotificationIds = <int>{};
   bool _initialized = false;
@@ -56,9 +56,9 @@ class LocalNotificationService {
           channelId,
           channelName,
           description: channelDesc,
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
+          importance: Importance.defaultImportance,
+          playSound: false,
+          enableVibration: false,
           showBadge: true,
         );
 
@@ -152,11 +152,11 @@ class LocalNotificationService {
         channelId,
         channelName,
         channelDescription: channelDesc,
-        importance: Importance.max,
-        priority: Priority.high,
-        ticker: 'RideMyCars Alert',
-        playSound: true,
-        enableVibration: true,
+        importance: Importance.defaultImportance,
+        priority: Priority.defaultPriority,
+        ticker: 'RideMyCars Update',
+        playSound: false,
+        enableVibration: false,
         icon: '@mipmap/launcher_icon',
         visibility: NotificationVisibility.public,
         category: AndroidNotificationCategory.status,
@@ -167,7 +167,7 @@ class LocalNotificationService {
         iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
-          presentSound: true,
+          presentSound: false,
         ),
       );
 

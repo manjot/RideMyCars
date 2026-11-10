@@ -1042,10 +1042,59 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     }
   }
 
+  bool _hasHandledExternalCancellation = false;
+
+  void _syncActiveRideWithProvider(DriverProvider driver) {
+    if (!mounted || _isUpdating || _hasHandledExternalCancellation) return;
+    final currentIdStr = (_ride['id'] ?? _ride['ride_id'] ?? '').toString();
+    if (currentIdStr.isEmpty) return;
+
+    final matching = driver.activeRides.where((r) {
+      final rIdStr = (r['id'] ?? r['ride_id'] ?? '').toString();
+      return rIdStr == currentIdStr;
+    }).toList();
+
+    if (matching.isNotEmpty) {
+      final latest = matching.first;
+      final latestStatus = (latest['status'] ?? '').toString().toLowerCase();
+      if (latestStatus == 'cancelled') {
+        _hasHandledExternalCancellation = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ride was cancelled by the customer.'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        Navigator.of(context).pop();
+        return;
+      }
+      if (latest['status'] != _ride['status']) {
+        setState(() {
+          _ride = Map<String, dynamic>.from(latest);
+        });
+      }
+    } else {
+      final localStatus = (_ride['status'] ?? '').toString().toLowerCase();
+      if (localStatus != 'completed' && localStatus != 'delivered') {
+        _hasHandledExternalCancellation = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ride was cancelled by the customer.'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final driver = Provider.of<DriverProvider>(context);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkIncomingJobs(driver));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncActiveRideWithProvider(driver);
+      _checkIncomingJobs(driver);
+    });
     final status = _ride['status'] ?? 'accepted';
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
     final currSym = (_ride['currency_symbol'] ?? countryProv.currencySymbol).toString();

@@ -597,21 +597,13 @@ class NotificationService
     }
 
     /**
-     * Notify Customer that primary chauffeur is unavailable and search for backup has started.
+     * Notify Customer that search for nearby chauffeur is continuing.
+     * Note (Issue 11): Never send "Primary Chauffeur Unavailable" notification during active waiting window.
      */
     public static function notifyCustomerPrimaryUnavailableSearchingBackup(Ride $ride): void
     {
-        if ($ride->rider_id) {
-            self::send(
-                $ride->rider_id,
-                'backup_searching',
-                'Primary Chauffeur Unavailable',
-                'Searching for a nearby chauffeur...',
-                $ride->id,
-                "/ride?resume={$ride->id}",
-                ['ride_id' => $ride->id, 'status' => 'backup_searching', 'icon' => 'clock', 'color' => 'amber']
-            );
-        }
+        // Intentionally silent during active ride waiting period so the rider is not falsely notified that a chauffeur is unavailable.
+        return;
     }
 
     /**

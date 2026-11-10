@@ -50,6 +50,10 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          final userEmail = await TokenStorage.getUserEmail();
+          if (userEmail != null && userEmail.isNotEmpty) {
+            options.headers['X-User-Email'] = userEmail;
+          }
           final countryCode = await TokenStorage.getSelectedCountryCode();
           if (countryCode != null && countryCode.isNotEmpty) {
             options.headers['X-Country'] = countryCode;

@@ -136,9 +136,6 @@ class NotificationProvider extends ChangeNotifier {
                 }
               }
             }
-            if (!triggeredOrderRingtone) {
-              _playChime();
-            }
           } else if (_lastSeenId == 0) {
             // First run: mark existing notifications as seen so we don't alert on old history
             LocalNotificationService.instance.markMultipleAsDisplayed(

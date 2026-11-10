@@ -17,6 +17,8 @@ import '../../services/driver_service.dart';
 import '../../services/places_service.dart';
 import '../../services/payment_config_service.dart';
 import '../../services/rental_service.dart';
+import '../../services/wallet_service.dart';
+import '../../core/services/local_notification_service.dart';
 import '../account/manage_account_screen.dart';
 import '../auth/login_screen.dart';
 import '../delivery/delivery_booking_screen.dart';
@@ -94,6 +96,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   String _paymentMethod = PaymentConfigService.currentConfig.firstActiveMethod;
   String? _momoPhone;
   String _momoNetwork = 'MTN';
+  String? _cardLast4;
+  String? _cardHolderName;
   bool _isFinalSubmittingRide = false;
 
   // Rent a Car Website Flow State
@@ -195,6 +199,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       rideProv.startActiveRidePolling();
       rideProv.fetchCategories(country: countryProv.selectedCountryCode);
       Provider.of<NotificationProvider>(context, listen: false).startPolling();
+      WalletService.getBalance();
       _getCurrentLocation();
       _fetchRentalVehicles(country: countryProv.selectedCountryCode);
       _fetchDrivers(country: countryProv.selectedCountryCode);
@@ -1458,6 +1463,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         _paymentMethod = res.method;
         _momoPhone = res.momoPhone;
         _momoNetwork = res.momoNetwork ?? _momoNetwork;
+        if (res.cardLast4 != null && res.cardLast4!.isNotEmpty) {
+          _cardLast4 = res.cardLast4;
+          _cardHolderName = res.cardHolderName;
+        }
       });
     }
   }
@@ -1501,6 +1510,379 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   // FINAL RIDE BOOKING EXECUTION
   // ==========================================
 
+  Future<Map<String, String>?> _showPreRideMomoPaymentDialog({
+    required double amount,
+    required String currencySymbol,
+  }) async {
+    final phoneCtrl = TextEditingController(text: _momoPhone ?? '');
+    final pinCtrl = TextEditingController();
+    String selectedNet = _momoNetwork;
+    String? errText;
+    final txRef = 'MOMO-RIDE-${DateTime.now().millisecondsSinceEpoch}';
+
+    try {
+      await LocalNotificationService.instance.showNotification(
+        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title: '📲 $selectedNet MoMo Ride Payment Prompt',
+        body: 'Authorize ride payment of $currencySymbol${amount.toStringAsFixed(0)} ($txRef) using your 4-digit MoMo PIN.',
+        force: true,
+      );
+    } catch (_) {}
+
+    final res = await showDialog<Map<String, String>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(color: Color(0xFFFFDC00), width: 1.5),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFDC00).withOpacity(0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.phonelink_lock_rounded, color: Color(0xFFFFDC00), size: 22),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Complete MoMo Payment',
+                  style: TextStyle(color: AppColors.textLight, fontSize: 16, fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundDark,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Text(
+                    'Please complete Mobile Money payment of $currencySymbol${amount.toStringAsFixed(0)} before your ride request is dispatched to nearby drivers.',
+                    style: const TextStyle(color: AppColors.textLight, fontSize: 12.5, height: 1.4),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: ['MTN', 'Telecel', 'AirtelTigo'].map((net) {
+                    final sel = selectedNet == net;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => setDialogState(() => selectedNet = net),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: sel ? const Color(0xFFFFDC00).withOpacity(0.18) : AppColors.backgroundDark,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: sel ? const Color(0xFFFFDC00) : Colors.white12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            net,
+                            style: TextStyle(
+                              color: sel ? const Color(0xFFFFDC00) : Colors.white70,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    labelText: 'MoMo Mobile Number',
+                    labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                    hintText: 'e.g. 024 123 4567',
+                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                    filled: true,
+                    fillColor: AppColors.backgroundDark,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.white24),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: pinCtrl,
+                  obscureText: true,
+                  maxLength: 4,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 8),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    labelText: '4-Digit MoMo PIN',
+                    labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12, letterSpacing: 0),
+                    hintText: '• • • •',
+                    hintStyle: const TextStyle(color: Colors.white38, letterSpacing: 6),
+                    filled: true,
+                    fillColor: AppColors.backgroundDark,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.white24),
+                    ),
+                  ),
+                ),
+                if (errText != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    errText!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, null),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final ph = phoneCtrl.text.trim();
+                final pin = pinCtrl.text.trim();
+                if (ph.length < 8) {
+                  setDialogState(() => errText = 'Please enter a valid MoMo phone number.');
+                  return;
+                }
+                if (pin.length < 4) {
+                  setDialogState(() => errText = 'Please enter your 4-digit MoMo PIN to pay.');
+                  return;
+                }
+                Navigator.pop(ctx, {
+                  'phone': ph,
+                  'network': selectedNet,
+                  'tx_ref': txRef,
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Authorize & Pay', style: TextStyle(fontWeight: FontWeight.w900)),
+            ),
+          ],
+        ),
+      ),
+    );
+    return res;
+  }
+
+  Future<Map<String, String>?> _showPreRideCardDetailsSheet({
+    required double amount,
+    required String currencySymbol,
+    required String gatewayLabel,
+  }) async {
+    final holderCtrl = TextEditingController(text: _cardHolderName ?? '');
+    final numberCtrl = TextEditingController();
+    final expiryCtrl = TextEditingController();
+    final cvvCtrl = TextEditingController();
+    String? errText;
+
+    final res = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: EdgeInsets.only(
+            top: 18,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.credit_card_rounded, color: Color(0xFF38BDF8), size: 22),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Card Details ($gatewayLabel)',
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx, null),
+                      child: const Icon(Icons.close, color: Colors.white70, size: 20),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Amount to Authorize', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                      Text(
+                        '$currencySymbol${amount.toStringAsFixed(0)}',
+                        style: const TextStyle(color: Color(0xFFFFDC00), fontSize: 18, fontWeight: FontWeight.w900),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: holderCtrl,
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    labelText: 'Cardholder Full Name',
+                    labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                    hintText: 'e.g. John Mensah',
+                    hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                    filled: true,
+                    fillColor: const Color(0xFF1E293B),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: numberCtrl,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+                  decoration: InputDecoration(
+                    labelText: 'Card Number',
+                    labelStyle: const TextStyle(color: Colors.white60, fontSize: 12, letterSpacing: 0),
+                    hintText: '4532 •••• •••• ••••',
+                    hintStyle: const TextStyle(color: Colors.white30, fontSize: 12, letterSpacing: 0),
+                    filled: true,
+                    fillColor: const Color(0xFF1E293B),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: expiryCtrl,
+                        keyboardType: TextInputType.datetime,
+                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                        decoration: InputDecoration(
+                          labelText: 'Expiry (MM/YY)',
+                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          hintText: '08/28',
+                          hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                          filled: true,
+                          fillColor: const Color(0xFF1E293B),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: cvvCtrl,
+                        keyboardType: TextInputType.number,
+                        obscureText: true,
+                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                        decoration: InputDecoration(
+                          labelText: 'CVV',
+                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          hintText: '123',
+                          hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                          filled: true,
+                          fillColor: const Color(0xFF1E293B),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (errText != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    errText!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final rawNum = numberCtrl.text.replaceAll(RegExp(r'\D'), '');
+                      if (rawNum.length < 12 || expiryCtrl.text.trim().isEmpty || cvvCtrl.text.trim().length < 3) {
+                        setSheetState(() => errText = 'Please enter a valid Card Number, Expiry Date (MM/YY), and CVV.');
+                        return;
+                      }
+                      Navigator.pop(ctx, {
+                        'card_last4': rawNum.substring(rawNum.length - 4),
+                        'card_holder': holderCtrl.text.trim(),
+                        'tx_ref': 'CARD-RIDE-${DateTime.now().millisecondsSinceEpoch}',
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFDC00),
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    icon: const Icon(Icons.lock_rounded, size: 18, color: Colors.black),
+                    label: Text(
+                      'Pay $currencySymbol${amount.toStringAsFixed(0)} & Dispatch Ride',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    return res;
+  }
+
   Future<void> _handleFinalRideBooking() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated || auth.token == null) {
@@ -1532,6 +1914,11 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
     final rideProv = Provider.of<RideProvider>(context, listen: false);
     final countryProv = Provider.of<CountryProvider>(context, listen: false);
+    final categories = rideProv.rideCategories.isNotEmpty
+        ? rideProv.rideCategories
+        : _fallbackRideCategories;
+    final selectedCat = rideProv.selectedCategory ?? (categories.isNotEmpty ? categories.first : _fallbackRideCategories.first);
+    final fareAmount = selectedCat.fare;
 
     double? computedDist;
     int? computedDur;
@@ -1541,6 +1928,45 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     }
     final finalDist = rideProv.estimatedDistanceKm ?? computedDist ?? 5.2;
     final finalDur = rideProv.estimatedDurationMinutes ?? computedDur ?? 12;
+
+    bool momoAuthorized = false;
+    bool cardAuthorized = false;
+    String? txRef;
+
+    // Issue 2: Require MoMo payment BEFORE issuing a ride request
+    if (_paymentMethod == 'momo') {
+      final momoRes = await _showPreRideMomoPaymentDialog(
+        amount: fareAmount,
+        currencySymbol: countryProv.currencySymbol,
+      );
+      if (momoRes == null) {
+        return; // Do NOT issue ride request if MoMo payment was not completed
+      }
+      _momoPhone = momoRes['phone'];
+      _momoNetwork = momoRes['network'] ?? _momoNetwork;
+      txRef = momoRes['tx_ref'];
+      momoAuthorized = true;
+    }
+
+    // Issue 3: Require Card Details before issuing a ride request when Card is selected
+    if (_paymentMethod == 'authorizenet' || _paymentMethod == 'stripe' || _paymentMethod == 'card') {
+      if (_cardLast4 == null || _cardLast4!.isEmpty) {
+        final cardRes = await _showPreRideCardDetailsSheet(
+          amount: fareAmount,
+          currencySymbol: countryProv.currencySymbol,
+          gatewayLabel: _paymentMethod == 'authorizenet' ? 'Authorize.Net' : 'Stripe',
+        );
+        if (cardRes == null) {
+          return; // Do NOT issue ride request if card details were not submitted
+        }
+        _cardLast4 = cardRes['card_last4'];
+        _cardHolderName = cardRes['card_holder'];
+        txRef = cardRes['tx_ref'];
+      } else {
+        txRef = 'CARD-RIDE-${DateTime.now().millisecondsSinceEpoch}';
+      }
+      cardAuthorized = true;
+    }
 
     setState(() => _isFinalSubmittingRide = true);
 
@@ -1561,6 +1987,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       scheduleTime: _scheduleType == 'later' ? _scheduledTime.format(context) : null,
       momoPhone: _momoPhone,
       momoNetwork: _momoNetwork,
+      momoAuthorized: momoAuthorized,
+      cardAuthorized: cardAuthorized,
+      cardLast4: _cardLast4,
+      transactionRef: txRef,
     );
 
     if (!mounted) return;

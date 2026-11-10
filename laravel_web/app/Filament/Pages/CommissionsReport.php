@@ -208,6 +208,17 @@ class CommissionsReport extends Page
         $countedRideIds = [];
         $countedBookingIds = [];
         $countedDeliveryIds = [];
+        $rideRatePercent = (float) (\App\Models\Setting::where('key', 'ride_hailing.platform_commission')->value('value') ?? 10.0);
+        if ($rideRatePercent <= 0) {
+            $rideRatePercent = 10.0;
+        }
+        $rideRateFraction = $rideRatePercent / 100.0;
+
+        $rentalRatePercent = (float) (\App\Models\Setting::where('key', 'vehicle_rental.platform_commission')->value('value') ?? $rideRatePercent);
+        $rentalRateFraction = ($rentalRatePercent > 0 ? $rentalRatePercent : $rideRatePercent) / 100.0;
+
+        $deliveryRatePercent = (float) (\App\Models\Setting::where('key', 'package_delivery.platform_commission')->value('value') ?? $rideRatePercent);
+        $deliveryRateFraction = ($deliveryRatePercent > 0 ? $deliveryRatePercent : $rideRatePercent) / 100.0;
 
         // 1. Cash trip auto-deductions from driver_cash_commissions
         try {
@@ -215,8 +226,10 @@ class CommissionsReport extends Page
                 $cashRows = DriverCashCommission::whereBetween('created_at', [$start, $end])->get();
                 foreach ($cashRows as $row) {
                     $curr = $row->currency ?? 'GHS';
-                    $commConv = $this->toGhsAndUsd((float) $row->commission_amount, $curr);
-                    $grossConv = $this->toGhsAndUsd((float) $row->cash_amount_collected, $curr);
+                    $grossRaw = (float) ($row->gross_fare ?: $row->cash_amount_collected ?: 0);
+                    $commRaw = $grossRaw > 0 ? round($grossRaw * $rideRateFraction) : (float) $row->commission_amount;
+                    $commConv = $this->toGhsAndUsd($commRaw, $curr);
+                    $grossConv = $this->toGhsAndUsd($grossRaw, $curr);
 
                     $cashCommissionGhs += $commConv['ghs'];
                     $cashCommissionUsd += $commConv['usd'];
@@ -224,14 +237,15 @@ class CommissionsReport extends Page
                     $cashGrossUsd += $grossConv['usd'];
                     $cashTripsCount++;
 
-                    $tripType = strtolower((string) ($row->trip_type ?? 'ride'));
-                    if ($row->trip_id) {
+                    $tripType = strtolower((string) ($row->service_type ?: $row->trip_type ?: 'ride'));
+                    $refTripId = $row->booking_id ?: $row->trip_id;
+                    if ($refTripId) {
                         if (str_contains($tripType, 'booking') || str_contains($tripType, 'chauffeur')) {
-                            $countedBookingIds[$row->trip_id] = true;
+                            $countedBookingIds[$refTripId] = true;
                         } elseif (str_contains($tripType, 'delivery')) {
-                            $countedDeliveryIds[$row->trip_id] = true;
+                            $countedDeliveryIds[$refTripId] = true;
                         } else {
-                            $countedRideIds[$row->trip_id] = true;
+                            $countedRideIds[$refTripId] = true;
                         }
                     }
                 }
@@ -250,7 +264,7 @@ class CommissionsReport extends Page
                 foreach ($onlineRows as $row) {
                     $curr = $row->currency ?? 'GHS';
                     $grossVal = (float) ($row->gross_amount ?: $row->amount ?: 0);
-                    $feeVal = (float) ($row->platform_fee > 0 ? $row->platform_fee : round($grossVal * 0.15));
+                    $feeVal = $grossVal > 0 ? round($grossVal * $rideRateFraction) : (float) ($row->platform_fee ?: 0);
 
                     $commConv = $this->toGhsAndUsd($feeVal, $curr);
                     $grossConv = $this->toGhsAndUsd($grossVal, $curr);
@@ -296,7 +310,7 @@ class CommissionsReport extends Page
                         continue;
                     }
                     $curr = $ride->currency ?? 'GHS';
-                    $comm = round($fare * 0.15);
+                    $comm = round($fare * $rideRateFraction);
 
                     $commConv = $this->toGhsAndUsd($comm, $curr);
                     $grossConv = $this->toGhsAndUsd($fare, $curr);
@@ -339,7 +353,7 @@ class CommissionsReport extends Page
                         continue;
                     }
                     $curr = $booking->currency ?? 'GHS';
-                    $comm = round($price * 0.15);
+                    $comm = round($price * $rentalRateFraction);
 
                     $commConv = $this->toGhsAndUsd($comm, $curr);
                     $grossConv = $this->toGhsAndUsd($price, $curr);
@@ -382,7 +396,7 @@ class CommissionsReport extends Page
                         continue;
                     }
                     $curr = $delivery->currency ?? 'GHS';
-                    $comm = round($price * 0.15);
+                    $comm = round($price * $deliveryRateFraction);
 
                     $commConv = $this->toGhsAndUsd($comm, $curr);
                     $grossConv = $this->toGhsAndUsd($price, $curr);
@@ -443,30 +457,40 @@ class CommissionsReport extends Page
         $seenRides = [];
         $seenBookings = [];
 
+        $configuredRideRate = round((float) (\App\Models\Setting::where('key', 'ride_hailing.platform_commission')->value('value') ?? 10.0), 2);
+        if ($configuredRideRate <= 0) {
+            $configuredRideRate = 10.0;
+        }
+        $configuredRideFraction = $configuredRideRate / 100.0;
+
         // 1. Fetch cash trip commission deductions
         try {
             if (Schema::hasTable('driver_cash_commissions')) {
                 DriverCashCommission::ensureTableExists();
-                $cashRecords = DriverCashCommission::with(['driver.user', 'driverProfile.user'])
+                $cashRecords = DriverCashCommission::with(['driver'])
                     ->orderBy('created_at', 'desc')
                     ->limit(100)
                     ->get();
 
                 foreach ($cashRecords as $rec) {
-                    $user = $rec->driverProfile?->user ?? $rec->driver?->user ?? $rec->driverProfile ?? null;
-                    $driverName = $user?->name ?? 'Driver #' . ($rec->driver_profile_id ?? $rec->driver_id ?? 'N/A');
+                    $user = $rec->driver;
+                    $driverName = $user?->name ?? 'Driver #' . ($rec->driver_id ?? 'N/A');
                     $driverPhone = $user?->phone ?? '';
                     $curr = $rec->currency ?? 'GHS';
 
-                    $grossConv = $this->toGhsAndUsd((float) $rec->cash_amount_collected, $curr);
-                    $commConv = $this->toGhsAndUsd((float) $rec->commission_amount, $curr);
+                    $grossRaw = (float) ($rec->gross_fare ?: $rec->cash_amount_collected ?: 0);
+                    $commRaw = $grossRaw > 0 ? round($grossRaw * $configuredRideFraction) : (float) $rec->commission_amount;
 
-                    $tripType = strtolower((string) ($rec->trip_type ?? 'ride'));
-                    if ($rec->trip_id) {
+                    $grossConv = $this->toGhsAndUsd($grossRaw, $curr);
+                    $commConv = $this->toGhsAndUsd($commRaw, $curr);
+
+                    $tripType = strtolower((string) ($rec->service_type ?: $rec->trip_type ?: 'ride'));
+                    $refTripId = $rec->booking_id ?: $rec->trip_id;
+                    if ($refTripId) {
                         if (str_contains($tripType, 'booking') || str_contains($tripType, 'chauffeur')) {
-                            $seenBookings[$rec->trip_id] = true;
+                            $seenBookings[$refTripId] = true;
                         } else {
-                            $seenRides[$rec->trip_id] = true;
+                            $seenRides[$refTripId] = true;
                         }
                     }
 
@@ -474,23 +498,23 @@ class CommissionsReport extends Page
                         'id' => 'cash_' . $rec->id,
                         'date' => $rec->created_at ? $rec->created_at->format('M d, Y H:i') : 'N/A',
                         'timestamp' => $rec->created_at ? $rec->created_at->timestamp : 0,
-                        'driver_id' => $rec->driver_profile_id ?? $rec->driver_id,
+                        'driver_id' => $rec->driver_id,
                         'driver_name' => $driverName,
                         'driver_phone' => $driverPhone,
                         'driver_avatar' => $user?->avatar_url ?? null,
-                        'vertical' => ucfirst(str_replace('_', ' ', $rec->trip_type ?? 'ride')),
-                        'trip_ref' => '#' . ($rec->trip_id ?? 'N/A'),
+                        'vertical' => ucfirst(str_replace('_', ' ', $tripType)),
+                        'trip_ref' => $rec->trip_ref ?: ('#RIDE-' . ($refTripId ?? $rec->id)),
                         'payment_mode' => 'Cash (Auto-Deducted from Main Wallet)',
                         'is_cash' => true,
                         'gross_fare' => $grossConv['ghs'],
                         'gross_fare_ghs' => $grossConv['ghs'],
                         'gross_fare_usd' => $grossConv['usd'],
-                        'commission_rate' => round((float) $rec->commission_rate),
+                        'commission_rate' => $configuredRideRate,
                         'commission_amount' => $commConv['ghs'],
                         'commission_amount_ghs' => $commConv['ghs'],
                         'commission_amount_usd' => $commConv['usd'],
                         'currency' => 'GHS',
-                        'deducted_from_wallet' => (bool) $rec->deducted_from_wallet,
+                        'deducted_from_wallet' => true,
                         'status' => 'Auto-Deducted',
                         'status_color' => 'success',
                     ];
@@ -516,8 +540,8 @@ class CommissionsReport extends Page
                     $curr = $rec->currency ?? 'GHS';
 
                     $grossVal = (float) ($rec->gross_amount ?: $rec->amount ?: 0);
-                    $feeVal = (float) ($rec->platform_fee > 0 ? $rec->platform_fee : round($grossVal * 0.15));
-                    $rate = $grossVal > 0 ? round(($feeVal / $grossVal) * 100) : 15;
+                    $feeVal = $grossVal > 0 ? round($grossVal * $configuredRideFraction) : (float) ($rec->platform_fee ?: 0);
+                    $rate = $configuredRideRate;
 
                     $grossConv = $this->toGhsAndUsd($grossVal, $curr);
                     $commConv = $this->toGhsAndUsd($feeVal, $curr);
@@ -577,7 +601,7 @@ class CommissionsReport extends Page
                         continue;
                     }
                     $curr = $ride->currency ?? 'GHS';
-                    $comm = round($fare * 0.15);
+                    $comm = round($fare * $configuredRideFraction);
                     $grossConv = $this->toGhsAndUsd($fare, $curr);
                     $commConv = $this->toGhsAndUsd($comm, $curr);
 
@@ -599,7 +623,7 @@ class CommissionsReport extends Page
                         'gross_fare' => $grossConv['ghs'],
                         'gross_fare_ghs' => $grossConv['ghs'],
                         'gross_fare_usd' => $grossConv['usd'],
-                        'commission_rate' => 15,
+                        'commission_rate' => $configuredRideRate,
                         'commission_amount' => $commConv['ghs'],
                         'commission_amount_ghs' => $commConv['ghs'],
                         'commission_amount_usd' => $commConv['usd'],

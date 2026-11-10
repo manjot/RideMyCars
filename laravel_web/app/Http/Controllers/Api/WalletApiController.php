@@ -207,13 +207,18 @@ class WalletApiController extends Controller
                         ]),
                     ]);
 
-                    // Trigger push notification to driver/rider phone for MoMo prompt authorization
+                    // Trigger SMS/USSD & push notification to driver/rider phone for MoMo prompt authorization
+                    try {
+                        $smsMessage = "RideMyCars {$network} MoMo USSD Prompt: Authorize payment of {$currency}{$amount} from {$phone} (Ref: {$promptRef}). Enter your MoMo PIN or dial *170# (Approvals) to complete your Wallet Top-Up.";
+                        \App\Services\Sms\SmsGatewayManager::sendSms($phone, $smsMessage);
+                    } catch (\Throwable $se) {}
+
                     try {
                         \App\Services\NotificationService::send(
                             $user->id,
                             'momo_payment_prompt',
                             "📲 Authorize {$network} MoMo Payment",
-                            "A Mobile Money payment prompt for {$currency}{$amount} has been sent to {$phone} ({$network}). Please enter your MoMo PIN to authorize the wallet top-up.",
+                            "A Mobile Money USSD payment prompt for {$currency}{$amount} has been sent to {$phone} ({$network}). Please enter your MoMo PIN to authorize the wallet top-up.",
                             null,
                             '/wallet',
                             [
@@ -222,13 +227,14 @@ class WalletApiController extends Controller
                                 'currency' => $currency,
                                 'phone_number' => $phone,
                                 'network' => $network,
+                                'ussd_code' => '*170#',
                                 'target_role' => $targetRole,
                                 'recipient_user_id' => $user->id,
                             ]
                         );
                     } catch (\Throwable $ne) {}
 
-                    $promptMsg = "📲 Mobile Money ({$network}) payment prompt for {$currency}{$amount} sent to {$phone}. Please authorize the transaction on your phone using your MoMo PIN.";
+                    $promptMsg = "📲 Mobile Money ({$network}) USSD payment prompt for {$currency}{$amount} sent to {$phone}. Please authorize the transaction on your phone using your MoMo PIN.";
 
                     if ($isExplicitInitiate) {
                         return response()->json([

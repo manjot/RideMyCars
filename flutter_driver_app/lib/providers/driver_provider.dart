@@ -788,11 +788,6 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
               .toList();
           if (mapped.isNotEmpty) {
             _activeRides = mapped;
-          } else if (_lastAcceptedRide != null &&
-              _lastAcceptedRide!['status'] != 'completed' &&
-              _lastAcceptedRide!['status'] != 'delivered' &&
-              _lastAcceptedRide!['status'] != 'cancelled') {
-            _activeRides = [_lastAcceptedRide!];
           } else {
             _activeRides = [];
             _lastAcceptedRide = null;
@@ -1163,11 +1158,6 @@ class DriverProvider extends ChangeNotifier with WidgetsBindingObserver {
         });
         if (mapped.isNotEmpty) {
           _activeRides = mapped;
-        } else if (_lastAcceptedRide != null &&
-            _lastAcceptedRide!['status'] != 'completed' &&
-            _lastAcceptedRide!['status'] != 'delivered' &&
-            _lastAcceptedRide!['status'] != 'cancelled') {
-          _activeRides = [_lastAcceptedRide!];
         } else {
           _activeRides = [];
           _lastAcceptedRide = null;

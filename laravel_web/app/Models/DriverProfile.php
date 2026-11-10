@@ -607,31 +607,36 @@ class DriverProfile extends Model
         }
 
         // Commission balance is < 100 (paid or below threshold)
-        $wasOverdueOrTracked = (bool) $profile->commission_locked
+        // Issue 5: "Driver Switch Turned On & Unlocked" must ONLY be triggered when a driver
+        // exceeds the 7-day payment deadline and subsequently makes the required payment after the deadline has expired.
+        $hadExceededDeadline = (bool) $profile->commission_locked
+            || !empty($profile->commission_locked_at)
+            || (!empty($profile->commission_threshold_reached_at)
+                && \Carbon\Carbon::parse($profile->commission_threshold_reached_at)->addDays(7)->isPast());
+
+        $wasOverdueOrTracked = $hadExceededDeadline
             || !empty($profile->commission_threshold_reached_at)
-            || !empty($profile->commission_warning_notified_at)
-            || !empty($profile->commission_locked_at);
+            || !empty($profile->commission_warning_notified_at);
 
         if ($wasOverdueOrTracked || $fromPayment) {
-            $wasLockedOrThreshold = $wasOverdueOrTracked;
             $profile->commission_threshold_reached_at = null;
             $profile->commission_warning_notified_at = null;
             $profile->commission_locked = false;
             $profile->commission_locked_at = null;
 
-            if ($fromPayment || $wasLockedOrThreshold) {
+            if ($hadExceededDeadline) {
                 $profile->is_available = true;
                 $profile->is_live = true;
             }
             $profile->save();
 
-            if ($fromPayment || $wasLockedOrThreshold) {
+            if ($fromPayment && $hadExceededDeadline) {
                 try {
                     \App\Services\NotificationService::send(
                         $profile->user_id,
                         'commission_switch_unlocked',
                         'Driver Switch Turned On & Unlocked',
-                        'Your Driver Switch has been turned on and unlocked. You can now receive ride requests.',
+                        'Your Driver Switch has been turned on and unlocked after settling your overdue commission balance. You can now receive ride requests.',
                         null,
                         '/driver/dashboard',
                         [

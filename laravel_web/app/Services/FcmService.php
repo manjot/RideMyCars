@@ -77,11 +77,13 @@ class FcmService
     /**
      * Send FCM message directly to a device token.
      */
-    public static function sendToToken(string $token, string $title, string $body, array $data = [], string $sound = 'incoming_order_ringtone'): bool
+    public static function sendToToken(string $token, string $title, string $body, array $data = [], string $sound = ''): bool
     {
         $serverKey = SettingService::get('firebase.fcm_server_key') 
             ?: config('services.firebase.fcm_server_key') 
             ?: env('FIREBASE_FCM_SERVER_KEY');
+
+        $isActionableRingtone = ($sound === 'incoming_order_ringtone');
 
         // Always format data values as strings for FCM compatibility
         $stringData = [];
@@ -90,20 +92,27 @@ class FcmService
         }
         $stringData['title'] = $title;
         $stringData['body'] = $body;
-        $stringData['sound'] = $sound;
+        $stringData['sound'] = $isActionableRingtone ? 'incoming_order_ringtone' : 'silent';
+        $stringData['is_actionable'] = $isActionableRingtone ? 'true' : 'false';
         $stringData['click_action'] = 'FLUTTER_NOTIFICATION_CLICK';
+
+        $notificationPayload = [
+            'title' => $title,
+            'body' => $body,
+            'android_channel_id' => $isActionableRingtone
+                ? 'ridemycars_incoming_orders_v2'
+                : 'ridemycars_silent_notifications',
+            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+        ];
+        if ($isActionableRingtone) {
+            $notificationPayload['sound'] = 'incoming_order_ringtone';
+        }
 
         $payload = [
             'to' => $token,
-            'priority' => 'high',
+            'priority' => $isActionableRingtone ? 'high' : 'normal',
             'content_available' => true,
-            'notification' => [
-                'title' => $title,
-                'body' => $body,
-                'sound' => $sound,
-                'android_channel_id' => 'ridemycars_incoming_orders_v2',
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-            ],
+            'notification' => $notificationPayload,
             'data' => $stringData,
         ];
 
